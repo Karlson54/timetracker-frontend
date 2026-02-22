@@ -59,12 +59,12 @@ export function EmployeeReports() {
   // Initialize with definite from and to dates
   const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const today = new Date();
-  
+
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: firstDayOfMonth,
     to: today
   });
-  
+
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
   const [showExportModal, setShowExportModal] = useState(false)
@@ -72,117 +72,8 @@ export function EmployeeReports() {
 
   // Fetch reports from the API instead of directly from the database
   useEffect(() => {
-    async function fetchReports() {
-      try {
-        // Fetch from API endpoint with the current user filter
-        const response = await fetch('/api/reports?currentUserOnly=true');
-        if (!response.ok) {
-          throw new Error('Failed to fetch reports');
-        }
-        const data = await response.json();
-        
-        // Check if the response contains a reports array
-        const allReports: ApiReport[] = Array.isArray(data) ? data : (data.reports || []);
-        
-        // Ensure allReports is an array before using map
-        if (!Array.isArray(allReports)) {
-          console.error("API returned non-array data:", allReports);
-          setReports([]);
-          return;
-        }
-        
-        // Transform reports to required format
-        const formattedReports: Report[] = allReports.map(report => {
-          // Format date from ISO to DD.MM.YYYY
-          const reportDate = new Date(report.report.date)
-          const formattedDate = reportDate.toLocaleDateString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-          });
-          
-          // Extract companies info
-          const companies = [
-            report.report.client,
-            report.report.contractingAgency
-          ].filter(Boolean).join(", ");
-          
-          // Extract employee name with fallback
-          const employeeName = report.employee?.name || '-';
-          
-          // Directly extract fields from report
-          const agency = report.employee?.agency || '-';
-          const market = report.report.market || '-';
-          const media = report.report.media || '-';
-          const comments = report.report.comments || '-';
-          const projectBrand = report.report.projectBrand || '-';
-          
-          // Log to debug the data extraction
-          console.log('Extracted data from API:', {
-            agency, market, media, comments, projectBrand, employeeName
-          });
-          
-          // Create task based on actual report data
-          const tasks: ReportTask[] = [];
-          if (report.report.client) {
-            tasks.push({
-              company: report.report.client,
-              description: report.report.jobType || "Work on project",
-              hours: report.report.hours
-            });
-          }
-          
-          // Add company information if available
-          if (report.companies && Array.isArray(report.companies) && report.companies.length > 0) {
-            // Add additional tasks from associated companies
-            report.companies.forEach(company => {
-              if (company && company.name && !tasks.some(t => t.company === company.name)) {
-                tasks.push({
-                  company: company.name,
-                  description: report.report.jobType || `Work with ${company.name}`,
-                  hours: report.report.hours / report.companies!.length // Distribute hours
-                });
-              }
-            });
-          }
-          
-          return {
-            id: report.report.id,
-            date: formattedDate,
-            totalHours: report.report.hours,
-            companies,
-            tasks,
-            employeeName,
-            projectBrand,
-            market,
-            agency,
-            media,
-            comments
-          };
-        });
-        
-        // Filter by date range if provided
-        const filteredReports = formattedReports.filter(report => {
-          if (!dateRange || !dateRange.from) return true; // No filter if no date range
-          
-          const reportDate = new Date(report.date.split('.').reverse().join('-'));
-          const fromDate = dateRange.from;
-          const toDate = dateRange.to || new Date(); // Use today if to is not set
-          
-          return reportDate >= fromDate && reportDate <= toDate;
-        });
-        
-        setReports(filteredReports);
-      } catch (error) {
-        console.error("Error fetching reports:", error);
-        setReports([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    fetchReports();
-  }, [dateRange]);
+    setLoading(false)
+  }, [])
 
   console.log("Report data to export:", reports);
 
@@ -190,18 +81,18 @@ export function EmployeeReports() {
   const prepareExportData = (reportsToExport: Report[] = reports) => {
     // Проверка данных для отладки
     console.log("Preparing export data from:", reportsToExport);
-    
+
     return reportsToExport.map(report => {
       const task = report.tasks[0] || {};
-      
+
       // Split companies string to extract client and contracting agency
       const companiesParts = report.companies.split(', ');
       const client = companiesParts[0] || '';
       const contractingAgency = companiesParts[1] || '';
-      
+
       // Данные для отладки
       console.log("Raw report data:", report);
-      
+
       const exportRow = {
         // Используем данные непосредственно из отчета/БД
         date: report.date || '-',
@@ -228,10 +119,10 @@ export function EmployeeReports() {
         // Часы из отчета
         hours: report.totalHours
       };
-      
+
       // Для отладки
       console.log("Prepared export row:", exportRow);
-      
+
       return exportRow;
     });
   }
@@ -240,7 +131,7 @@ export function EmployeeReports() {
   const createReportExcel = async (reportsToExport: Report[]) => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Звіти');
-    
+
     // Додаємо заголовки
     worksheet.columns = [
       { header: 'Agency', key: 'agency', width: 15 },
@@ -255,7 +146,7 @@ export function EmployeeReports() {
       { header: 'Hours', key: 'hours', width: 10 },
       { header: 'Comments', key: 'comments', width: 25 }
     ];
-    
+
     // Стилізуємо заголовки
     worksheet.getRow(1).font = { bold: true };
     worksheet.getRow(1).fill = {
@@ -263,19 +154,19 @@ export function EmployeeReports() {
       pattern: 'solid',
       fgColor: { argb: 'FFE6E6E6' }
     };
-    
+
     // Додаємо дані зі звітів
     reportsToExport.forEach(report => {
       // Use the same data preparation logic as in prepareExportData
       const task = report.tasks[0] || {};
-      
+
       // Split companies string to extract client and contracting agency
       const companiesParts = report.companies.split(', ');
       const client = companiesParts[0] || '';
       const contractingAgency = companiesParts[1] || '';
-      
+
       console.log("Excel export - report data:", report, "contractingAgency:", contractingAgency);
-      
+
       worksheet.addRow({
         agency: report.agency || '-',
         fullName: report.employeeName || '-',
@@ -290,7 +181,7 @@ export function EmployeeReports() {
         comments: report.comments || '-'
       });
     });
-    
+
     // Встановлюємо рамки для всіх клітинок
     worksheet.eachRow({ includeEmpty: false }, row => {
       row.eachCell({ includeEmpty: false }, cell => {
@@ -302,7 +193,7 @@ export function EmployeeReports() {
         };
       });
     });
-    
+
     // Створюємо буфер з даними Excel
     return workbook.xlsx.writeBuffer();
   }
@@ -314,7 +205,7 @@ export function EmployeeReports() {
       if (!report) {
         throw new Error(`Звіт з ID ${reportId} не знайдено`);
       }
-      
+
       // Підготувати дані для модального вікна
       const exportData = prepareExportData([report]);
       setExportData(exportData);
@@ -332,18 +223,18 @@ export function EmployeeReports() {
         alert('Немає звітів для експорту');
         return;
       }
-      
+
       // Подготовка данных для экспорта с использованием данных из базы
       const processedReports = reports.map(report => {
         const task = report.tasks[0] || {};
-        
+
         // Split companies string to extract client and contracting agency
         const companiesParts = report.companies.split(', ');
         const client = companiesParts[0] || '';
         const contractingAgency = companiesParts[1] || '';
-        
+
         console.log("Download all reports - report data:", report, "contractingAgency:", contractingAgency);
-        
+
         return {
           date: report.date || '-',
           market: report.market || '-',
@@ -359,9 +250,9 @@ export function EmployeeReports() {
           hours: report.totalHours
         };
       });
-      
+
       console.log("Final export data:", processedReports);
-      
+
       // Подготовленные данные в модальное окно
       setExportData(processedReports);
       setShowExportModal(true);
@@ -562,7 +453,7 @@ export function EmployeeReports() {
         </TabsContent>
       </Tabs>
 
-      <ReportExportModal 
+      <ReportExportModal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
         reportData={exportData}

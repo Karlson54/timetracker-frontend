@@ -1,52 +1,30 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useState, useEffect } from 'react'
+import { useAuthContext } from '@/lib/AuthContext'
 
 interface Employee {
-  id: number;
-  name: string;
-  email: string;
-  position: string;
-  department: string;
-  joinDate: string;
-  status: string;
-  clerkId: string | null;
-  agency: string | null;
+  id: number
+  name: string
+  email: string
+  login: string
+  agencyId: number
+  agencyName: string
+  roles: string[]
 }
 
 export function useCurrentEmployee() {
-  const { user, isLoaded } = useUser();
-  const [employee, setEmployee] = useState<Employee | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user, isAuthenticated } = useAuthContext()
 
-  useEffect(() => {
-    async function fetchEmployeeData() {
-      if (!isLoaded || !user) {
-        setIsLoading(false);
-        return;
-      }
+  const employee: Employee | null = user ? {
+    id: user.userId,
+    name: user.name,
+    email: user.email,
+    login: user.login,
+    agencyId: user.agencyId,
+    agencyName: user.agencyName,
+    roles: user.roles,
+  } : null
 
-      try {
-        const response = await fetch('/api/employee/current');
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch employee data');
-        }
-
-        const data = await response.json();
-        setEmployee(data.employee);
-      } catch (err) {
-        console.error('Error fetching employee data:', err);
-        setError('Could not load employee data');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchEmployeeData();
-  }, [isLoaded, user]);
-
-  return { employee, isLoading, error };
-} 
+  return { employee, isLoading: false, error: null }
+}
