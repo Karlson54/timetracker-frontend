@@ -1,31 +1,29 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuthContext } from '@/lib/AuthContext'
-import { useTranslation } from 'react-i18next'
 
 export default function Home() {
-  const { t } = useTranslation()
-  const { isAuthenticated, isLoading, isAdmin, redirectToLogin } = useAuthContext();
+  const { isAuthenticated, isLoading, isAdmin } = useAuthContext()
+  const router = useRouter()
 
   useEffect(() => {
-    if (!isLoading) {
-      if (isAuthenticated) {
-        if (isAdmin) {
-          window.location.replace('/admin/dashboard');
-        } else {
-          window.location.replace('/dashboard');
-        }
-      } else {
-        redirectToLogin();
-      }
+    if (isLoading) return
+    if (!isAuthenticated) {
+      router.replace('/login')
+      return
     }
-  }, [isLoading, isAuthenticated, isAdmin, redirectToLogin]);
+    if (isAdmin) {
+      router.replace('/admin')
+    } else {
+      router.replace('/dashboard')
+    }
+  }, [isLoading, isAuthenticated, isAdmin, router])
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <h1 className="text-2xl font-bold mb-4">{t('auth.redirecting')}</h1>
-      <p className="mb-4">{t('auth.checkingStatus')}</p>
+    <div className="flex min-h-screen items-center justify-center">
+      <p className="text-gray-500">Завантаження...</p>
     </div>
-  );
+  )
 }

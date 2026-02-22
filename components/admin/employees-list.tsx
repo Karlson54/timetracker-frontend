@@ -58,53 +58,8 @@ export function EmployeesList() {
   })
 
   useEffect(() => {
-    async function fetchEmployees() {
-      try {
-        const response = await fetch('/api/admin', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ action: 'getEmployees' }),
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch employees');
-        }
-        
-        const data = await response.json();
-        
-        // Format the join date for each employee
-        const formattedEmployees = data.employees.map((emp: any) => {
-          // Convert ISO date to DD.MM.YYYY format
-          const joinDate = emp.joinDate 
-            ? new Date(emp.joinDate).toLocaleDateString('uk-UA', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-              })
-            : 'N/A';
-            
-          return {
-            ...emp,
-            joinDate,
-            // Set default status if not present
-            status: emp.status || 'Активний',
-            // Check if user has admin role
-            isAdmin: emp.isAdmin || false
-          };
-        });
-        
-        setEmployees(formattedEmployees);
-      } catch (error) {
-        console.error("Error fetching employees:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    fetchEmployees();
-  }, []);
+    setLoading(false)
+  }, [])
 
   // Фільтрація співробітників за пошуковим запитом
   const filteredEmployees = employees.filter(
@@ -129,14 +84,14 @@ export function EmployeesList() {
           employee: newEmployee
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(`Failed to add employee: ${errorData.error || 'Unknown error'}`);
       }
-      
+
       const result = await response.json();
-      
+
       // Format today's date
       const today = new Date();
       const joinDate = today.toLocaleDateString('uk-UA', {
@@ -175,11 +130,11 @@ export function EmployeesList() {
   // Редагування співробітника
   const handleEditEmployee = async () => {
     if (!editingEmployee) return;
-    
+
     try {
       setIsUpdating(editingEmployee.id);
       setUpdateMessage(null);
-      
+
       const response = await fetch('/api/admin', {
         method: 'POST',
         headers: {
@@ -190,21 +145,21 @@ export function EmployeesList() {
           employee: editingEmployee
         }),
       });
-      
+
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || 'Failed to update employee');
       }
-      
+
       // Update local state
-      setEmployees(employees.map((emp) => 
+      setEmployees(employees.map((emp) =>
         emp.id === editingEmployee.id ? editingEmployee : emp
       ));
-      
+
       // Show success message
       setUpdateMessage(result.message || 'Employee updated successfully');
-      
+
       // Close the dialog after a short delay
       setTimeout(() => {
         setIsEditDialogOpen(false);
@@ -231,11 +186,11 @@ export function EmployeesList() {
           id
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to delete employee');
       }
-      
+
       // Remove from local state
       setEmployees(employees.filter((emp) => emp.id !== id));
       setIsDeleteDialogOpen(false);
@@ -383,8 +338,8 @@ export function EmployeesList() {
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
               {t('admin.employees.delete.cancel')}
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={() => employeeToDelete && handleDeleteEmployee(employeeToDelete)}
             >
               {t('admin.employees.delete.delete')}
@@ -438,9 +393,8 @@ export function EmployeesList() {
                     <TableCell>{employee.agency || '-'}</TableCell>
                     <TableCell>
                       <div className="flex items-center">
-                        <div className={`w-2 h-2 rounded-full mr-2 ${
-                          employee.status === 'active' ? 'bg-green-500' : 'bg-gray-300'
-                        }`} />
+                        <div className={`w-2 h-2 rounded-full mr-2 ${employee.status === 'active' ? 'bg-green-500' : 'bg-gray-300'
+                          }`} />
                         {employee.isAdmin && (
                           <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
                             {t('admin.employees.roles.admin')}
@@ -452,7 +406,7 @@ export function EmployeesList() {
                       <div className="flex justify-end gap-2">
                         <Dialog open={isEditDialogOpen && editingEmployee?.id === employee.id} onOpenChange={setIsEditDialogOpen}>
                           <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => setEditingEmployee({
+                            <Button variant="ghost" size="icon" onClick={() => setEditingEmployee({
                               ...employee,
                               isAdmin: employee.isAdmin === true
                             })}>
@@ -553,9 +507,9 @@ export function EmployeesList() {
                                       id="edit-admin-role"
                                       className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                                       checked={editingEmployee.isAdmin}
-                                      onChange={(e) => setEditingEmployee({ 
-                                        ...editingEmployee, 
-                                        isAdmin: e.target.checked 
+                                      onChange={(e) => setEditingEmployee({
+                                        ...editingEmployee,
+                                        isAdmin: e.target.checked
                                       })}
                                     />
                                     <Label htmlFor="edit-admin-role" className="font-medium">
@@ -571,7 +525,7 @@ export function EmployeesList() {
                                 <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                                   {t('admin.employees.edit.cancel')}
                                 </Button>
-                                <Button 
+                                <Button
                                   onClick={handleEditEmployee}
                                   disabled={isUpdating === editingEmployee?.id}
                                 >

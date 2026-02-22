@@ -17,31 +17,8 @@ export function AdminDashboard() {
   });
 
   useEffect(() => {
-    async function fetchDashboardStats() {
-      try {
-        // Fetch counts from API
-        const response = await fetch('/api/admin');
-        if (!response.ok) {
-          throw new Error('Failed to fetch dashboard data');
-        }
-        
-        const data = await response.json();
-        setStats({
-          employeeCount: data.employeeCount,
-          companyCount: data.companyCount,
-          loading: false
-        });
-      } catch (error) {
-        console.error("Error fetching dashboard stats:", error);
-        setStats({
-          ...stats,
-          loading: false
-        });
-      }
-    }
-    
-    fetchDashboardStats();
-  }, []);
+    setStats({ employeeCount: 0, companyCount: 0, loading: false })
+  }, [])
 
   if (stats.loading) {
     return <div>{t('admin.dashboard.loading')}</div>;

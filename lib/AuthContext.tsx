@@ -1,117 +1,75 @@
-"use client";
+'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth, useUser } from "@clerk/nextjs";
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import type { UserInfo, AuthResponse } from '@/lib/api/types'
+import { saveAuth, getToken, getUser, clearAuth } from '@/lib/api/tokenStorage'
 
 interface AuthContextType {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  isAdmin: boolean;
-  user: any | null;
-  redirectToLogin: () => void;
-  redirectToDashboard: () => void;
+  user: UserInfo | null
+  isAuthenticated: boolean
+  isLoading: boolean
+  login: (data: AuthResponse) => void
+  logout: () => void
+  isAdmin: boolean
 }
 
-const AuthContext = createContext<AuthContextType>({
-  isAuthenticated: false,
-  isLoading: true,
-  isAdmin: false,
-  user: null,
-  redirectToLogin: () => {},
-  redirectToDashboard: () => {},
-});
+const AuthContext = createContext<AuthContextType | null>(null)
 
-export const useAuthContext = () => useContext(AuthContext);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<UserInfo | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const router = useRouter();
-  const { isLoaded, userId, isSignedIn } = useAuth();
-  const { user } = useUser();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
+  // При инициализации читаем токен из localStorage
   useEffect(() => {
-    if (isLoaded) {
-      setIsAuthenticated(!!isSignedIn);
-      setIsLoading(false);
-      
-      if (isSignedIn && user) {
-        const userRole = user.publicMetadata?.role as string;
-        setIsAdmin(userRole === "admin");
-      }
+    const token = getToken()
+    const savedUser = getUser()
+    if (token && savedUser) {
+      setUser(savedUser)
     }
-  }, [isLoaded, isSignedIn, user]);
+    setIsLoading(false)
+  }, [])
 
-  const redirectToLogin = () => {
-    router.push("/login");
-  };
+  const login = useCallback((data: AuthResponse) => {
+    saveAuth(data)
+    setUser({
+      userId: data.userId,
+      login: data.login,
+      email: data.email,
+      name: data.name,
+      agencyId: data.agencyId,
+      agencyName: data.agencyName,
+      roles: data.roles,
+    })
+  }, [])
 
-  const redirectToDashboard = () => {
-    // Always redirect to main dashboard regardless of admin status
-    router.push("/dashboard");
-  };
+  const logout = useCallback(() => {
+    clearAuth()
+    setUser(null)
+    router.push('/login')
+  }, [router])
+
+  const isAdmin = user?.roles?.includes('Admin') ?? false
 
   return (
-    <AuthContext.Provider
-      value={{
-        isAuthenticated,
-        isLoading,
-        isAdmin,
-        user,
-        redirectToLogin,
-        redirectToDashboard,
-      }}
-    >
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated: !!user,
+      isLoading,
+      login,
+      logout,
+      isAdmin,
+    }}>
       {children}
     </AuthContext.Provider>
-  );
-};
-
-// HOC for protected routes
-export function withAuth(Component: React.ComponentType) {
-  return function ProtectedRoute(props: any) {
-    const { isAuthenticated, isLoading, redirectToLogin } = useAuthContext();
-    const router = useRouter();
-
-    useEffect(() => {
-      if (!isLoading && !isAuthenticated) {
-        redirectToLogin();
-      }
-    }, [isLoading, isAuthenticated, redirectToLogin]);
-
-    if (isLoading) {
-      return <div>Loading...</div>; // Or your custom loading component
-    }
-
-    if (!isAuthenticated) {
-      return null; // Don't render anything while redirecting
-    }
-
-    return <Component {...props} />;
-  };
+  )
 }
 
-// HOC for admin-only routes
-export function withAdmin(Component: React.ComponentType) {
-  return function AdminRoute(props: any) {
-    const { isAuthenticated, isAdmin, isLoading, redirectToDashboard } = useAuthContext();
-    
-    useEffect(() => {
-      if (!isLoading && (!isAuthenticated || !isAdmin)) {
-        redirectToDashboard();
-      }
-    }, [isLoading, isAuthenticated, isAdmin, redirectToDashboard]);
-
-    if (isLoading) {
-      return <div>Loading...</div>; // Or your custom loading component
-    }
-
-    if (!isAuthenticated || !isAdmin) {
-      return null; // Don't render anything while redirecting
-    }
-
-    return <Component {...props} />;
-  };
-} 
+export function useAuthContext() {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuthContext must be used within AuthProvider')
+  }
+  return context
+}

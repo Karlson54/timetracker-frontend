@@ -26,49 +26,15 @@ export function EmployeeOverview() {
   const today = new Date();
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  
+
   const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0];
   };
 
   useEffect(() => {
-    async function fetchEmployees() {
-      try {
-        const response = await fetch('/api/admin', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ action: 'getEmployees' }),
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch employees');
-        }
-        
-        const data = await response.json();
-        setEmployees(data.employees);
-        
-        // Initialize date ranges for all employees
-        const ranges: Record<number, { start: string, end: string }> = {};
-        data.employees.forEach((employee: Employee) => {
-          ranges[employee.id] = {
-            start: formatDate(oneMonthAgo),
-            end: formatDate(today)
-          };
-        });
-        setDateRanges(ranges);
-        
-      } catch (error) {
-        console.error("Error fetching employees:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    fetchEmployees();
-  }, []);
-  
+    setLoading(false)
+  }, [])
+
   const handleDateChange = (employeeId: number, field: 'start' | 'end', value: string) => {
     setDateRanges(prev => ({
       ...prev,
@@ -109,18 +75,18 @@ export function EmployeeOverview() {
                   <TableCell className="font-medium">{employee.name}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         value={dateRanges[employee.id]?.start || formatDate(oneMonthAgo)}
                         onChange={(e) => handleDateChange(employee.id, 'start', e.target.value)}
-                        className="border rounded px-2 py-1 text-sm" 
+                        className="border rounded px-2 py-1 text-sm"
                       />
                       <span>—</span>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         value={dateRanges[employee.id]?.end || formatDate(today)}
                         onChange={(e) => handleDateChange(employee.id, 'end', e.target.value)}
-                        className="border rounded px-2 py-1 text-sm" 
+                        className="border rounded px-2 py-1 text-sm"
                       />
                     </div>
                   </TableCell>
@@ -130,7 +96,7 @@ export function EmployeeOverview() {
                       size="sm"
                       className="gap-2"
                       onClick={() => downloadEmployeeReport(
-                        employee.id, 
+                        employee.id,
                         dateRanges[employee.id]?.start || formatDate(oneMonthAgo),
                         dateRanges[employee.id]?.end || formatDate(today)
                       )}

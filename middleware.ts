@@ -1,34 +1,21 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-// Define public routes that don't require authentication
-const isPublicRoute = createRouteMatcher([
-  "/login(.*)",
-  "/signup(.*)",
-  "/forgot-password(.*)"
-]);
+const publicRoutes = ['/login', '/signup', '/forgot-password']
 
-export default clerkMiddleware(async (auth, req) => {
-  if (isPublicRoute(req)) {
-    // Allow access to public routes
-    return NextResponse.next();
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  const isPublic = publicRoutes.some(route => pathname.startsWith(route))
+
+  if (isPublic) {
+    return NextResponse.next()
   }
-  
-  // For all other routes, require authentication
-  await auth.protect();
-});
 
-// Apply the middleware to specific routes
+  // Проверка токена происходит на клиенте через AuthContext
+  // Middleware только пропускает запросы
+  return NextResponse.next()
+}
+
 export const config = {
-  matcher: [
-    '/',
-    '/dashboard/:path*',
-    '/admin/:path*',
-    '/api/:path*',
-    '/reports/:path*',
-    '/profile/:path*',
-    '/login',
-    '/signup',
-    '/forgot-password'
-  ],
-}; 
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+}

@@ -1,17 +1,13 @@
-"use client"
+'use client'
 
-import { EmployeeReports } from "@/components/employee-reports"
-import { SimpleSidebar } from "@/components/simple-sidebar"
-import { useAuthProtection } from "@/lib/auth"
-import { useUser } from "@clerk/nextjs"
+import { EmployeeReports } from '@/components/employee-reports'
+import { SimpleSidebar } from '@/components/simple-sidebar'
+import { useAuthProtection } from '@/lib/auth'
 
 export default function ReportsPage() {
   const isAuthenticated = useAuthProtection()
-  const { user } = useUser()
 
-  if (!isAuthenticated) {
-    return null
-  }
+  if (!isAuthenticated) return null
 
   return (
     <div className="flex h-screen bg-gray-50">

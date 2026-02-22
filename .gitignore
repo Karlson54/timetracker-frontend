@@ -28,4 +28,21 @@ next-env.d.ts
 # clerk configuration (can include secrets)
 /.clerk/
 
+# Cursor IDE
 .cursor/
+
+# SQLite база (старый бекенд)
+*.db
+*.db-shm
+*.db-wal
+
+# Drizzle (старый ORM, уже не нужен)
+/drizzle/
+
+# Python скрипты (мусор от старого проекта)
+*.py
+__pycache__/
+
+# OS файлы
+.DS_Store
+Thumbs.db

@@ -83,111 +83,8 @@ export function EmployeeReports() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        // Fetch employees
-        const employeesResponse = await fetch('/api/admin', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ action: 'getEmployees' }),
-        });
-        
-        if (!employeesResponse.ok) {
-          throw new Error('Failed to fetch employees');
-        }
-        
-        const employeesData = await employeesResponse.json();
-        setEmployees(employeesData.employees);
-        
-        // Fetch reports
-        const reportsResponse = await fetch('/api/admin', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ action: 'getReports' }),
-        });
-        
-        if (!reportsResponse.ok) {
-          throw new Error('Failed to fetch reports');
-        }
-        
-        const reportsData = await reportsResponse.json();
-        
-        // Process and transform the reports data
-        const processedReports = reportsData.reports.map((item: any) => {
-          const reportDate = new Date(item.report.date);
-          const formattedDate = reportDate.toLocaleDateString('uk-UA', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-          });
-          
-          // Determine the period (e.g., "1-15 [Month], [Year]")
-          const day = reportDate.getDate();
-          const month = reportDate.toLocaleDateString('uk-UA', { month: 'long' });
-          const year = reportDate.getFullYear();
-          const periodPrefix = day <= 15 ? "1-15" : "16-30";
-          const period = `${periodPrefix} ${month}, ${year}`;
-          
-          // Calculate efficiency (arbitrary for this example)
-          const efficiency = Math.floor(70 + Math.random() * 30);
-          
-          // Check if the projectBrand field is available in the API response
-          // We'll try both 'project' and 'projectBrand' fields, as well as nested fields
-          const projectBrandValue = 
-            item.report.projectBrand || 
-            item.report.project_brand || 
-            item.report.project || 
-            (item.project ? item.project : "N/A");
-          
-          // Handle different client data formats
-          const clientValue = item.client?.name || 
-                              (typeof item.report.client === 'object' ? 
-                                item.report.client?.name : 
-                                item.report.client) || "N/A";
-          
-          return {
-            id: item.report.id,
-            employee: item.employee?.name || 'Unknown',
-            employeeId: item.employee?.id || 0,
-            period,
-            totalHours: item.report.hours || 0,
-            projects: Math.floor(Math.random() * 8) + 1, // Mock projects count
-            efficiency,
-            status: Math.random() > 0.3 ? "Підтверджено" : "На перевірці",
-            date: formattedDate,
-            reportDate: reportDate, // Store the actual Date object for filtering
-            market: item.report.market || "N/A",
-            contractingAgency: item.report.contractingAgency || "N/A",
-            client: item.client || item.report.client || "N/A",
-            clientName: clientValue,
-            projectBrand: projectBrandValue,
-            media: item.report.media || "N/A",
-            jobType: item.report.jobType || "N/A",
-            comments: item.report.comments || "N/A",
-            hours: item.report.hours || 0,
-            company: item.employee?.agency || 'MediaCom',
-          };
-        });
-        
-        // Log the first report for debugging
-        if (reportsData.reports.length > 0) {
-          console.log("First report data:", reportsData.reports[0]);
-        }
-        
-        setReports(processedReports);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    fetchData();
-  }, []);
+    setLoading(false)
+  }, [])
 
   // Filter reports based on employee and date range
   const filteredReports = reports
@@ -196,22 +93,22 @@ export function EmployeeReports() {
       if (selectedEmployee !== "all" && report.employeeId !== Number.parseInt(selectedEmployee)) {
         return false;
       }
-      
+
       // Then filter by date range if we have a complete date range
       if (dateRange.from && dateRange.to) {
         // Parse the date string to a Date object if we don't have reportDate
         const reportDate = report.reportDate || new Date(report.date.split('.').reverse().join('-'));
-        
+
         // Set hours to 0 for accurate date comparison (ignore time)
         const fromDate = new Date(dateRange.from);
         fromDate.setHours(0, 0, 0, 0);
-        
+
         const toDate = new Date(dateRange.to);
         toDate.setHours(23, 59, 59, 999); // End of the day
-        
+
         return reportDate >= fromDate && reportDate <= toDate;
       }
-      
+
       return true;
     });
 
@@ -221,7 +118,7 @@ export function EmployeeReports() {
       // Create a new workbook and worksheet
       const workbook = new ExcelJS.Workbook()
       const worksheet = workbook.addWorksheet('Summary')
-      
+
       // Define columns based on selected columns
       const columns = []
       if (selectedColumns.company) columns.push({ header: 'Agency', key: 'company', width: 20 })
@@ -235,9 +132,9 @@ export function EmployeeReports() {
       if (selectedColumns.jobType) columns.push({ header: 'Job type', key: 'jobType', width: 20 })
       if (selectedColumns.hours) columns.push({ header: 'Hours', key: 'hours', width: 10 })
       if (selectedColumns.comments) columns.push({ header: 'Comments', key: 'comments', width: 25 })
-      
+
       worksheet.columns = columns
-      
+
       // Style the headers
       worksheet.getRow(1).font = { bold: true }
       worksheet.getRow(1).fill = {
@@ -245,7 +142,7 @@ export function EmployeeReports() {
         pattern: 'solid',
         fgColor: { argb: 'FFE6E6E6' }
       }
-      
+
       // Add data rows
       reportsToExport.forEach(report => {
         const rowData: any = {}
@@ -260,10 +157,10 @@ export function EmployeeReports() {
         if (selectedColumns.jobType) rowData.jobType = report.jobType
         if (selectedColumns.hours) rowData.hours = report.hours
         if (selectedColumns.comments) rowData.comments = report.comments
-        
+
         worksheet.addRow(rowData)
       })
-      
+
       // Add borders to all cells
       worksheet.eachRow({ includeEmpty: false }, row => {
         row.eachCell({ includeEmpty: false }, cell => {
@@ -275,18 +172,18 @@ export function EmployeeReports() {
           }
         })
       })
-      
+
       // Generate Excel file
       const buffer = await workbook.xlsx.writeBuffer()
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
       const url = URL.createObjectURL(blob)
-      
+
       // Create download link
       const a = document.createElement('a')
       a.href = url
       a.download = fileName
       a.click()
-      
+
       // Clean up
       URL.revokeObjectURL(url)
     } catch (error) {
@@ -298,15 +195,15 @@ export function EmployeeReports() {
   // Функція для завантаження звіту з вибраними стовпцями
   const handleDownloadWithColumns = async () => {
     if (!selectedReport) return;
-    
+
     try {
       // Формируем массив отчетов для экспорта - все отфильтрованные отчеты
       // Начиная с выбранного, затем все остальные из previewReports
       const reportsToExport = [selectedReport, ...previewReports];
-      
+
       // Формируем имя файла
       let fileName = 'Reports_';
-      
+
       // Если выбран конкретный сотрудник, добавляем его имя в имя файла
       if (selectedEmployee !== "all") {
         const emp = employees.find(e => e.id.toString() === selectedEmployee);
@@ -314,15 +211,15 @@ export function EmployeeReports() {
           fileName += `${emp.name.replace(/\s+/g, '_')}_`;
         }
       }
-      
+
       // Добавляем даты в имя файла
       const fromDate = dateRange.from.toLocaleDateString().replace(/\./g, '-');
       const toDate = dateRange.to.toLocaleDateString().replace(/\./g, '-');
       fileName += `${fromDate}_${toDate}.xlsx`;
-      
+
       // Экспортируем все отчеты в один Excel файл
       await createAndDownloadExcel(reportsToExport, fileName);
-      
+
       setShowDownloadDialog(false);
     } catch (error) {
       console.error(t('admin.reports.errors.downloadError'), error);
@@ -339,10 +236,10 @@ export function EmployeeReports() {
         alert(t('admin.reports.filters.noReportsToDownload'))
         return
       }
-      
+
       // Use "All_Records" in the file name instead of employee info
       const fromDate = new Date().toLocaleDateString().replace(/\./g, '-')
-      
+
       await createAndDownloadExcel(
         reportsToExport,
         `All_Reports_${fromDate}.xlsx`
@@ -361,13 +258,13 @@ export function EmployeeReports() {
         alert(t('admin.reports.errors.reportNotFound', { reportId }))
         return
       }
-      
+
       setSelectedReport(report)
-      
+
       // Get all filtered reports except the selected one
       const otherReports = filteredReports
         .filter(r => r.id !== reportId);
-      
+
       setPreviewReports(otherReports);
       setShowDownloadDialog(true)
     } catch (error) {
@@ -420,11 +317,11 @@ export function EmployeeReports() {
               <label className="text-sm font-medium mb-2 block">{t('admin.reports.filters.period')}</label>
               <div className="flex gap-2">
                 <div className="flex-grow">
-                  <DatePickerWithRange 
+                  <DatePickerWithRange
                     date={{
                       from: dateRange.from,
                       to: dateRange.to
-                    }} 
+                    }}
                     setDate={(value) => {
                       if (value?.from && value?.to) {
                         setDateRange({
@@ -432,7 +329,7 @@ export function EmployeeReports() {
                           to: value.to
                         });
                       }
-                    }} 
+                    }}
                   />
                 </div>
                 <Button variant="outline" size="sm" className="gap-2 self-end" onClick={() => {
@@ -443,25 +340,25 @@ export function EmployeeReports() {
                       const employeeReport = filteredReports.find(r => r.employeeId === empId);
                       if (employeeReport) {
                         setSelectedReport(employeeReport);
-                        
+
                         // Get all filtered reports except the selected one
                         const otherReports = filteredReports
                           .filter(r => r.id !== employeeReport.id);
-                        
+
                         setPreviewReports(otherReports);
                         setShowDownloadDialog(true);
                         return;
                       }
                     }
-                    
+
                     // Otherwise, show dialog for the first filtered report
                     const firstReport = filteredReports[0];
                     setSelectedReport(firstReport);
-                    
+
                     // Get all filtered reports except the selected one
                     const otherReports = filteredReports
                       .filter(r => r.id !== firstReport.id);
-                    
+
                     setPreviewReports(otherReports);
                     setShowDownloadDialog(true);
                   } else {
@@ -474,7 +371,7 @@ export function EmployeeReports() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex justify-end mt-4 gap-2">
           </div>
         </CardContent>
@@ -652,14 +549,14 @@ export function EmployeeReports() {
               {t('admin.reports.downloadDialog.description')}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="flex flex-row flex-wrap gap-4 py-4 overflow-y-auto">
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="company-checkbox" 
+              <Checkbox
+                id="company-checkbox"
                 checked={selectedColumns.company}
-                onCheckedChange={(checked) => 
-                  setSelectedColumns({...selectedColumns, company: !!checked})
+                onCheckedChange={(checked) =>
+                  setSelectedColumns({ ...selectedColumns, company: !!checked })
                 }
               />
               <label htmlFor="company-checkbox" className="text-sm font-medium">
@@ -667,11 +564,11 @@ export function EmployeeReports() {
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="fullName-checkbox" 
+              <Checkbox
+                id="fullName-checkbox"
                 checked={selectedColumns.fullName}
-                onCheckedChange={(checked) => 
-                  setSelectedColumns({...selectedColumns, fullName: !!checked})
+                onCheckedChange={(checked) =>
+                  setSelectedColumns({ ...selectedColumns, fullName: !!checked })
                 }
               />
               <label htmlFor="fullName-checkbox" className="text-sm font-medium">
@@ -679,11 +576,11 @@ export function EmployeeReports() {
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="date-checkbox" 
+              <Checkbox
+                id="date-checkbox"
                 checked={selectedColumns.date}
-                onCheckedChange={(checked) => 
-                  setSelectedColumns({...selectedColumns, date: !!checked})
+                onCheckedChange={(checked) =>
+                  setSelectedColumns({ ...selectedColumns, date: !!checked })
                 }
               />
               <label htmlFor="date-checkbox" className="text-sm font-medium">
@@ -691,11 +588,11 @@ export function EmployeeReports() {
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="market-checkbox" 
+              <Checkbox
+                id="market-checkbox"
                 checked={selectedColumns.market}
-                onCheckedChange={(checked) => 
-                  setSelectedColumns({...selectedColumns, market: !!checked})
+                onCheckedChange={(checked) =>
+                  setSelectedColumns({ ...selectedColumns, market: !!checked })
                 }
               />
               <label htmlFor="market-checkbox" className="text-sm font-medium">
@@ -703,11 +600,11 @@ export function EmployeeReports() {
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="contractingAgency-checkbox" 
+              <Checkbox
+                id="contractingAgency-checkbox"
                 checked={selectedColumns.contractingAgency}
-                onCheckedChange={(checked) => 
-                  setSelectedColumns({...selectedColumns, contractingAgency: !!checked})
+                onCheckedChange={(checked) =>
+                  setSelectedColumns({ ...selectedColumns, contractingAgency: !!checked })
                 }
               />
               <label htmlFor="contractingAgency-checkbox" className="text-sm font-medium">
@@ -715,11 +612,11 @@ export function EmployeeReports() {
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="client-checkbox" 
+              <Checkbox
+                id="client-checkbox"
                 checked={selectedColumns.client}
-                onCheckedChange={(checked) => 
-                  setSelectedColumns({...selectedColumns, client: !!checked})
+                onCheckedChange={(checked) =>
+                  setSelectedColumns({ ...selectedColumns, client: !!checked })
                 }
               />
               <label htmlFor="client-checkbox" className="text-sm font-medium">
@@ -727,11 +624,11 @@ export function EmployeeReports() {
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="projectBrand-checkbox" 
+              <Checkbox
+                id="projectBrand-checkbox"
                 checked={selectedColumns.projectBrand}
-                onCheckedChange={(checked) => 
-                  setSelectedColumns({...selectedColumns, projectBrand: !!checked})
+                onCheckedChange={(checked) =>
+                  setSelectedColumns({ ...selectedColumns, projectBrand: !!checked })
                 }
               />
               <label htmlFor="projectBrand-checkbox" className="text-sm font-medium">
@@ -739,11 +636,11 @@ export function EmployeeReports() {
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="media-checkbox" 
+              <Checkbox
+                id="media-checkbox"
                 checked={selectedColumns.media}
-                onCheckedChange={(checked) => 
-                  setSelectedColumns({...selectedColumns, media: !!checked})
+                onCheckedChange={(checked) =>
+                  setSelectedColumns({ ...selectedColumns, media: !!checked })
                 }
               />
               <label htmlFor="media-checkbox" className="text-sm font-medium">
@@ -751,11 +648,11 @@ export function EmployeeReports() {
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="jobType-checkbox" 
+              <Checkbox
+                id="jobType-checkbox"
                 checked={selectedColumns.jobType}
-                onCheckedChange={(checked) => 
-                  setSelectedColumns({...selectedColumns, jobType: !!checked})
+                onCheckedChange={(checked) =>
+                  setSelectedColumns({ ...selectedColumns, jobType: !!checked })
                 }
               />
               <label htmlFor="jobType-checkbox" className="text-sm font-medium">
@@ -763,11 +660,11 @@ export function EmployeeReports() {
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="hours-checkbox" 
+              <Checkbox
+                id="hours-checkbox"
                 checked={selectedColumns.hours}
-                onCheckedChange={(checked) => 
-                  setSelectedColumns({...selectedColumns, hours: !!checked})
+                onCheckedChange={(checked) =>
+                  setSelectedColumns({ ...selectedColumns, hours: !!checked })
                 }
               />
               <label htmlFor="hours-checkbox" className="text-sm font-medium">
@@ -775,11 +672,11 @@ export function EmployeeReports() {
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="comments-checkbox" 
+              <Checkbox
+                id="comments-checkbox"
                 checked={selectedColumns.comments}
-                onCheckedChange={(checked) => 
-                  setSelectedColumns({...selectedColumns, comments: !!checked})
+                onCheckedChange={(checked) =>
+                  setSelectedColumns({ ...selectedColumns, comments: !!checked })
                 }
               />
               <label htmlFor="comments-checkbox" className="text-sm font-medium">
@@ -787,7 +684,7 @@ export function EmployeeReports() {
               </label>
             </div>
           </div>
-          
+
           <div className="overflow-y-auto" style={{ maxHeight: "350px" }}>
             <h3 className="font-medium mb-2">
               {t('admin.reports.downloadDialog.tablePreview')} ({previewReports.length + (selectedReport ? 1 : 0)} {t('admin.reports.downloadDialog.reports')})
@@ -842,7 +739,7 @@ export function EmployeeReports() {
               </Table>
             )}
           </div>
-          
+
           <DialogFooter className="flex justify-end space-x-2 pt-4 border-t">
             <Button variant="outline" onClick={() => setShowDownloadDialog(false)}>
               {t('admin.reports.downloadDialog.cancel')}

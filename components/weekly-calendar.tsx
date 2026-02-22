@@ -53,7 +53,7 @@ export function WeeklyCalendar() {
   const [copyDates, setCopyDates] = useState<Date[]>([])
   const [showCopyDialog, setShowCopyDialog] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(new Date())
-  
+
   // Добавляем состояние для хранения клиентов из API
   const [clients, setClients] = useState<Client[]>([])
   const [isLoadingClients, setIsLoadingClients] = useState(true)
@@ -129,13 +129,13 @@ export function WeeklyCalendar() {
 
   // Форматування дати
   const formatDate = (date: Date) => {
-    const locale = i18n.language === 'uk' ? 'uk-UA' : en;
+    const locale = i18n.language === 'uk' ? 'uk-UA' : 'en-US';
     return date.toLocaleDateString(locale, { day: 'numeric', month: 'long' });
   }
 
   // Форматування дня тижня
   const formatDayOfWeek = (date: Date) => {
-    const locale = i18n.language === 'uk' ? 'uk-UA' : en;
+    const locale = i18n.language === 'uk' ? 'uk-UA' : 'en-US';
     return date.toLocaleDateString(locale, { weekday: 'short' });
   }
 
@@ -235,115 +235,15 @@ export function WeeklyCalendar() {
 
   // Fetch reports from the API when component mounts
   const [isLoading, setIsLoading] = useState(true);
-  
+
   useEffect(() => {
-    async function fetchReports() {
-      try {
-        setIsLoading(true);
-        console.log('Fetching reports from API...');
-        const response = await fetch('/api/reports?currentUserOnly=true');
-        
-        if (!response.ok) {
-          console.error('API response not OK:', response.status, response.statusText);
-          throw new Error(`Failed to fetch reports: ${response.status} ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log('Raw API response:', data);
-        
-        // Transform the reports to match the format expected by the component
-        // Проверяем, есть ли свойство reports в ответе
-        const reportsData = data.reports || [];
-        console.log('Reports data array:', reportsData);
-        const formattedReports = reportsData.map((item: any) => {
-          // Получаем объект отчета из данных API
-          const report = item.report;
-          
-          // Format date from ISO to DD.MM.YYYY
-          const dateObj = new Date(report.date);
-          const formattedDate = dateObj.toLocaleDateString('uk-UA', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-          }).replace(/\//g, '.');
-          
-          return {
-            id: report.id,
-            date: formattedDate,
-            market: report.market || '',
-            contractingAgency: report.contractingAgency || '',
-            client: report.client || '',
-            projectBrand: report.projectBrand || '',
-            media: report.media || '',
-            jobType: report.jobType || '',
-            comments: report.comments || '',
-            hours: report.hours || 0,
-          };
-        });
-        
-        console.log('Fetched reports:', formattedReports);
-        if (formattedReports.length > 0) {
-          // Полностью заменяем тестовые данные реальными отчетами из API
-          setAllReports(formattedReports);
-          console.log('Updated allReports with API data');
-        } else {
-          console.warn('No reports found in the API response, keeping example data');
-        }
-      } catch (error) {
-        console.error('Error fetching reports:', error);
-        // Keep the example data if there's an error
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    
-    fetchReports();
-  }, []);
+    setIsLoading(false)
+  }, [])
 
   // Загрузка клиентов из API
   useEffect(() => {
-    async function fetchClients() {
-      try {
-        setIsLoadingClients(true)
-        console.log('Fetching clients from API...')
-        const response = await fetch('/api/clients')
-        
-        if (!response.ok) {
-          console.error('API response not OK:', response.status, response.statusText)
-          throw new Error(`Failed to fetch clients: ${response.status} ${response.statusText}`)
-        }
-        
-        const data = await response.json()
-        console.log('Clients data:', data)
-        
-        // Преобразуем данные из БД в формат, ожидаемый компонентом
-        const formattedClients = data.clients.map((client: { id: number | string; name: string }) => ({
-          id: client.id.toString(),
-          name: client.name
-        }))
-        
-        // Добавляем опцию "All clients", если её нет
-        if (!formattedClients.some((client: Client) => client.name === "All clients")) {
-          formattedClients.unshift({ id: "0", name: "All clients" })
-        }
-        
-        setClients(formattedClients)
-        setIsLoadingClients(false)
-      } catch (error) {
-        console.error('Error fetching clients:', error)
-        // Если загрузка не удалась, используем резервный список
-        const fallbackClients = [
-          { id: "1", name: "All clients" },
-          { id: "2", name: "NewBiz" },
-          { id: "3", name: "Adidas/Reebook" },
-        ]
-        setClients(fallbackClients)
-        setIsLoadingClients(false)
-      }
-    }
-    
-    fetchClients()
-  }, []) // Пустой массив зависимостей означает, что эффект выполнится один раз при монтировании
+  setIsLoadingClients(false)
+}, [])
 
   // Фільтрація звітів за вибраною датою
   const getFilteredReports = () => {
@@ -358,7 +258,7 @@ export function WeeklyCalendar() {
       .replace(/\//g, ".")
 
     console.log(`Filtering reports for selected date: ${selectedDateStr}`);
-    
+
     // Ensure allReports is an array before filtering
     if (!Array.isArray(allReports)) {
       console.warn('allReports is not an array:', allReports);
@@ -367,7 +267,7 @@ export function WeeklyCalendar() {
 
     const filtered = allReports.filter((report) => {
       if (!report || !report.date) return false;
-      
+
       // Преобразуем формат даты отчета для сравнения
       let reportDate;
       if (report.date.includes('.')) {
@@ -376,11 +276,11 @@ export function WeeklyCalendar() {
         const [day, month, year] = report.date.split(".")
         reportDate = `${day}.${month}.${year}`
       }
-      
+
       const match = reportDate === selectedDateStr;
       return match;
     });
-    
+
     console.log(`Found ${filtered.length} reports for ${selectedDateStr}:`, filtered);
     return filtered;
   }
@@ -396,11 +296,11 @@ export function WeeklyCalendar() {
       .replace(/\//g, ".")
 
     console.log(`Checking records for date: ${dateStr}, allReports:`, allReports);
-    
+
     // Check if allReports is defined and is an array before calling .some()
     return Array.isArray(allReports) && allReports.some((report) => {
       if (!report || !report.date) return false;
-      
+
       // Преобразуем формат даты отчета для сравнения
       let reportDate;
       if (report.date.includes('.')) {
@@ -409,7 +309,7 @@ export function WeeklyCalendar() {
         const [day, month, year] = report.date.split(".")
         reportDate = `${day}.${month}.${year}`
       }
-      
+
       const match = reportDate === dateStr;
       if (match) {
         console.log(`Found report for ${dateStr}:`, report);
@@ -486,7 +386,7 @@ export function WeeklyCalendar() {
     const saveReportsToDB = async () => {
       try {
         setIsLoading(true);
-        
+
         // Сохраняем каждый новый отчет в базу данных
         for (const newReport of newReports) {
           // Получаем компании для ассоциации с отчетом
@@ -495,11 +395,11 @@ export function WeeklyCalendar() {
           if (newReport.contractingAgency && newReport.contractingAgency !== newReport.client) {
             companiesToAssociate.push(newReport.contractingAgency);
           }
-          
+
           // Преобразуем дату в формат YYYY-MM-DD для БД
           const [day, month, year] = newReport.date.split('.');
           const dateForDB = `${year}-${month}-${day}`;
-          
+
           const response = await fetch('/api/reports', {
             method: 'POST',
             headers: {
@@ -511,15 +411,15 @@ export function WeeklyCalendar() {
               companies: companiesToAssociate,
             }),
           });
-          
+
           if (!response.ok) {
             throw new Error(`Failed to save copied report: ${response.statusText}`);
           }
         }
-        
+
         // После успешного сохранения обновляем локальное состояние
         setAllReports([...allReports, ...newReports]);
-        
+
       } catch (error) {
         console.error('Error saving copied reports:', error);
         alert('Не удалось сохранить скопированные записи. Пожалуйста, попробуйте снова.');
@@ -527,7 +427,7 @@ export function WeeklyCalendar() {
         setIsLoading(false);
       }
     };
-    
+
     // Запустить сохранение в базу данных
     saveReportsToDB();
 
@@ -553,7 +453,7 @@ export function WeeklyCalendar() {
       // Закрываем форму и очищаем данные редактирования одновременно
       setShowEntryForm(false);
       setEditingReport(null);
-      
+
       // Затем, в следующем цикле рендеринга, открываем форму снова
       // Используем requestAnimationFrame вместо setTimeout
       requestAnimationFrame(() => {
@@ -572,16 +472,16 @@ export function WeeklyCalendar() {
     const [day, month, year] = report.date.split(".")
     const reportDate = new Date(`${year}-${month}-${day}`)
     setSelectedDate(reportDate)
-    
+
     // Преобразуем названия в ID для селекторов
-    const findIdByName = (items: Array<{id: string, name: string}>, name: string) => {
+    const findIdByName = (items: Array<{ id: string, name: string }>, name: string) => {
       const item = items.find(item => item.name === name)
       return item ? item.id : name
     }
-    
+
     // Convert hours to minutes for the form
     const hoursToMinutes = Math.round(report.hours * 60);
-    
+
     const reportForEdit = {
       ...report,
       // Convert values to IDs for the form dropdowns
@@ -593,7 +493,7 @@ export function WeeklyCalendar() {
       // Update hours to minutes for the form
       hours: hoursToMinutes.toString(),
     }
-    
+
     setEditingReport(reportForEdit)
     setShowEntryForm(true)
   }
@@ -608,19 +508,19 @@ export function WeeklyCalendar() {
           const response = await fetch(`/api/reports?id=${reportId}`, {
             method: 'DELETE',
           });
-          
+
           const data = await response.json();
-          
+
           if (!response.ok) {
             console.error('Error response from server:', data);
             throw new Error(data.error || 'Failed to delete report');
           }
-          
+
           console.log('Report successfully deleted', data);
-          
+
           // Update local state after successful deletion
           setAllReports(allReports.filter((report) => report.id !== reportId));
-          
+
           // Recalculate stats
           calculateStats();
         } catch (error) {
@@ -628,7 +528,7 @@ export function WeeklyCalendar() {
           alert(`Failed to delete the report: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       };
-      
+
       deleteReport();
     }
   }
@@ -727,7 +627,7 @@ export function WeeklyCalendar() {
   }
 
   const formattedMonthName = currentMonth.toLocaleDateString(
-    i18n.language === 'uk' ? 'uk-UA' : en,
+    i18n.language === 'uk' ? 'uk-UA' : 'en-US',
     { month: 'long', year: 'numeric' }
   )
   const calendarDays = generateCalendarDays(currentMonth.getFullYear(), currentMonth.getMonth())
@@ -739,14 +639,14 @@ export function WeeklyCalendar() {
     if (client && typeof client === 'object' && 'name' in client) {
       return client.name;
     }
-    
+
     // Handle client ID (string or number)
     if (typeof client === 'number' || typeof client === 'string') {
       const clientId = client.toString();
       const foundClient = clients.find((c) => c.id === clientId);
       return foundClient ? foundClient.name : clientId;
     }
-    
+
     // Fallback for other cases
     return client ? String(client) : '';
   };
@@ -762,7 +662,7 @@ export function WeeklyCalendar() {
         <CardHeader className="pb-0">
           <div className="flex justify-between items-center">
             <CardTitle>
-              {t('calendar.week', { from: weekDays[0].toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : en, { day: 'numeric', month: 'long' }), to: weekDays[6].toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : en, { day: 'numeric', month: 'long' }) })}
+              {t('calendar.week', { from: weekDays[0].toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'long' }), to: weekDays[6].toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'long' }) })}
             </CardTitle>
             <div className="flex gap-2">
               <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
@@ -783,24 +683,23 @@ export function WeeklyCalendar() {
                   isToday(day)
                     ? "outline"
                     : selectedDate &&
-                        selectedDate.getDate() === day.getDate() &&
-                        selectedDate.getMonth() === day.getMonth() &&
-                        selectedDate.getFullYear() === day.getFullYear()
+                      selectedDate.getDate() === day.getDate() &&
+                      selectedDate.getMonth() === day.getMonth() &&
+                      selectedDate.getFullYear() === day.getFullYear()
                       ? "secondary"
                       : "outline"
                 }
-                className={`h-auto flex flex-col py-2 ${
-                  isToday(day)
+                className={`h-auto flex flex-col py-2 ${isToday(day)
                     ? "border-primary bg-[rgb(15,40,84)] text-white hover:bg-[rgb(15,40,84)] hover:text-white"
                     : hasDayRecords(day)
                       ? "bg-gray-100 hover:bg-gray-200"
                       : "bg-gray-200 hover:bg-gray-300"
-                }`}
+                  }`}
                 onClick={() => selectDay(day)}
               >
                 <span className="text-xs font-medium">{t(`calendar.weekdayShort.${index}`)}</span>
                 <span className="text-lg font-bold">{day.getDate()}</span>
-                <span className="text-xs">{day.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : en, { month: 'short' })}</span>
+                <span className="text-xs">{day.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : 'en-US', { month: 'short' })}</span>
               </Button>
             ))}
           </div>
@@ -810,7 +709,7 @@ export function WeeklyCalendar() {
       {selectedDate && (
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-bold">
-            {t('calendar.entriesForDate', { date: selectedDate.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : en, { day: 'numeric', month: 'long', year: 'numeric' }) })}
+            {t('calendar.entriesForDate', { date: selectedDate.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }) })}
           </h2>
           <Button onClick={handleAddNewEntry} className="gap-2">
             <Plus className="h-4 w-4" />
@@ -882,15 +781,15 @@ export function WeeklyCalendar() {
                   try {
                     const apiUrl = '/api/reports';
                     const method = editingReport ? 'PUT' : 'POST';
-                    
+
                     // Fetch companies to associate with the report
                     const companiesToAssociate = [];
                     if (clientName) companiesToAssociate.push(clientName);
                     if (agencyName && agencyName !== clientName) companiesToAssociate.push(agencyName);
-                    
+
                     // Format the date properly for the database (YYYY-MM-DD)
                     const dateForDB = selectedDate.toISOString().split('T')[0];
-                    
+
                     const response = await fetch(apiUrl, {
                       method,
                       headers: {
@@ -904,14 +803,14 @@ export function WeeklyCalendar() {
                         companies: companiesToAssociate, // Include companies to associate
                       }),
                     });
-                    
+
                     if (!response.ok) {
                       throw new Error('Failed to save report');
                     }
-                    
+
                     const result = await response.json();
                     console.log('Report saved:', result);
-                    
+
                     // Update local state after successful save to server
                     // Update the report if we're editing an existing one
                     if (editingReport) {
@@ -924,7 +823,7 @@ export function WeeklyCalendar() {
                       // Add new report
                       setAllReports([...allReports, updatedData])
                     }
-                    
+
                     // Close the form and clear editing state
                     setShowEntryForm(false);
                     setEditingReport(null);
@@ -933,7 +832,7 @@ export function WeeklyCalendar() {
                     alert('Failed to save the report. Please try again.');
                   }
                 };
-                
+
                 saveReport();
               }}
             />
@@ -950,7 +849,7 @@ export function WeeklyCalendar() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">{t('calendar.totalHours')}</CardTitle>
                 <CardDescription>
-                  {t('calendar.forDate', { date: selectedDate.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : en, { day: 'numeric', month: 'long' }) })}
+                  {t('calendar.forDate', { date: selectedDate.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'long' }) })}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -961,7 +860,7 @@ export function WeeklyCalendar() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">{t('calendar.entriesCount')}</CardTitle>
                 <CardDescription>
-                  {t('calendar.forDate', { date: selectedDate.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : en, { day: 'numeric', month: 'long' }) })}
+                  {t('calendar.forDate', { date: selectedDate.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'long' }) })}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -972,7 +871,7 @@ export function WeeklyCalendar() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">{t('calendar.avgTimePerEntry')}</CardTitle>
                 <CardDescription>
-                  {t('calendar.forDate', { date: selectedDate.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : en, { day: 'numeric', month: 'long' }) })}
+                  {t('calendar.forDate', { date: selectedDate.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'long' }) })}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -988,7 +887,7 @@ export function WeeklyCalendar() {
               <CardHeader>
                 <CardTitle>{t('calendar.summaryInfo')}</CardTitle>
                 <CardDescription>
-                  {t('calendar.reportsForDate', { date: selectedDate.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : en, { day: 'numeric', month: 'long', year: 'numeric' }) })}
+                  {t('calendar.reportsForDate', { date: selectedDate.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }) })}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1048,7 +947,7 @@ export function WeeklyCalendar() {
               <CardContent className="flex flex-col items-center justify-center py-8">
                 <p className="text-lg font-medium mb-2">{t('calendar.noEntriesForDate')}</p>
                 <p className="text-gray-500 mb-4">
-                  {t('calendar.noEntriesForDateDesc', { date: selectedDate.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : en, { day: 'numeric', month: 'long', year: 'numeric' }) })}
+                  {t('calendar.noEntriesForDateDesc', { date: selectedDate.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }) })}
                 </p>
                 <Button onClick={handleAddNewEntry} className="gap-2">
                   <Plus className="h-4 w-4" />
