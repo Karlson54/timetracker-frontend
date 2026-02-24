@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useRouter } from 'next/navigation'
 import type { UserInfo, AuthResponse } from '@/lib/api/types'
 import { saveAuth, getToken, getUser, clearAuth } from '@/lib/api/tokenStorage'
+import authService from '@/lib/api/services/authService'
 
 interface AuthContextType {
   user: UserInfo | null
@@ -21,14 +22,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
-  // При инициализации читаем токен из localStorage
   useEffect(() => {
-    const token = getToken()
-    const savedUser = getUser()
-    if (token && savedUser) {
-      setUser(savedUser)
+    const initAuth = async () => {
+      const token = getToken()
+      const savedUser = getUser()
+
+      if (!token || !savedUser) {
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        // Проверяем токен на бэке — жив ли он и активен ли пользователь
+        await authService.validate()
+        setUser(savedUser)
+      } catch {
+        // Токен невалидный или пользователь деактивирован — чистим всё
+        clearAuth()
+      } finally {
+        setIsLoading(false)
+      }
     }
-    setIsLoading(false)
+
+    initAuth()
   }, [])
 
   const login = useCallback((data: AuthResponse) => {

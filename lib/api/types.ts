@@ -32,3 +32,76 @@ export interface UserInfo {
 export interface ApiError {
   message: string
 }
+
+// ===== USERS =====
+export interface UserListItem {
+  id: number
+  login: string
+  email: string
+  name: string
+  agencyId: number
+  agencyName: string
+  isActive: boolean
+}
+
+export interface CreateUserRequest {
+  login: string
+  email: string
+  name: string
+  password: string
+  agencyId: number
+  roleIds: number[]
+}
+
+export interface UpdateUserRequest {
+  email: string
+  name: string
+  agencyId: number
+}
+
+// ===== DICTIONARIES =====
+export interface DictionaryItem {
+  id: number
+  name: string
+  isActive: boolean
+}
+
+export interface CreateDictionaryItemRequest {
+  name: string
+}
+
+// ===== TIME ENTRIES =====
+export interface TimeEntryListItem {
+  id: number
+  userId: number
+  userName: string
+  entryDate: string
+  hoursMilliseconds: number
+  clientId: number | null
+  clientName: string | null
+  projectBrandId: number | null
+  projectBrandName: string | null
+  marketId: number | null
+  marketName: string | null
+  mediaId: number | null
+  mediaName: string | null
+  jobTypeId: number | null
+  jobTypeName: string | null
+  contractingAgencyId: number | null
+  contractingAgencyName: string | null
+  comments: string | null
+}
+
+export interface CreateTimeEntryRequest {
+  entryDate: string
+  hoursMilliseconds: number
+  clientId?: number | null
+  projectBrandId?: number | null
+  marketId?: number | null
+  mediaId?: number | null
+  jobTypeId?: number | null
+  contractingAgencyId?: number | null
+  comments?: string | null
+}
+
+export interface UpdateTimeEntryRequest extends CreateTimeEntryRequest {}

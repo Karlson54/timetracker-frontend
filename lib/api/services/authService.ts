@@ -6,6 +6,10 @@ const authService = {
     const response = await httpClient.post<AuthResponse>('/api/auth/login', data)
     return response.data
   },
+
+  async validate(): Promise<void> {
+    await httpClient.get('/api/auth/validate')
+  },
 }
 
 export default authService
