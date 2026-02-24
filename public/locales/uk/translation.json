@@ -60,7 +60,7 @@
         "noReportsToExport": "Немає звітів для експорту"
       },
       "tableHeaders": {
-        "name": "Ім'я", 
+        "name": "Ім'я",
         "agency": "Agency",
         "date": "Дата",
         "market": "Market",
@@ -209,11 +209,20 @@
         "cancel": "Скасувати",
         "delete": "Видалити"
       },
+      "fields": {
+        "name": "ПІБ",
+        "login": "Логін",
+        "email": "Email",
+        "password": "Пароль",
+        "agency": "Агенція",
+        "selectAgency": "Оберіть агенцію"
+      },
       "list": {
         "title": "Список співробітників",
         "description": "Всього співробітників: {{count}}",
         "searchPlaceholder": "Пошук співробітників...",
-        "noEmployees": "Немає співробітників"
+        "noEmployees": "Немає співробітників",
+        "empty": "Співробітників не знайдено"
       },
       "tableHeaders": {
         "employee": "Співробітник",
@@ -221,6 +230,7 @@
         "position": "Посада",
         "department": "Відділ",
         "agency": "Агенція",
+        "login": "Логін",
         "status": "Статус",
         "actions": "Дії"
       }
@@ -250,6 +260,22 @@
       "download": "Завантажити",
       "downloadMessage": "Звіт ID: {reportId} завантажується у форматі Excel...",
       "allReports": "Всі звіти"
+    },
+    "nav": {
+      "dashboard": "Дашборд",
+      "employees": "Співробітники",
+      "companies": "Компанії",
+      "reports": "Звіти",
+      "dictionaries": "Довідники",
+      "dict": {
+        "agencies": "Агенції",
+        "markets": "Ринки",
+        "clients": "Клієнти",
+        "media": "Медіа",
+        "jobTypes": "Типи роботи",
+        "projectBrands": "Проекти / Бренди",
+        "contractingAgencies": "Підрядні агенції"
+      }
     }
   },
   "calendar": {
@@ -288,7 +314,15 @@
     "copyEntry": "Копіювати запис",
     "selectDateToCopy": "Оберіть дату, на яку потрібно скопіювати запис",
     "selectDatesToCopy": "Оберіть дати для копіювання",
-    "weekdayShort": {"0": "Нд", "1": "Пн", "2": "Вт", "3": "Ср", "4": "Чт", "5": "Пт", "6": "Сб"},
+    "weekdayShort": {
+      "0": "Нд",
+      "1": "Пн",
+      "2": "Вт",
+      "3": "Ср",
+      "4": "Чт",
+      "5": "Пт",
+      "6": "Сб"
+    },
     "selectedDates": "Обрано {{count}} дат(у/и)",
     "selectDatesToCopyHint": "Оберіть дати для копіювання запису",
     "cancel": "Скасувати",
@@ -350,5 +384,69 @@
   "logout": {
     "signingOut": "Вихід з системи...",
     "signingOutAndRedirecting": "Вихід з системи та перенаправлення на сторінку входу."
+  },
+  "dictionaries": {
+    "agencies": {
+      "title": "Агенції",
+      "description": "Рекламні агенції"
+    },
+    "markets": {
+      "title": "Ринки",
+      "description": "Операційні ринки"
+    },
+    "clients": {
+      "title": "Клієнти",
+      "description": "Клієнтські компанії"
+    },
+    "media": {
+      "title": "Медіа",
+      "description": "Медіаканали"
+    },
+    "jobTypes": {
+      "title": "Типи роботи",
+      "description": "Типи виконуваних робіт"
+    },
+    "projectBrands": {
+      "title": "Проекти / Бренди",
+      "description": "Проекти та бренди клієнтів"
+    },
+    "contractingAgencies": {
+      "title": "Підрядні агенції",
+      "description": "Компанії-підрядники"
+    },
+    "add": {
+      "title": "Додати {{name}}"
+    },
+    "edit": {
+      "title": "Редагувати {{name}}"
+    },
+    "delete": {
+      "title": "Видалити запис",
+      "description": "Цю дію не можна скасувати."
+    },
+    "fields": {
+      "name": "Назва",
+      "namePlaceholder": "Введіть назву..."
+    },
+    "tableHeaders": {
+      "name": "Назва",
+      "status": "Статус",
+      "actions": "Дії"
+    }
+  },
+  "common": {
+    "save": "Зберегти",
+    "cancel": "Скасувати",
+    "add": "Додати",
+    "delete": "Видалити",
+    "search": "Пошук...",
+    "active": "Активний",
+    "inactive": "Неактивний",
+    "noData": "Даних не знайдено",
+    "errors": {
+      "loadFailed": "Помилка завантаження даних",
+      "saveFailed": "Помилка збереження",
+      "deleteFailed": "Помилка видалення"
+    }
   }
-} 
+}

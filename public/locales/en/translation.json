@@ -60,7 +60,7 @@
         "noReportsToExport": "No reports to export"
       },
       "tableHeaders": {
-        "name": "Name", 
+        "name": "Name",
         "agency": "Agency",
         "date": "Date",
         "market": "Market",
@@ -209,11 +209,20 @@
         "cancel": "Cancel",
         "delete": "Delete"
       },
+      "fields": {
+        "name": "Full Name",
+        "login": "Login",
+        "email": "Email",
+        "password": "Password",
+        "agency": "Agency",
+        "selectAgency": "Select agency"
+      },
       "list": {
         "title": "Employees List",
         "description": "Total employees: {{count}}",
         "searchPlaceholder": "Search employees...",
-        "noEmployees": "No employees found"
+        "noEmployees": "No employees found",
+        "empty": "No employees found"
       },
       "tableHeaders": {
         "employee": "Employee",
@@ -221,6 +230,7 @@
         "position": "Position",
         "department": "Department",
         "agency": "Agency",
+        "login": "Login",
         "status": "Status",
         "actions": "Actions"
       }
@@ -250,6 +260,22 @@
       "download": "Download",
       "downloadMessage": "Report ID: {reportId} is downloading in Excel format...",
       "allReports": "All Reports"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "employees": "Employees",
+      "companies": "Companies",
+      "reports": "Reports",
+      "dictionaries": "Dictionaries",
+      "dict": {
+        "agencies": "Agencies",
+        "markets": "Markets",
+        "clients": "Clients",
+        "media": "Media",
+        "jobTypes": "Job Types",
+        "projectBrands": "Project Brands",
+        "contractingAgencies": "Contracting Agencies"
+      }
     }
   },
   "calendar": {
@@ -288,7 +314,15 @@
     "copyEntry": "Copy Entry",
     "selectDateToCopy": "Select a date to copy the entry to",
     "selectDatesToCopy": "Select dates to copy",
-    "weekdayShort": {"0": "Sun", "1": "Mon", "2": "Tue", "3": "Wed", "4": "Thu", "5": "Fri", "6": "Sat"},
+    "weekdayShort": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    },
     "selectedDates": "Selected {{count}} date(s)",
     "selectDatesToCopyHint": "Select dates to copy the entry",
     "cancel": "Cancel",
@@ -350,5 +384,69 @@
   "logout": {
     "signingOut": "Signing out...",
     "signingOutAndRedirecting": "Signing out and redirecting to login page."
+  },
+  "dictionaries": {
+    "agencies": {
+      "title": "Agencies",
+      "description": "Advertising agencies"
+    },
+    "markets": {
+      "title": "Markets",
+      "description": "Operating markets"
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Client companies"
+    },
+    "media": {
+      "title": "Media",
+      "description": "Media channels"
+    },
+    "jobTypes": {
+      "title": "Job Types",
+      "description": "Types of work"
+    },
+    "projectBrands": {
+      "title": "Project Brands",
+      "description": "Projects and brands"
+    },
+    "contractingAgencies": {
+      "title": "Contracting Agencies",
+      "description": "Contracting companies"
+    },
+    "add": {
+      "title": "Add {{name}}"
+    },
+    "edit": {
+      "title": "Edit {{name}}"
+    },
+    "delete": {
+      "title": "Delete item",
+      "description": "This action cannot be undone."
+    },
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "Enter name..."
+    },
+    "tableHeaders": {
+      "name": "Name",
+      "status": "Status",
+      "actions": "Actions"
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "add": "Add",
+    "delete": "Delete",
+    "search": "Search...",
+    "active": "Active",
+    "inactive": "Inactive",
+    "noData": "No data found",
+    "errors": {
+      "loadFailed": "Failed to load data",
+      "saveFailed": "Failed to save",
+      "deleteFailed": "Failed to delete"
+    }
   }
-} 
+}
