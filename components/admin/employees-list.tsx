@@ -346,9 +346,6 @@ export function EmployeesList() {
                         <Button variant="ghost" size="icon" onClick={() => handleToggleActive(employee)}>
                           {employee.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => confirmDelete(employee.id)}>
-                          <Trash className="h-4 w-4 text-red-500" />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

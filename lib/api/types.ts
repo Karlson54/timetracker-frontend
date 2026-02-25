@@ -93,6 +93,8 @@ export interface TimeEntryListItem {
 }
 
 export interface CreateTimeEntryRequest {
+  userId: number
+  agencyId: number 
   entryDate: string
   hoursMilliseconds: number
   clientId?: number | null

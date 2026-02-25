@@ -5,8 +5,8 @@ import { AuthProvider } from "@/lib/AuthContext"
 import I18nProvider from "@/lib/I18nProvider"
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
+  title: "MediaCom TimeTracker",
+  description: "Ruban",
   generator: "v0.dev",
 }
 

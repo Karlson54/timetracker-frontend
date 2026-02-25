@@ -156,7 +156,8 @@
       "loading": "Loading employees...",
       "addEmployee": "Add Employee",
       "status": {
-        "active": "Active"
+        "active": "Active",
+        "inactive": "Inactive"
       },
       "roles": {
         "admin": "Administrator"
@@ -350,6 +351,8 @@
       "logout": "Logout"
     },
     "loading": "Loading...",
+    "selectProjectBrand": "Select project/brand",
+    "projectBrandNotFound": "Project/brand not found.",
     "selectMarket": "Select market",
     "marketNotFound": "Market not found.",
     "selectAgency": "Select agency",

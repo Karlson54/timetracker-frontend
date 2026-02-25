@@ -59,13 +59,13 @@ export function DayEntryForm({
   const { t } = useTranslation()
 
   // --- Данные справочников из API ---
-  const [markets, setMarkets]                         = useState<DictionaryItem[]>([])
+  const [markets, setMarkets] = useState<DictionaryItem[]>([])
   const [contractingAgencies, setContractingAgencies] = useState<DictionaryItem[]>([])
-  const [clients, setClients]                         = useState<DictionaryItem[]>([])
-  const [mediaTypes, setMediaTypes]                   = useState<DictionaryItem[]>([])
-  const [jobTypes, setJobTypes]                       = useState<DictionaryItem[]>([])
-  const [projectBrands, setProjectBrands]             = useState<DictionaryItem[]>([])
-  const [loadingDicts, setLoadingDicts]               = useState(true)
+  const [clients, setClients] = useState<DictionaryItem[]>([])
+  const [mediaTypes, setMediaTypes] = useState<DictionaryItem[]>([])
+  const [jobTypes, setJobTypes] = useState<DictionaryItem[]>([])
+  const [projectBrands, setProjectBrands] = useState<DictionaryItem[]>([])
+  const [loadingDicts, setLoadingDicts] = useState(true)
 
   useEffect(() => {
     async function fetchDicts() {
@@ -98,23 +98,23 @@ export function DayEntryForm({
 
   // --- Стан форми (зберігаємо id) ---
   const [formData, setFormData] = useState({
-    market:             isEditMode ? String(initialValues?.marketId             ?? initialValues?.market             ?? "") : "",
-    contractingAgency:  isEditMode ? String(initialValues?.contractingAgencyId  ?? initialValues?.contractingAgency  ?? "") : "",
-    client:             isEditMode ? String(initialValues?.clientId             ?? initialValues?.client             ?? "") : "",
-    projectBrand:       isEditMode ? String(initialValues?.projectBrandId       ?? initialValues?.projectBrand       ?? "") : "",
-    media:              isEditMode ? String(initialValues?.mediaId              ?? initialValues?.media              ?? "") : "",
-    jobType:            isEditMode ? String(initialValues?.jobTypeId            ?? initialValues?.jobType            ?? "") : "",
-    comments:           isEditMode ? (initialValues?.comments ?? "") : "",
-    hours:              isEditMode ? String(initialValues?.hoursMilliseconds ? Math.round(initialValues.hoursMilliseconds / 60000) : (initialValues?.hours ? Math.round(Number(initialValues.hours) * 60) : 60)) : "60",
+    market: isEditMode ? String(initialValues?.marketId ?? initialValues?.market ?? "") : "",
+    contractingAgency: isEditMode ? String(initialValues?.contractingAgencyId ?? initialValues?.contractingAgency ?? "") : "",
+    client: isEditMode ? String(initialValues?.clientId ?? initialValues?.client ?? "") : "",
+    projectBrand: isEditMode ? String(initialValues?.projectBrandId ?? initialValues?.projectBrand ?? "") : "",
+    media: isEditMode ? String(initialValues?.mediaId ?? initialValues?.media ?? "") : "",
+    jobType: isEditMode ? String(initialValues?.jobTypeId ?? initialValues?.jobType ?? "") : "",
+    comments: isEditMode ? (initialValues?.comments ?? "") : "",
+    hours: isEditMode ? String(initialValues?.hoursMilliseconds ? Math.round(initialValues.hoursMilliseconds / 60000) : (initialValues?.hours ? Math.round(Number(initialValues.hours) * 60) : 60)) : "60",
   })
 
   // --- Текстові значення для інпутів-селектів ---
-  const [marketInput,            setMarketInput]            = useState("")
-  const [agencyInput,            setAgencyInput]            = useState("")
-  const [clientInput,            setClientInput]            = useState("")
-  const [mediaInput,             setMediaInput]             = useState("")
-  const [jobTypeInput,           setJobTypeInput]           = useState("")
-  const [projectBrandInput,      setProjectBrandInput]      = useState("")
+  const [marketInput, setMarketInput] = useState("")
+  const [agencyInput, setAgencyInput] = useState("")
+  const [clientInput, setClientInput] = useState("")
+  const [mediaInput, setMediaInput] = useState("")
+  const [jobTypeInput, setJobTypeInput] = useState("")
+  const [projectBrandInput, setProjectBrandInput] = useState("")
 
   // Після завантаження справочників — ініціалізуємо текстові поля для edit-режиму
   useEffect(() => {
@@ -147,15 +147,15 @@ export function DayEntryForm({
     e.preventDefault()
     onSave({
       date,
-      marketId:            formData.market            ? Number(formData.market)            : null,
+      marketId: formData.market ? Number(formData.market) : null,
       contractingAgencyId: formData.contractingAgency ? Number(formData.contractingAgency) : null,
-      clientId:            formData.client            ? Number(formData.client)            : null,
-      projectBrandId:      formData.projectBrand      ? Number(formData.projectBrand)      : null,
-      mediaId:             formData.media             ? Number(formData.media)             : null,
-      jobTypeId:           formData.jobType           ? Number(formData.jobType)           : null,
-      comments:            formData.comments          || null,
+      clientId: formData.client ? Number(formData.client) : null,
+      projectBrandId: formData.projectBrand ? Number(formData.projectBrand) : null,
+      mediaId: formData.media ? Number(formData.media) : null,
+      jobTypeId: formData.jobType ? Number(formData.jobType) : null,
+      comments: formData.comments || null,
       // hoursMilliseconds — для timeEntriesService
-      hoursMilliseconds:   Number(formData.hours) * 60 * 1000,
+      hoursMilliseconds: Number(formData.hours) * 60 * 1000,
     })
   }
 
@@ -253,15 +253,9 @@ export function DayEntryForm({
           {/* Рядок 2: ProjectBrand, Media, JobType */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {fields.projectBrand && renderField("projectBrand", t('calendar.projectBrand'),
-              <Input
-                className="h-8 text-sm"
-                placeholder={t('calendar.projectBrandPlaceholder')}
-                value={projectBrandInput}
-                onChange={(e) => {
-                  setProjectBrandInput(e.target.value)
-                  setFormData({ ...formData, projectBrand: e.target.value })
-                }}
-              />
+              renderCombo("projectBrand", projectBrandInput, setProjectBrandInput, projectBrands, formData.projectBrand,
+                (item) => { setFormData({ ...formData, projectBrand: String(item.id) }); setProjectBrandInput(item.name) },
+                t('calendar.selectProjectBrand'), t('calendar.projectBrandNotFound'), true)
             )}
             {fields.media && renderField("media", t('calendar.media'),
               renderCombo("media", mediaInput, setMediaInput, mediaTypes, formData.media,
@@ -335,14 +329,9 @@ export function DayEntryForm({
           {fields.projectBrand && (
             <div className="space-y-2">
               <Label>{t('calendar.projectBrand')}</Label>
-              <Input
-                placeholder={t('calendar.projectBrandPlaceholder')}
-                value={projectBrandInput}
-                onChange={(e) => {
-                  setProjectBrandInput(e.target.value)
-                  setFormData({ ...formData, projectBrand: e.target.value })
-                }}
-              />
+              {renderCombo("projectBrand", projectBrandInput, setProjectBrandInput, projectBrands, formData.projectBrand,
+                (item) => { setFormData({ ...formData, projectBrand: String(item.id) }); setProjectBrandInput(item.name) },
+                t('calendar.selectProjectBrand'), t('calendar.projectBrandNotFound'), false)}
             </div>
           )}
           {fields.media && (

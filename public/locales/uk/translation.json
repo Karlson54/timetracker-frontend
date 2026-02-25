@@ -156,7 +156,8 @@
       "loading": "Завантаження співробітників...",
       "addEmployee": "Додати співробітника",
       "status": {
-        "active": "Активний"
+        "active": "Активний",
+        "inactive": "Неактивний"
       },
       "roles": {
         "admin": "Адміністратор"
@@ -351,6 +352,8 @@
     },
     "loading": "Завантаження...",
     "selectMarket": "Оберіть ринок",
+    "selectProjectBrand": "Оберіть проект/бренд",
+    "projectBrandNotFound": "Проект/бренд не знайдено.",
     "marketNotFound": "Ринок не знайдено.",
     "selectAgency": "Оберіть агентство",
     "agencyNotFound": "Агентство не знайдено.",

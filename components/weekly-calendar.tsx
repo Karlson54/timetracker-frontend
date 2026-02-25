@@ -1,5 +1,6 @@
 "use client"
 
+import { useAuthContext } from '@/lib/AuthContext'
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -21,7 +22,10 @@ import type { TimeEntryListItem, CreateTimeEntryRequest } from "@/lib/api/types"
 
 // Хелпер: Date -> "YYYY-MM-DD"
 function toISODate(date: Date): string {
-  return date.toISOString().split("T")[0]
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 // Хелпер: мілісекунди -> години з 1 знаком після коми
@@ -63,6 +67,8 @@ export function WeeklyCalendar() {
 
   const weekFrom = toISODate(weekDays[0])
   const weekTo = toISODate(weekDays[6])
+
+  const { user } = useAuthContext()
 
   // --- Завантаження записів за поточний тиждень ---
   useEffect(() => {
@@ -142,6 +148,8 @@ export function WeeklyCalendar() {
       const payload: CreateTimeEntryRequest = {
         entryDate: toISODate(data.date instanceof Date ? data.date : selectedDate),
         hoursMilliseconds: Number(data.hoursMilliseconds),
+        userId: user?.userId ?? 0,
+        agencyId: user?.agencyId ?? 0,
         clientId: data.clientId ?? null,
         projectBrandId: data.projectBrandId ?? null,
         marketId: data.marketId ?? null,
@@ -197,6 +205,8 @@ export function WeeklyCalendar() {
       const newEntries: TimeEntryListItem[] = []
       for (const date of copyDates) {
         const created = await timeEntriesService.create({
+          userId: user?.userId ?? 0,
+          agencyId: user?.agencyId ?? 0,
           entryDate: toISODate(date),
           hoursMilliseconds: source.hoursMilliseconds,
           clientId: source.clientId,
@@ -299,12 +309,12 @@ export function WeeklyCalendar() {
                     key={index}
                     variant="outline"
                     className={`h-auto flex flex-col py-2 ${isToday(day)
-                        ? "border-primary bg-[rgb(15,40,84)] text-white hover:bg-[rgb(15,40,84)] hover:text-white"
-                        : isSelected
-                          ? "bg-primary/10 border-primary"
-                          : hasRecords
-                            ? "bg-gray-100 hover:bg-gray-200"
-                            : "bg-gray-200 hover:bg-gray-300"
+                      ? "border-primary bg-[rgb(15,40,84)] text-white hover:bg-[rgb(15,40,84)] hover:text-white"
+                      : isSelected
+                        ? "bg-primary/10 border-primary"
+                        : hasRecords
+                          ? "bg-gray-100 hover:bg-gray-200"
+                          : "bg-gray-200 hover:bg-gray-300"
                       }`}
                     onClick={() => {
                       setSelectedDate(day)
