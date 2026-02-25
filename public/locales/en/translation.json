@@ -181,7 +181,8 @@
         "agency": "Agency",
         "selectAgency": "Select agency",
         "cancel": "Cancel",
-        "add": "Add"
+        "add": "Add",
+        "button": "Add Employee"
       },
       "edit": {
         "title": "Edit Employee",
@@ -277,6 +278,16 @@
         "contractingAgencies": "Contracting Agencies"
       }
     }
+  },
+  "nav": {
+    "calendar": "Calendar",
+    "reports": "My Reports",
+    "logout": "Logout",
+    "admin": "Admin Panel"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "user": "Employee"
   },
   "calendar": {
     "title": "Working Time Calendar",

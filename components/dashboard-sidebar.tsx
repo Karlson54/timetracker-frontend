@@ -74,13 +74,18 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                 </Link>
               </li>
               <li>
-                <Link href="/admin/companies" className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm', pathname === '/admin/companies' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50')}>
+                <Link href="/admin/dictionaries/clients" className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm', pathname === '/admin/companies' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50')}>
                   <Building className="h-4 w-4" />{t('admin.nav.companies')}
                 </Link>
               </li>
               <li>
                 <Link href="/admin/reports" className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm', pathname === '/admin/reports' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50')}>
                   <FileSpreadsheet className="h-4 w-4" />{t('admin.nav.reports')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/dashboard" className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm', pathname === '/dashboard' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50')}>
+                  <Clock className="h-4 w-4" />{t('nav.calendar')}
                 </Link>
               </li>
 
@@ -104,12 +109,12 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                 {isDictionariesOpen && (
                   <ul className="mt-1 ml-4 space-y-1 border-l pl-3">
                     {[
-                      { href: '/admin/dictionaries/agencies',             label: t('admin.nav.dict.agencies') },
-                      { href: '/admin/dictionaries/markets',              label: t('admin.nav.dict.markets') },
-                      { href: '/admin/dictionaries/clients',              label: t('admin.nav.dict.clients') },
-                      { href: '/admin/dictionaries/media',                label: t('admin.nav.dict.media') },
-                      { href: '/admin/dictionaries/job-types',            label: t('admin.nav.dict.jobTypes') },
-                      { href: '/admin/dictionaries/project-brands',       label: t('admin.nav.dict.projectBrands') },
+                      { href: '/admin/dictionaries/agencies', label: t('admin.nav.dict.agencies') },
+                      { href: '/admin/dictionaries/markets', label: t('admin.nav.dict.markets') },
+                      { href: '/admin/dictionaries/clients', label: t('admin.nav.dict.clients') },
+                      { href: '/admin/dictionaries/media', label: t('admin.nav.dict.media') },
+                      { href: '/admin/dictionaries/job-types', label: t('admin.nav.dict.jobTypes') },
+                      { href: '/admin/dictionaries/project-brands', label: t('admin.nav.dict.projectBrands') },
                       { href: '/admin/dictionaries/contracting-agencies', label: t('admin.nav.dict.contractingAgencies') },
                     ].map(({ href, label }) => (
                       <li key={href}>

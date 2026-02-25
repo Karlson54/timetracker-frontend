@@ -293,6 +293,7 @@ export function WeeklyCalendar() {
               {weekDays.map((day, index) => {
                 const isSelected = selectedDate && isSameDay(day, selectedDate)
                 const hasRecords = hasDayRecords(day)
+                const weekdayKeyMap = [1, 2, 3, 4, 5, 6, 0]
                 return (
                   <Button
                     key={index}
@@ -311,7 +312,7 @@ export function WeeklyCalendar() {
                       setEditingEntry(null)
                     }}
                   >
-                    <span className="text-xs font-medium">{t(`calendar.weekdayShort.${index}`)}</span>
+                    <span className="text-xs font-medium">{t(`calendar.weekdayShort.${weekdayKeyMap[index]}`)}</span>
                     <span className="text-lg font-bold">{day.getDate()}</span>
                     <span className="text-xs">{day.toLocaleDateString(locale, { month: 'short' })}</span>
                   </Button>
