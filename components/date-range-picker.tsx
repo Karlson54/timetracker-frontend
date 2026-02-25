@@ -21,7 +21,7 @@ export function DatePickerWithRange({ date, setDate }: DatePickerWithRangeProps)
   const [localDateRange, setLocalDateRange] = useState<DateRange | undefined>(date);
   const [isOpen, setIsOpen] = useState(false);
   
-  const locale = i18n.language === 'uk' ? 'uk-UA' : en;
+  const locale = i18n.language === 'uk' ? 'uk-UA' : 'en-US';
   const monthName = currentMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
   
   // Calendar helper functions

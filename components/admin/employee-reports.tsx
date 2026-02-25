@@ -1,5 +1,7 @@
 "use client"
 
+import httpClient from '@/lib/api/httpClient'
+import usersService from "@/lib/api/services/usersService"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -83,7 +85,65 @@ export function EmployeeReports() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setLoading(false)
+    async function fetchData() {
+      try {
+        setLoading(true)
+
+        // Завантажуємо працівників
+        const usersRes = await usersService.getAll()
+        setEmployees(usersRes.map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email ?? '',
+          position: u.position ?? '',
+          department: u.department ?? '',
+          agency: u.agencyName ?? '',
+        })))
+
+        const timeEntriesRes = await httpClient.get<any[]>('/api/timeentries', {
+          params: {
+            fromDate: new Date(new Date().getFullYear(), new Date().getMonth() - 3, 1).toISOString(),
+            toDate: new Date().toISOString(),
+            pageSize: 500,
+            pageNumber: 1,
+          }
+        })
+
+        const entries = timeEntriesRes.data?.entries ?? timeEntriesRes.data ?? []
+
+        const mapped = entries.map((rd: any) => {
+          const reportDate = new Date(rd.entryDate)
+          const formattedDate = reportDate.toLocaleDateString('uk-UA', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+          })
+          return {
+            id: rd.id,
+            date: formattedDate,
+            reportDate: reportDate,
+            totalHours: rd.hoursMilliseconds / 3600000,
+            companies: [rd.contractingAgencyName, rd.clientName].filter(Boolean).join(', '),
+            employeeId: rd.userId,
+            employeeName: rd.userName || 'Unknown',
+            market: rd.marketName || '-',
+            agency: rd.agencyName || '-',
+            projectBrand: rd.projectBrandName || '-',
+            media: rd.mediaName || '-',
+            jobType: rd.jobTypeName || '-',
+            comments: rd.comments || '-',
+            contractingAgency: rd.contractingAgencyName || '-',
+            client: rd.clientName || '-',
+            company: rd.agencyName || '-',
+            tasks: [{ company: rd.clientName || '', description: rd.jobTypeName || '', hours: rd.hoursMilliseconds / 3600000 }],
+          }
+        })
+        setReports(mapped)
+      } catch (error) {
+        console.error('Error fetching reports data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
   }, [])
 
   // Filter reports based on employee and date range

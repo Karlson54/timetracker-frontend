@@ -3,7 +3,6 @@
 import { EmployeeReports } from "@/components/admin/employee-reports"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
 import { useAdminProtection } from "@/lib/auth"
-import i18n from "@/lib/i18n"
 import { useTranslation } from "react-i18next"
 
 export default function ReportsPage() {
