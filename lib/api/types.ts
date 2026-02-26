@@ -57,6 +57,9 @@ export interface UpdateUserRequest {
   email: string
   name: string
   agencyId: number
+  login?: string
+  newPassword?: string
+  roleIds?: number[]
 }
 
 export interface RoleItem {

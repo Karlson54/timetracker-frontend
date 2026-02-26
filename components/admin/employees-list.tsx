@@ -113,7 +113,14 @@ export function EmployeesList() {
   // --- Редагувати ---
   const openEdit = (employee: UserListItem) => {
     setEditingEmployee(employee)
-    setEditForm({ email: employee.email, name: employee.name, agencyId: employee.agencyId })
+    setEditForm({
+      email: employee.email,
+      name: employee.name,
+      agencyId: employee.agencyId,
+      login: employee.login,
+      newPassword: "",
+      roleIds: [],  // не передаём — не меняем, пока не выберут
+    })
     setIsEditDialogOpen(true)
   }
 
@@ -121,7 +128,15 @@ export function EmployeesList() {
     if (!editingEmployee) return
     try {
       setSubmitting(true)
-      const updated = await usersService.update(editingEmployee.id, editForm)
+      const payload: UpdateUserRequest = {
+        email: editForm.email,
+        name: editForm.name,
+        agencyId: editForm.agencyId,
+        login: editForm.login || undefined,
+        newPassword: editForm.newPassword || undefined,
+        roleIds: editForm.roleIds?.length ? editForm.roleIds : undefined,
+      }
+      const updated = await usersService.update(editingEmployee.id, payload)
       setEmployees((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
       setIsEditDialogOpen(false)
     } catch (err: any) {
@@ -296,6 +311,49 @@ export function EmployeesList() {
                 <SelectContent>
                   {agencies.map((a) => (
                     <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Логін */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">{t('admin.employees.fields.login')}</Label>
+              <Input
+                className="col-span-3"
+                value={editForm.login ?? ""}
+                onChange={(e) => setEditForm({ ...editForm, login: e.target.value })}
+              />
+            </div>
+
+            {/* Новий пароль */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">{t('admin.employees.fields.password')}</Label>
+              <div className="col-span-3">
+                <Input
+                  type="password"
+                  placeholder={t('admin.employees.edit.passwordPlaceholder')}
+                  value={editForm.newPassword ?? ""}
+                  onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t('admin.employees.edit.passwordNote')}
+                </p>
+              </div>
+            </div>
+
+            {/* Роль */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">{t('admin.employees.fields.role')}</Label>
+              <Select
+                value={String(editForm.roleIds?.[0] ?? "")}
+                onValueChange={(v) => setEditForm({ ...editForm, roleIds: v ? [Number(v)] : [] })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder={t('admin.employees.fields.selectRole')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((r) => (
+                    <SelectItem key={r.id} value={String(r.id)}>{r.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
