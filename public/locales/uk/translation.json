@@ -217,7 +217,9 @@
         "email": "Email",
         "password": "Пароль",
         "agency": "Агенція",
-        "selectAgency": "Оберіть агенцію"
+        "selectAgency": "Оберіть агенцію",
+        "role": "Роль",
+        "selectRole": "Оберіть роль"
       },
       "list": {
         "title": "Список співробітників",

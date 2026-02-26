@@ -59,6 +59,12 @@ export interface UpdateUserRequest {
   agencyId: number
 }
 
+export interface RoleItem {
+  id: number
+  name: string
+  isActive: boolean
+}
+
 // ===== DICTIONARIES =====
 export interface DictionaryItem {
   id: number
@@ -94,7 +100,7 @@ export interface TimeEntryListItem {
 
 export interface CreateTimeEntryRequest {
   userId: number
-  agencyId: number 
+  agencyId: number
   entryDate: string
   hoursMilliseconds: number
   clientId?: number | null
@@ -106,4 +112,4 @@ export interface CreateTimeEntryRequest {
   comments?: string | null
 }
 
-export interface UpdateTimeEntryRequest extends CreateTimeEntryRequest {}
+export interface UpdateTimeEntryRequest extends CreateTimeEntryRequest { }

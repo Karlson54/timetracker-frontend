@@ -217,7 +217,9 @@
         "email": "Email",
         "password": "Password",
         "agency": "Agency",
-        "selectAgency": "Select agency"
+        "selectAgency": "Select agency",
+        "role": "Role",
+        "selectRole": "Select role"
       },
       "list": {
         "title": "Employees List",

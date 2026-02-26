@@ -31,7 +31,8 @@ import { Pencil, Plus, Search, Trash, UserCheck, UserX } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import usersService from "@/lib/api/services/usersService"
 import { agenciesService } from "@/lib/api/services/dictionaryService"
-import type { UserListItem, CreateUserRequest, UpdateUserRequest, DictionaryItem } from "@/lib/api/types"
+import rolesService from "@/lib/api/services/rolesService"
+import type { UserListItem, CreateUserRequest, UpdateUserRequest, DictionaryItem, RoleItem } from "@/lib/api/types"
 
 const EMPTY_CREATE: CreateUserRequest = {
   login: "",
@@ -47,6 +48,7 @@ export function EmployeesList() {
 
   const [employees, setEmployees] = useState<UserListItem[]>([])
   const [agencies, setAgencies] = useState<DictionaryItem[]>([])
+  const [roles, setRoles] = useState<RoleItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -68,12 +70,14 @@ export function EmployeesList() {
       try {
         setLoading(true)
         setError(null)
-        const [users, activeAgencies] = await Promise.all([
+        const [users, activeAgencies, activeRoles] = await Promise.all([
           usersService.getAll(),
           agenciesService.getActive(),
+          rolesService.getActive(),
         ])
         setEmployees(users)
         setAgencies(activeAgencies)
+        setRoles(activeRoles)
       } catch (err: any) {
         setError(err?.response?.data?.message ?? t('common.errors.loadFailed'))
       } finally {
@@ -92,7 +96,7 @@ export function EmployeesList() {
 
   // --- Додати ---
   const handleAdd = async () => {
-    if (!newEmployee.name || !newEmployee.email || !newEmployee.login || !newEmployee.password || !newEmployee.agencyId) return
+    if (!newEmployee.name || !newEmployee.email || !newEmployee.login || !newEmployee.password || !newEmployee.agencyId || newEmployee.roleIds.length === 0) return
     try {
       setSubmitting(true)
       const created = await usersService.create(newEmployee)
@@ -243,6 +247,23 @@ export function EmployeesList() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">{t('admin.employees.fields.role')}</Label>
+              <Select
+                value={String(newEmployee.roleIds[0] ?? "")}
+                onValueChange={(v) => setNewEmployee({ ...newEmployee, roleIds: [Number(v)] })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder={t('admin.employees.fields.selectRole')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((r) => (
+                    <SelectItem key={r.id} value={String(r.id)}>{r.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>{t('common.cancel')}</Button>
