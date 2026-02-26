@@ -94,6 +94,11 @@ export function EmployeesList() {
     )
   )
 
+  // --- Кількість активних адміністраторів ---
+  const activeAdminCount = employees.filter(
+    (e) => e.isActive && e.roles?.includes('Admin')
+  ).length
+
   // --- Додати ---
   const handleAdd = async () => {
     if (!newEmployee.name || !newEmployee.email || !newEmployee.login || !newEmployee.password || !newEmployee.agencyId || newEmployee.roleIds.length === 0) return
@@ -422,9 +427,33 @@ export function EmployeesList() {
                         <Button variant="ghost" size="icon" onClick={() => openEdit(employee)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleToggleActive(employee)}>
-                          {employee.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                        </Button>
+                        {(() => {
+                          const isLastAdmin =
+                            employee.isActive &&
+                            employee.roles?.includes('Admin') &&
+                            activeAdminCount <= 1
+
+                          return (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => !isLastAdmin && handleToggleActive(employee)}
+                              disabled={isLastAdmin}
+                              title={
+                                isLastAdmin
+                                  ? t('admin.employees.errors.lastAdmin')
+                                  : employee.isActive
+                                    ? t('common.deactivate')
+                                    : t('common.activate')
+                              }
+                            >
+                              {employee.isActive
+                                ? <UserX className="h-4 w-4 text-yellow-500" />
+                                : <UserCheck className="h-4 w-4 text-green-500" />
+                              }
+                            </Button>
+                          )
+                        })()}
                       </div>
                     </TableCell>
                   </TableRow>

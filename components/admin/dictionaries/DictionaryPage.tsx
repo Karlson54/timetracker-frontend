@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Pencil, Plus, Search, Trash } from "lucide-react"
+import { Pencil, Plus, Search, Trash, UserCheck, UserX } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import type { DictionaryItem, CreateDictionaryItemRequest } from "@/lib/api/types"
 
@@ -34,6 +34,8 @@ interface DictionaryService {
   create: (data: CreateDictionaryItemRequest) => Promise<DictionaryItem>
   update: (id: number, data: CreateDictionaryItemRequest) => Promise<DictionaryItem>
   delete: (id: number) => Promise<void>
+  activate?: (id: number) => Promise<void>
+  deactivate?: (id: number) => Promise<void>
 }
 
 interface DictionaryPageProps {
@@ -136,6 +138,24 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
     } finally {
       setSubmitting(false)
       setDeleteId(null)
+    }
+  }
+
+  // --- Активація / Деактивація ---
+  const handleToggleStatus = async (item: DictionaryItem) => {
+    try {
+      if (item.isActive) {
+        if (!service.deactivate) return
+        await service.deactivate(item.id)
+      } else {
+        if (!service.activate) return
+        await service.activate(item.id)
+      }
+      setItems((prev) =>
+        prev.map((i) => (i.id === item.id ? { ...i, isActive: !i.isActive } : i))
+      )
+    } catch (err: any) {
+      alert(err?.response?.data?.message ?? t('common.errors.saveFailed'))
     }
   }
 
@@ -271,6 +291,19 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        {(service.activate || service.deactivate) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleToggleStatus(item)}
+                            title={item.isActive ? t('common.deactivate') : t('common.activate')}
+                          >
+                            {item.isActive
+                              ? <UserX className="h-4 w-4 text-yellow-500" />
+                              : <UserCheck className="h-4 w-4 text-green-500" />
+                            }
+                          </Button>
+                        )}
                         <Button variant="ghost" size="icon" onClick={() => openEdit(item)}>
                           <Pencil className="h-4 w-4" />
                         </Button>

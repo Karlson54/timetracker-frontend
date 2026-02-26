@@ -26,6 +26,14 @@ function createDictionaryService(endpoint: string) {
     async delete(id: number): Promise<void> {
       await httpClient.delete(`/api/${endpoint}/${id}`)
     },
+
+    async activate(id: number): Promise<void> {
+      await httpClient.patch(`/api/${endpoint}/${id}/activate`)
+    },
+
+    async deactivate(id: number): Promise<void> {
+      await httpClient.patch(`/api/${endpoint}/${id}/deactivate`)
+    },
   }
 }
 

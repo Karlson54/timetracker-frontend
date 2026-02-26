@@ -237,6 +237,9 @@
         "login": "Login",
         "status": "Status",
         "actions": "Actions"
+      },
+      "errors": {
+        "lastAdmin": "Cannot deactivate the last administrator"
       }
     },
     "companyOverview": {
@@ -458,6 +461,8 @@
     "search": "Search...",
     "active": "Active",
     "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
     "noData": "No data found",
     "errors": {
       "loadFailed": "Failed to load data",

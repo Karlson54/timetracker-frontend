@@ -42,6 +42,7 @@ export interface UserListItem {
   agencyId: number
   agencyName: string
   isActive: boolean
+  roles: string[]
 }
 
 export interface CreateUserRequest {
