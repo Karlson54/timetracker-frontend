@@ -20,7 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import ExcelJS from 'exceljs'
 import { useTranslation } from "react-i18next"
 
 interface Employee {
@@ -83,6 +82,7 @@ export function EmployeeReports() {
   const [reports, setReports] = useState<Report[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(true)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -100,7 +100,7 @@ export function EmployeeReports() {
           agency: u.agencyName ?? '',
         })))
 
-        const timeEntriesRes = await httpClient.get<any[]>('/api/timeentries', {
+        const timeEntriesRes = await httpClient.get<any>('/api/timeentries', {
           params: {
             fromDate: new Date(new Date().getFullYear(), new Date().getMonth() - 3, 1).toISOString(),
             toDate: new Date().toISOString(),
@@ -121,6 +121,8 @@ export function EmployeeReports() {
             date: formattedDate,
             reportDate: reportDate,
             totalHours: rd.hoursMilliseconds / 3600000,
+            hours: rd.hoursMilliseconds / 3600000,
+            employee: rd.userName || 'Unknown',
             companies: [rd.contractingAgencyName, rd.clientName].filter(Boolean).join(', '),
             employeeId: rd.userId,
             employeeName: rd.userName || 'Unknown',
@@ -172,165 +174,103 @@ export function EmployeeReports() {
       return true;
     });
 
-  // Функція для створення та завантаження Excel файлу
-  const createAndDownloadExcel = async (reportsToExport: Report[], fileName: string) => {
-    try {
-      // Create a new workbook and worksheet
-      const workbook = new ExcelJS.Workbook()
-      const worksheet = workbook.addWorksheet('Summary')
-
-      // Define columns based on selected columns
-      const columns = []
-      if (selectedColumns.company) columns.push({ header: 'Agency', key: 'company', width: 20 })
-      if (selectedColumns.fullName) columns.push({ header: 'Name', key: 'fullName', width: 20 })
-      if (selectedColumns.date) columns.push({ header: 'Date', key: 'date', width: 15 })
-      if (selectedColumns.market) columns.push({ header: 'Market', key: 'market', width: 15 })
-      if (selectedColumns.contractingAgency) columns.push({ header: 'Contracting Agency / Unit', key: 'contractingAgency', width: 20 })
-      if (selectedColumns.client) columns.push({ header: 'Client', key: 'client', width: 20 })
-      if (selectedColumns.projectBrand) columns.push({ header: 'Project / brand', key: 'projectBrand', width: 20 })
-      if (selectedColumns.media) columns.push({ header: 'Media', key: 'media', width: 15 })
-      if (selectedColumns.jobType) columns.push({ header: 'Job type', key: 'jobType', width: 20 })
-      if (selectedColumns.hours) columns.push({ header: 'Hours', key: 'hours', width: 10 })
-      if (selectedColumns.comments) columns.push({ header: 'Comments', key: 'comments', width: 25 })
-
-      worksheet.columns = columns
-
-      // Style the headers
-      worksheet.getRow(1).font = { bold: true }
-      worksheet.getRow(1).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FFE6E6E6' }
-      }
-
-      // Add data rows
-      reportsToExport.forEach(report => {
-        const rowData: any = {}
-        if (selectedColumns.company) rowData.company = report.company // Use employee's agency field
-        if (selectedColumns.fullName) rowData.fullName = report.employee // Using employee name field as full name
-        if (selectedColumns.date) rowData.date = report.date
-        if (selectedColumns.market) rowData.market = report.market
-        if (selectedColumns.contractingAgency) rowData.contractingAgency = report.contractingAgency
-        if (selectedColumns.client) rowData.client = typeof report.client === 'object' ? report.client.name : report.clientName || report.client
-        if (selectedColumns.projectBrand) rowData.projectBrand = report.projectBrand
-        if (selectedColumns.media) rowData.media = report.media
-        if (selectedColumns.jobType) rowData.jobType = report.jobType
-        if (selectedColumns.hours) rowData.hours = report.hours
-        if (selectedColumns.comments) rowData.comments = report.comments
-
-        worksheet.addRow(rowData)
-      })
-
-      // Add borders to all cells
-      worksheet.eachRow({ includeEmpty: false }, row => {
-        row.eachCell({ includeEmpty: false }, cell => {
-          cell.border = {
-            top: { style: 'thin' },
-            left: { style: 'thin' },
-            bottom: { style: 'thin' },
-            right: { style: 'thin' }
-          }
-        })
-      })
-
-      // Generate Excel file
-      const buffer = await workbook.xlsx.writeBuffer()
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-      const url = URL.createObjectURL(blob)
-
-      // Create download link
-      const a = document.createElement('a')
-      a.href = url
-      a.download = fileName
-      a.click()
-
-      // Clean up
-      URL.revokeObjectURL(url)
-    } catch (error) {
-      console.error(t('admin.reports.errors.excelCreationError'), error)
-      alert(t('admin.reports.errors.excelCreationError'))
-    }
-  }
-
   // Функція для завантаження звіту з вибраними стовпцями
   const handleDownloadWithColumns = async () => {
-    if (!selectedReport) return;
+    if (filteredReports.length === 0) {
+      alert(t('admin.reports.filters.noReportsToDownload'))
+      return
+    }
 
+    setIsDownloading(true)
     try {
-      // Формируем массив отчетов для экспорта - все отфильтрованные отчеты
-      // Начиная с выбранного, затем все остальные из previewReports
-      const reportsToExport = [selectedReport, ...previewReports];
+      const columnsParam = Object.entries(selectedColumns)
+        .filter(([, enabled]) => enabled)
+        .map(([key]) => {
+          const keyMap: Record<string, string> = {
+            company: 'agency',
+            fullName: 'fullname',
+            date: 'date',
+            market: 'market',
+            contractingAgency: 'contractingagency',
+            client: 'client',
+            projectBrand: 'projectbrand',
+            media: 'media',
+            jobType: 'jobtype',
+            hours: 'hours',
+            comments: 'comments',
+          }
+          return keyMap[key] ?? key
+        })
+        .join(',')
 
-      // Формируем имя файла
-      let fileName = 'Reports_';
+      const fromStr = dateRange.from.toLocaleDateString('uk-UA').replace(/\./g, '-')
+      const toStr = dateRange.to.toLocaleDateString('uk-UA').replace(/\./g, '-')
 
-      // Если выбран конкретный сотрудник, добавляем его имя в имя файла
-      if (selectedEmployee !== "all") {
-        const emp = employees.find(e => e.id.toString() === selectedEmployee);
-        if (emp) {
-          fileName += `${emp.name.replace(/\s+/g, '_')}_`;
-        }
+      let url: string
+      let fileName: string
+
+      if (selectedEmployee === "all") {
+        url = `/api/reports/export/flat`
+        fileName = `AllReports_${fromStr}_${toStr}.xlsx`
+      } else {
+        const userId = Number.parseInt(selectedEmployee)
+        const emp = employees.find(e => e.id === userId)
+        const empName = emp ? emp.name.replace(/\s+/g, '_') : `user_${userId}`
+        url = `/api/reports/user/${userId}/export/flat`
+        fileName = `Report_${empName}_${fromStr}_${toStr}.xlsx`
       }
 
-      // Добавляем даты в имя файла
-      const fromDate = dateRange.from.toLocaleDateString().replace(/\./g, '-');
-      const toDate = dateRange.to.toLocaleDateString().replace(/\./g, '-');
-      fileName += `${fromDate}_${toDate}.xlsx`;
+      const response = await httpClient.get(url, {
+        params: {
+          fromDate: dateRange.from.toISOString(),
+          toDate: dateRange.to.toISOString(),
+          columns: columnsParam,
+          locale: 'uk',
+        },
+        responseType: 'blob',
+      })
 
-      // Экспортируем все отчеты в один Excel файл
-      await createAndDownloadExcel(reportsToExport, fileName);
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = fileName
+      a.click()
+      URL.revokeObjectURL(blobUrl)
 
-      setShowDownloadDialog(false);
+      setShowDownloadDialog(false)
     } catch (error) {
-      console.error(t('admin.reports.errors.downloadError'), error);
-      alert(t('admin.reports.errors.excelCreationError'));
+      console.error(t('admin.reports.errors.downloadError'), error)
+      alert(t('admin.reports.errors.excelCreationError'))
+    } finally {
+      setIsDownloading(false)
     }
   }
 
   // Функция для скачивания всех отчетов в Excel формате
   const downloadAllReports = async () => {
-    try {
-      // Use all reports instead of filtered reports
-      const reportsToExport = reports
-      if (reportsToExport.length === 0) {
-        alert(t('admin.reports.filters.noReportsToDownload'))
-        return
-      }
-
-      // Use "All_Records" in the file name instead of employee info
-      const fromDate = new Date().toLocaleDateString().replace(/\./g, '-')
-
-      await createAndDownloadExcel(
-        reportsToExport,
-        `All_Reports_${fromDate}.xlsx`
-      )
-    } catch (error) {
-      console.error(t('admin.reports.errors.downloadError'), error)
-      alert(t('admin.reports.errors.excelCreationError'))
+    if (reports.length === 0) {
+      alert(t('admin.reports.filters.noReportsToDownload'))
+      return
     }
+    const firstReport = reports[0]
+    setSelectedReport(firstReport)
+    setPreviewReports(reports.filter(r => r.id !== firstReport.id))
+    setShowDownloadDialog(true)
   }
 
   // Function to download a report
-  const downloadReport = async (reportId: number) => {
-    try {
-      const report = reports.find(r => r.id === reportId)
-      if (!report) {
-        alert(t('admin.reports.errors.reportNotFound', { reportId }))
-        return
-      }
-
-      setSelectedReport(report)
-
-      // Get all filtered reports except the selected one
-      const otherReports = filteredReports
-        .filter(r => r.id !== reportId);
-
-      setPreviewReports(otherReports);
-      setShowDownloadDialog(true)
-    } catch (error) {
-      console.error(t('admin.reports.errors.downloadError', { reportId }), error)
-      alert(t('admin.reports.errors.excelCreationError'))
+  const downloadReportFromBackend = async () => {
+    if (filteredReports.length === 0) {
+      alert(t('admin.reports.filters.noReportsToDownload'))
+      return
     }
+    const firstReport = filteredReports[0]
+    setSelectedReport(firstReport)
+    setPreviewReports(filteredReports.filter(r => r.id !== firstReport.id))
+    setShowDownloadDialog(true)
   }
 
   if (loading) {
@@ -392,39 +332,7 @@ export function EmployeeReports() {
                     }}
                   />
                 </div>
-                <Button variant="outline" size="sm" className="gap-2 self-end" onClick={() => {
-                  if (filteredReports.length > 0) {
-                    // If we have selected a specific employee, download their report
-                    if (selectedEmployee !== "all") {
-                      const empId = Number.parseInt(selectedEmployee);
-                      const employeeReport = filteredReports.find(r => r.employeeId === empId);
-                      if (employeeReport) {
-                        setSelectedReport(employeeReport);
-
-                        // Get all filtered reports except the selected one
-                        const otherReports = filteredReports
-                          .filter(r => r.id !== employeeReport.id);
-
-                        setPreviewReports(otherReports);
-                        setShowDownloadDialog(true);
-                        return;
-                      }
-                    }
-
-                    // Otherwise, show dialog for the first filtered report
-                    const firstReport = filteredReports[0];
-                    setSelectedReport(firstReport);
-
-                    // Get all filtered reports except the selected one
-                    const otherReports = filteredReports
-                      .filter(r => r.id !== firstReport.id);
-
-                    setPreviewReports(otherReports);
-                    setShowDownloadDialog(true);
-                  } else {
-                    alert(t('admin.reports.filters.noReportsToDownload'));
-                  }
-                }}>
+                <Button variant="outline" size="sm" className="gap-2 self-end" onClick={downloadReportFromBackend}>
                   <Download className="h-4 w-4" />
                   <span>{t('admin.reports.filters.downloadReport')}</span>
                 </Button>
@@ -580,7 +488,7 @@ export function EmployeeReports() {
                   </Table>
 
                   <div className="flex justify-end">
-                    <Button onClick={() => downloadReport(Number.parseInt(selectedEmployee))} className="gap-2">
+                    <Button onClick={downloadReportFromBackend} className="gap-2">
                       <FileSpreadsheet className="h-4 w-4" />
                       {t('admin.reports.detailed.exportToExcel')}
                     </Button>
@@ -804,8 +712,8 @@ export function EmployeeReports() {
             <Button variant="outline" onClick={() => setShowDownloadDialog(false)}>
               {t('admin.reports.downloadDialog.cancel')}
             </Button>
-            <Button onClick={handleDownloadWithColumns}>
-              {t('admin.reports.downloadDialog.download')}
+            <Button onClick={handleDownloadWithColumns} disabled={isDownloading}>
+              {isDownloading ? '...' : t('admin.reports.downloadDialog.download')}
             </Button>
           </DialogFooter>
         </DialogContent>
