@@ -39,6 +39,7 @@ const EMPTY_CREATE: CreateUserRequest = {
   email: "",
   name: "",
   password: "",
+  confirmPassword: "",
   agencyId: 0,
   roleIds: [],
 }
@@ -63,6 +64,7 @@ export function EmployeesList() {
   const [employeeToDelete, setEmployeeToDelete] = useState<number | null>(null)
 
   const [submitting, setSubmitting] = useState(false)
+  const [passwordError, setPasswordError] = useState("")
 
   // --- Завантаження даних ---
   useEffect(() => {
@@ -102,6 +104,13 @@ export function EmployeesList() {
   // --- Додати ---
   const handleAdd = async () => {
     if (!newEmployee.name || !newEmployee.email || !newEmployee.login || !newEmployee.password || !newEmployee.agencyId || newEmployee.roleIds.length === 0) return
+
+    if (newEmployee.password !== newEmployee.confirmPassword) {
+      setPasswordError(t('admin.employees.errors.passwordMismatch'))
+      return
+    }
+
+    setPasswordError("")
     try {
       setSubmitting(true)
       const created = await usersService.create(newEmployee)
@@ -250,9 +259,33 @@ export function EmployeesList() {
               <Label className="text-right">{t('admin.employees.fields.email')}</Label>
               <Input className="col-span-3" type="email" value={newEmployee.email} onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })} />
             </div>
+            {/* Пароль */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right">{t('admin.employees.fields.password')}</Label>
-              <Input className="col-span-3" type="password" value={newEmployee.password} onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })} />
+              <Input
+                className="col-span-3"
+                type="password"
+                value={newEmployee.password}
+                onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
+              />
+            </div>
+
+            {/* Підтвердження пароля */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">{t('admin.employees.fields.confirmPassword')}</Label>
+              <div className="col-span-3">
+                <Input
+                  type="password"
+                  value={newEmployee.confirmPassword}
+                  onChange={(e) => {
+                    setNewEmployee({ ...newEmployee, confirmPassword: e.target.value })
+                    setPasswordError("")
+                  }}
+                />
+                {passwordError && (
+                  <p className="text-sm text-destructive mt-1">{passwordError}</p>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right">{t('admin.employees.fields.agency')}</Label>
@@ -286,7 +319,13 @@ export function EmployeesList() {
 
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>{t('common.cancel')}</Button>
+            <Button variant="outline" onClick={() => {
+              setIsAddDialogOpen(false)
+              setPasswordError("")
+              setNewEmployee(EMPTY_CREATE)
+            }}>
+              {t('common.cancel')}
+            </Button>
             <Button onClick={handleAdd} disabled={submitting}>{t('common.save')}</Button>
           </DialogFooter>
         </DialogContent>

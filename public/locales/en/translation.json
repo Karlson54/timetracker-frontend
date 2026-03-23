@@ -216,6 +216,7 @@
         "login": "Login",
         "email": "Email",
         "password": "Password",
+        "confirmPassword": "Confirm Password",
         "agency": "Agency",
         "selectAgency": "Select agency",
         "role": "Role",
@@ -239,7 +240,8 @@
         "actions": "Actions"
       },
       "errors": {
-        "lastAdmin": "Cannot deactivate the last administrator"
+        "lastAdmin": "Cannot deactivate the last administrator",
+        "passwordMismatch": "Passwords do not match"
       }
     },
     "companyOverview": {
@@ -324,6 +326,7 @@
     "actions": "Actions",
     "edit": "Edit",
     "delete": "Delete",
+    "deleteConfirm": "Are you sure you want to delete this entry?",
     "copy": "Copy",
     "noEntriesForDate": "No entries for this date",
     "noEntriesForDateDesc": "No entries have been added for {{date}} yet",
