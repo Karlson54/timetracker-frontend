@@ -13,7 +13,7 @@ The database includes the following tables:
    - position
    - department
    - joinDate
-   - status
+   - status 
 
 2. **Companies** - Stores information about companies
    - id (primary key)
