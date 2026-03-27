@@ -11,7 +11,7 @@ const nextConfig = {
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      // Don't resolve 'fs' module on the client to prevent this error test deploying to Vercel
+      // Don't resolve 'fs' module on the client to prevent this error test disconnecting Vercel
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
