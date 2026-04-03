@@ -114,7 +114,6 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                       { href: '/admin/dictionaries/clients', label: t('admin.nav.dict.clients') },
                       { href: '/admin/dictionaries/media', label: t('admin.nav.dict.media') },
                       { href: '/admin/dictionaries/job-types', label: t('admin.nav.dict.jobTypes') },
-                      { href: '/admin/dictionaries/project-brands', label: t('admin.nav.dict.projectBrands') },
                       { href: '/admin/dictionaries/contracting-agencies', label: t('admin.nav.dict.contractingAgencies') },
                     ].map(({ href, label }) => (
                       <li key={href}>

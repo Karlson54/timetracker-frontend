@@ -90,7 +90,6 @@ export interface TimeEntryListItem {
   hoursMilliseconds: number
   clientId: number | null
   clientName: string | null
-  projectBrandId: number | null
   projectBrandName: string | null
   marketId: number | null
   marketName: string | null
@@ -109,7 +108,7 @@ export interface CreateTimeEntryRequest {
   entryDate: string
   hoursMilliseconds: number
   clientId?: number | null
-  projectBrandId?: number | null
+  projectBrand?: string | null
   marketId?: number | null
   mediaId?: number | null
   jobTypeId?: number | null

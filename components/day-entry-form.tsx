@@ -15,7 +15,6 @@ import {
   clientsService,
   mediaService,
   jobTypesService,
-  projectBrandsService,
 } from "@/lib/api/services/dictionaryService"
 import type { DictionaryItem } from "@/lib/api/types"
 
@@ -64,26 +63,23 @@ export function DayEntryForm({
   const [clients, setClients] = useState<DictionaryItem[]>([])
   const [mediaTypes, setMediaTypes] = useState<DictionaryItem[]>([])
   const [jobTypes, setJobTypes] = useState<DictionaryItem[]>([])
-  const [projectBrands, setProjectBrands] = useState<DictionaryItem[]>([])
   const [loadingDicts, setLoadingDicts] = useState(true)
 
   useEffect(() => {
     async function fetchDicts() {
       try {
-        const [m, ca, cl, mt, jt, pb] = await Promise.all([
+        const [m, ca, cl, mt, jt] = await Promise.all([
           marketsService.getActive(),
           contractingAgenciesService.getActive(),
           clientsService.getActive(),
           mediaService.getActive(),
           jobTypesService.getActive(),
-          projectBrandsService.getActive(),
         ])
         setMarkets(m)
         setContractingAgencies(ca)
         setClients(cl)
         setMediaTypes(mt)
         setJobTypes(jt)
-        setProjectBrands(pb)
       } catch (err) {
         console.error("Failed to load dictionaries", err)
       } finally {
@@ -101,7 +97,7 @@ export function DayEntryForm({
     market: isEditMode ? String(initialValues?.marketId ?? initialValues?.market ?? "") : "",
     contractingAgency: isEditMode ? String(initialValues?.contractingAgencyId ?? initialValues?.contractingAgency ?? "") : "",
     client: isEditMode ? String(initialValues?.clientId ?? initialValues?.client ?? "") : "",
-    projectBrand: isEditMode ? String(initialValues?.projectBrandId ?? initialValues?.projectBrand ?? "") : "",
+    projectBrand: isEditMode ? (initialValues?.projectBrandName ?? initialValues?.projectBrand ?? "") : "",
     media: isEditMode ? String(initialValues?.mediaId ?? initialValues?.media ?? "") : "",
     jobType: isEditMode ? String(initialValues?.jobTypeId ?? initialValues?.jobType ?? "") : "",
     comments: isEditMode ? (initialValues?.comments ?? "") : "",
@@ -114,7 +110,6 @@ export function DayEntryForm({
   const [clientInput, setClientInput] = useState("")
   const [mediaInput, setMediaInput] = useState("")
   const [jobTypeInput, setJobTypeInput] = useState("")
-  const [projectBrandInput, setProjectBrandInput] = useState("")
 
   // Після завантаження справочників — ініціалізуємо текстові поля для edit-режиму
   useEffect(() => {
@@ -124,7 +119,6 @@ export function DayEntryForm({
     setClientInput(getNameById(formData.client, clients))
     setMediaInput(getNameById(formData.media, mediaTypes))
     setJobTypeInput(getNameById(formData.jobType, jobTypes))
-    setProjectBrandInput(getNameById(formData.projectBrand, projectBrands))
   }, [loadingDicts])
 
   // --- Стани відкриття дропдаунів ---
@@ -150,7 +144,7 @@ export function DayEntryForm({
       marketId: formData.market ? Number(formData.market) : null,
       contractingAgencyId: formData.contractingAgency ? Number(formData.contractingAgency) : null,
       clientId: formData.client ? Number(formData.client) : null,
-      projectBrandId: formData.projectBrand ? Number(formData.projectBrand) : null,
+      projectBrand: formData.projectBrand || null,
       mediaId: formData.media ? Number(formData.media) : null,
       jobTypeId: formData.jobType ? Number(formData.jobType) : null,
       comments: formData.comments || null,
@@ -253,9 +247,12 @@ export function DayEntryForm({
           {/* Рядок 2: ProjectBrand, Media, JobType */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {fields.projectBrand && renderField("projectBrand", t('calendar.projectBrand'),
-              renderCombo("projectBrand", projectBrandInput, setProjectBrandInput, projectBrands, formData.projectBrand,
-                (item) => { setFormData({ ...formData, projectBrand: String(item.id) }); setProjectBrandInput(item.name) },
-                t('calendar.selectProjectBrand'), t('calendar.projectBrandNotFound'), true)
+              <Input
+                className="h-8 text-sm"
+                placeholder={t('calendar.projectBrandPlaceholder')}
+                value={formData.projectBrand}
+                onChange={(e) => setFormData({ ...formData, projectBrand: e.target.value })}
+              />
             )}
             {fields.media && renderField("media", t('calendar.media'),
               renderCombo("media", mediaInput, setMediaInput, mediaTypes, formData.media,
@@ -329,9 +326,11 @@ export function DayEntryForm({
           {fields.projectBrand && (
             <div className="space-y-2">
               <Label>{t('calendar.projectBrand')}</Label>
-              {renderCombo("projectBrand", projectBrandInput, setProjectBrandInput, projectBrands, formData.projectBrand,
-                (item) => { setFormData({ ...formData, projectBrand: String(item.id) }); setProjectBrandInput(item.name) },
-                t('calendar.selectProjectBrand'), t('calendar.projectBrandNotFound'), false)}
+              <Input
+                placeholder={t('calendar.projectBrandPlaceholder')}
+                value={formData.projectBrand}
+                onChange={(e) => setFormData({ ...formData, projectBrand: e.target.value })}
+              />
             </div>
           )}
           {fields.media && (
