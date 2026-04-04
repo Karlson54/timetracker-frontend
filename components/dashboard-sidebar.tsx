@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -21,14 +21,19 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
   const isMobile = useMobile()
   const [isOpen, setIsOpen] = useState(!isMobile)
-  const [isDictionariesOpen, setIsDictionariesOpen] = useState(false)
   const pathname = usePathname()
   const { user, logout } = useAuthContext()
   const { t } = useTranslation()
+  const [isDictionariesOpen, setIsDictionariesOpen] = useState(false)
+  const isDictionaryActive = pathname.startsWith('/admin/dictionaries')
+
+  useEffect(() => {
+    if (isDictionaryActive) {
+      setIsDictionariesOpen(true)
+    }
+  }, [isDictionaryActive])
 
   const formattedName = user?.name ? formatEmployeeName(user.name) : null
-
-  const isDictionaryActive = pathname.startsWith('/admin/dictionaries')
 
   return (
     <>
