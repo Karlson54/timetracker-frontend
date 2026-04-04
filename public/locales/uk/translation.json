@@ -5,6 +5,9 @@
       "description": "Перегляд та експорт звітів про робочий час",
       "exportAllToExcel": "Експорт всіх записів в Excel",
       "loadingReports": "Завантаження звітів...",
+      "pagination": {
+        "showing": "Показано {{from}}-{{to}} з {{total}} записів"
+      },
       "tabs": {
         "summary": "Зведення",
         "detailed": "Детальний звіт"

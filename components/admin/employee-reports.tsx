@@ -84,32 +84,45 @@ export function EmployeeReports() {
   const [loading, setLoading] = useState(true)
   const [isDownloading, setIsDownloading] = useState(false)
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+  const PAGE_SIZE = 50
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true)
 
-        // Завантажуємо працівників
-        const usersRes = await usersService.getAll()
-        setEmployees(usersRes.map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          email: u.email ?? '',
-          position: u.position ?? '',
-          department: u.department ?? '',
-          agency: u.agencyName ?? '',
-        })))
+        // Загружаем юзеров только при первом рендере
+        if (employees.length === 0) {
+          const usersRes = await usersService.getAll()
+          setEmployees(usersRes.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email ?? '',
+            position: u.position ?? '',
+            department: u.department ?? '',
+            agency: u.agencyName ?? '',
+          })))
+        }
 
-        const timeEntriesRes = await httpClient.get<any>('/api/timeentries', {
-          params: {
-            fromDate: new Date(new Date().getFullYear(), new Date().getMonth() - 3, 1).toISOString(),
-            toDate: new Date().toISOString(),
-            pageSize: 500,
-            pageNumber: 1,
-          }
-        })
+        const params: any = {
+          pageSize: PAGE_SIZE,
+          pageNumber: currentPage,
+          toDate: dateRange.to.toISOString(),
+          fromDate: dateRange.from.toISOString(),
+        }
+
+        if (selectedEmployee !== 'all') {
+          params.userId = Number.parseInt(selectedEmployee)
+        }
+
+        const timeEntriesRes = await httpClient.get<any>('/api/timeentries', { params })
 
         const entries = timeEntriesRes.data?.entries ?? timeEntriesRes.data ?? []
+        const total = timeEntriesRes.data?.totalCount ?? entries.length
+        setTotalCount(total)
 
         const mapped = entries.map((rd: any) => {
           const reportDate = new Date(rd.entryDate)
@@ -146,37 +159,16 @@ export function EmployeeReports() {
       }
     }
     fetchData()
-  }, [])
+  }, [currentPage, selectedEmployee, dateRange]) // <-- зависимости
 
-  // Filter reports based on employee and date range
-  const filteredReports = reports
-    .filter(report => {
-      // First filter by employee
-      if (selectedEmployee !== "all" && report.employeeId !== Number.parseInt(selectedEmployee)) {
-        return false;
-      }
-
-      // Then filter by date range if we have a complete date range
-      if (dateRange.from && dateRange.to) {
-        // Parse the date string to a Date object if we don't have reportDate
-        const reportDate = report.reportDate || new Date(report.date.split('.').reverse().join('-'));
-
-        // Set hours to 0 for accurate date comparison (ignore time)
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999); // End of the day
-
-        return reportDate >= fromDate && reportDate <= toDate;
-      }
-
-      return true;
-    });
+  const handleEmployeeChange = (value: string) => {
+    setSelectedEmployee(value)
+    setCurrentPage(1)
+  }
 
   // Функція для завантаження звіту з вибраними стовпцями
   const handleDownloadWithColumns = async () => {
-    if (filteredReports.length === 0) {
+    if (reports.length === 0) {
       alert(t('admin.reports.filters.noReportsToDownload'))
       return
     }
@@ -263,13 +255,13 @@ export function EmployeeReports() {
 
   // Function to download a report
   const downloadReportFromBackend = async () => {
-    if (filteredReports.length === 0) {
+    if (reports.length === 0) {
       alert(t('admin.reports.filters.noReportsToDownload'))
       return
     }
-    const firstReport = filteredReports[0]
+    const firstReport = reports[0]
     setSelectedReport(firstReport)
-    setPreviewReports(filteredReports.filter(r => r.id !== firstReport.id))
+    setPreviewReports(reports.filter(r => r.id !== firstReport.id))
     setShowDownloadDialog(true)
   }
 
@@ -324,10 +316,8 @@ export function EmployeeReports() {
                     }}
                     setDate={(value) => {
                       if (value?.from && value?.to) {
-                        setDateRange({
-                          from: value.from,
-                          to: value.to
-                        });
+                        setDateRange({ from: value.from, to: value.to })
+                        setCurrentPage(1)
                       }
                     }}
                   />
@@ -374,14 +364,14 @@ export function EmployeeReports() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredReports.length === 0 ? (
+                  {reports.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={12} className="text-center">
                         {t('admin.reports.summary.noReportsAvailable')}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredReports.map((report) => (
+                    reports.map((report) => (
                       <TableRow key={report.id}>
                         <TableCell className="font-medium">{report.employee}</TableCell>
                         <TableCell>{report.company}</TableCell>
@@ -401,6 +391,39 @@ export function EmployeeReports() {
               </Table>
             </CardContent>
           </Card>
+          {/* Пагинация */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-gray-500">
+                {t('admin.reports.pagination.showing', {
+                  from: (currentPage - 1) * PAGE_SIZE + 1,
+                  to: Math.min(currentPage * PAGE_SIZE, totalCount),
+                  total: totalCount,
+                })}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1 || loading}
+                >
+                  ←
+                </Button>
+                <span className="text-sm">
+                  {currentPage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || loading}
+                >
+                  →
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
         <TabsContent value="detailed" className="mt-4">
           <Card>
@@ -467,14 +490,14 @@ export function EmployeeReports() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredReports.length === 0 ? (
+                      {reports.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center">
                             {t('admin.reports.summary.noReportsAvailable')}
                           </TableCell>
                         </TableRow>
                       ) : (
-                        filteredReports.map((report) => (
+                        reports.map((report) => (
                           <TableRow key={report.id}>
                             <TableCell>{report.date}</TableCell>
                             <TableCell>{report.projectBrand}</TableCell>
@@ -718,6 +741,6 @@ export function EmployeeReports() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   )
 }

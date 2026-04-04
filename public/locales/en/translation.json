@@ -5,6 +5,9 @@
       "description": "View and export time reports",
       "exportAllToExcel": "Export All Records to Excel",
       "loadingReports": "Loading reports...",
+      "pagination": {
+        "showing": "Showing {{from}}-{{to}} of {{total}} records"
+      },
       "tabs": {
         "summary": "Summary",
         "detailed": "Detailed Report"
