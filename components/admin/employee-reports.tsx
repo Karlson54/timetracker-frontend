@@ -83,47 +83,53 @@ export function EmployeeReports() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(true)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [reportsLoading, setReportsLoading] = useState(false)
 
   const [currentPage, setCurrentPage] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
   const PAGE_SIZE = 50
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
+  // Загружаем юзеров только один раз
   useEffect(() => {
-    async function fetchData() {
+    async function fetchUsers() {
       try {
-        setLoading(true)
+        const usersRes = await usersService.getAll()
+        setEmployees(usersRes.map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email ?? '',
+          position: u.position ?? '',
+          department: u.department ?? '',
+          agency: u.agencyName ?? '',
+        })))
+      } catch (error) {
+        console.error('Error fetching users:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchUsers()
+  }, [])
 
-        // Загружаем юзеров только при первом рендере
-        if (employees.length === 0) {
-          const usersRes = await usersService.getAll()
-          setEmployees(usersRes.map((u: any) => ({
-            id: u.id,
-            name: u.name,
-            email: u.email ?? '',
-            position: u.position ?? '',
-            department: u.department ?? '',
-            agency: u.agencyName ?? '',
-          })))
-        }
-
+  // Загружаем отчёты при изменении фильтров
+  useEffect(() => {
+    async function fetchReports() {
+      try {
+        setReportsLoading(true)
         const params: any = {
           pageSize: PAGE_SIZE,
           pageNumber: currentPage,
           toDate: dateRange.to.toISOString(),
           fromDate: dateRange.from.toISOString(),
         }
-
         if (selectedEmployee !== 'all') {
           params.userId = Number.parseInt(selectedEmployee)
         }
-
         const timeEntriesRes = await httpClient.get<any>('/api/timeentries', { params })
-
         const entries = timeEntriesRes.data?.entries ?? timeEntriesRes.data ?? []
         const total = timeEntriesRes.data?.totalCount ?? entries.length
         setTotalCount(total)
-
         const mapped = entries.map((rd: any) => {
           const reportDate = new Date(rd.entryDate)
           const formattedDate = reportDate.toLocaleDateString('uk-UA', {
@@ -153,13 +159,13 @@ export function EmployeeReports() {
         })
         setReports(mapped)
       } catch (error) {
-        console.error('Error fetching reports data:', error)
+        console.error('Error fetching reports:', error)
       } finally {
-        setLoading(false)
+        setReportsLoading(false)
       }
     }
-    fetchData()
-  }, [currentPage, selectedEmployee, dateRange]) // <-- зависимости
+    fetchReports()
+  }, [currentPage, selectedEmployee, dateRange])
 
   const handleEmployeeChange = (value: string) => {
     setSelectedEmployee(value)
@@ -347,6 +353,11 @@ export function EmployeeReports() {
               <CardDescription>{t('admin.reports.summary.summaryDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
+              {reportsLoading && (
+                <div className="text-center py-2 text-sm text-gray-400">
+                  Оновлення...
+                </div>
+              )}
               <Table>
                 <TableHeader>
                   <TableRow>
