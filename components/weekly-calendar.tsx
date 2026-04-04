@@ -255,7 +255,6 @@ export function WeeklyCalendar() {
 
   const toggleCopyDate = (date: Date | null) => {
     if (!date) return
-    setSelectedDate(null) // не плутаємо зі selected day
     if (isDateSelected(date)) {
       setCopyDates((prev) => prev.filter((d) => !isSameDay(d, date)))
     } else {
