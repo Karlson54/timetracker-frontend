@@ -273,21 +273,19 @@ export function WeeklyCalendar() {
       {/* Тижневий навігатор */}
       <Card>
         <CardHeader className="pb-0">
-          <div className="flex justify-between items-center">
-            <CardTitle>
+          <div className="flex items-center justify-between">
+            <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <CardTitle className="text-center">
               {t('calendar.week', {
                 from: weekDays[0].toLocaleDateString(locale, { day: 'numeric', month: 'long' }),
                 to: weekDays[6].toLocaleDateString(locale, { day: 'numeric', month: 'long' }),
               })}
             </CardTitle>
-            <div className="flex gap-2">
-              <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={goToNextWeek}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button variant="outline" size="icon" onClick={goToNextWeek}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -312,8 +310,8 @@ export function WeeklyCalendar() {
                       : isSelected
                         ? "bg-primary/10 border-primary"
                         : hasRecords
-                          ? "bg-gray-100 hover:bg-gray-200"
-                          : "bg-gray-200 hover:bg-gray-300"
+                          ? "bg-gray-300 hover:bg-gray-400"
+                          : "bg-gray-50 hover:bg-gray-100"
                       }`}
                     onClick={() => {
                       setSelectedDate(day)
@@ -383,7 +381,7 @@ export function WeeklyCalendar() {
                 <CardDescription>{t('calendar.totalHours')}</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{totalHours.toFixed(1)} {t('calendar.hours')}</div>
+                <div className="text-2xl font-bold">{totalHours.toFixed(1)} {t('calendar.totalPeriodHours')}</div>
               </CardContent>
             </Card>
             <Card>
@@ -400,7 +398,7 @@ export function WeeklyCalendar() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {avgHours > 0 ? `${avgHours.toFixed(1)} ${t('calendar.hours')}` : "—"}
+                  {avgHours > 0 ? `${avgHours.toFixed(1)} ${t('calendar.totalPeriodHours')}` : "—"}
                 </div>
               </CardContent>
             </Card>
