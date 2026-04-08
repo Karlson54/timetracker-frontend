@@ -2,7 +2,6 @@
   "admin": {
     "reports": {
       "title": "Звіти співробітників",
-      "description": "Перегляд та експорт звітів про робочий час",
       "exportAllToExcel": "Експорт всіх записів в Excel",
       "loadingReports": "Завантаження звітів...",
       "pagination": {
@@ -13,7 +12,7 @@
         "detailed": "Детальний звіт"
       },
       "filters": {
-        "title": "Фільтри звітів",
+        "title": "Період",
         "description": "Оберіть параметри для відображення звітів",
         "employee": "Співробітник",
         "selectEmployee": "Оберіть співробітника",
@@ -25,12 +24,12 @@
       "summary": {
         "title": "Зведення",
         "detailed": "Детальний звіт",
-        "summaryTitle": "Зведення звітів",
+        "summaryTitle": "Зведення записів",
         "summaryDescription": "Загальна інформація по звітам співробітників",
         "noReportsAvailable": "Немає доступних звітів за обраний період",
         "totalHoursTitle": "Загальна кількість годин",
         "period": "За обраний період",
-        "reportsCountTitle": "Кількість звітів",
+        "reportsCountTitle": "Кількість записів",
         "avgTimePerDay": "Середній час на день"
       },
       "detailed": {
@@ -318,7 +317,7 @@
     "entriesCount": "Кількість записів",
     "avgTimePerEntry": "Середній час на запис",
     "summaryInfo": "Зведена інформація",
-    "reportsForDate": "Звіти за {{date}}",
+    "reportsForDate": "Записи за {{date}}",
     "market": "Market",
     "agency": "Agency/Unit",
     "client": "Client",

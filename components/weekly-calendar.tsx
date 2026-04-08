@@ -280,7 +280,7 @@ export function WeeklyCalendar() {
             <CardTitle className="text-center">
               {t('calendar.week', {
                 from: weekDays[0].toLocaleDateString(locale, { day: 'numeric', month: 'long' }),
-                to: weekDays[6].toLocaleDateString(locale, { day: 'numeric', month: 'long' }),
+                to: weekDays[6].toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }),
               })}
             </CardTitle>
             <Button variant="outline" size="icon" onClick={goToNextWeek}>

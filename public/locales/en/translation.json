@@ -2,7 +2,6 @@
   "admin": {
     "reports": {
       "title": "Employee Reports",
-      "description": "View and export time reports",
       "exportAllToExcel": "Export All Records to Excel",
       "loadingReports": "Loading reports...",
       "pagination": {
@@ -13,7 +12,7 @@
         "detailed": "Detailed Report"
       },
       "filters": {
-        "title": "Report Filters",
+        "title": "Period",
         "description": "Select parameters to display reports",
         "employee": "Employee",
         "selectEmployee": "Select an employee",
@@ -25,12 +24,12 @@
       "summary": {
         "title": "Summary",
         "detailed": "Detailed Report",
-        "summaryTitle": "Report Summary",
+        "summaryTitle": "Summary of records",
         "summaryDescription": "General information about employee reports",
         "noReportsAvailable": "No reports available for the selected period",
         "totalHoursTitle": "Total Hours",
         "period": "For the selected period",
-        "reportsCountTitle": "Number of Reports",
+        "reportsCountTitle": "Number of Records",
         "avgTimePerDay": "Average Time per Day"
       },
       "detailed": {
@@ -318,7 +317,7 @@
     "entriesCount": "Number of Entries",
     "avgTimePerEntry": "Average Time per Entry",
     "summaryInfo": "Summary Information",
-    "reportsForDate": "Reports for {{date}}",
+    "reportsForDate": "Records for {{date}}",
     "market": "Market",
     "agency": "Agency/Unit",
     "client": "Client",

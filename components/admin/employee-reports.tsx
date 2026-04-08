@@ -290,7 +290,6 @@ export function EmployeeReports() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('admin.reports.title')}</h1>
-          <p className="text-gray-500">{t('admin.reports.description')}</p>
         </div>
         <Button onClick={() => setShowDownloadDialog(true)} className="gap-2">
           <FileSpreadsheet className="h-4 w-4" />
@@ -352,12 +351,26 @@ export function EmployeeReports() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">{t('admin.reports.summary.avgTimePerDay')}</CardTitle>
+            <CardTitle className="text-base">Середній час</CardTitle>
             <CardDescription>{t('admin.reports.summary.period')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {avgHoursPerEntry > 0 ? avgHoursPerEntry.toFixed(1) : "0"} {t('calendar.totalPeriodHours')}
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold">
+                  {(() => {
+                    const uniqueDays = new Set(allEntries.map(e => e.entryDate.split('T')[0])).size
+                    return uniqueDays > 0 ? (totalHoursAll / uniqueDays).toFixed(1) : "0"
+                  })()}
+                </span>
+                <span className="text-sm text-muted-foreground">{t('calendar.totalPeriodHours')} / день</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold">
+                  {avgHoursPerEntry > 0 ? avgHoursPerEntry.toFixed(1) : "0"}
+                </span>
+                <span className="text-sm text-muted-foreground">{t('calendar.totalPeriodHours')} / запис</span>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -524,7 +537,7 @@ export function EmployeeReports() {
 
       {/* Диалог экспорта */}
       <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="max-w-[95vw] overflow-hidden">
           <DialogHeader>
             <DialogTitle>{t('admin.reports.downloadDialog.title')}</DialogTitle>
             <DialogDescription>{t('admin.reports.downloadDialog.description')}</DialogDescription>
@@ -560,6 +573,65 @@ export function EmployeeReports() {
                 </div>
               )
             })}
+          </div>
+
+          {/* Preview таблица */}
+          <div>
+            <h3 className="text-sm font-medium mb-2">{t('admin.reports.downloadDialog.tablePreview')}</h3>
+            <div className="border rounded-md overflow-auto" style={{ maxHeight: "300px" }}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {selectedColumns.company && <TableHead>Agency</TableHead>}
+                    {selectedColumns.fullName && <TableHead>Name</TableHead>}
+                    {selectedColumns.date && <TableHead>Date</TableHead>}
+                    {selectedColumns.market && <TableHead>Market</TableHead>}
+                    {selectedColumns.contractingAgency && <TableHead>Contracting Agency / Unit</TableHead>}
+                    {selectedColumns.client && <TableHead>Client</TableHead>}
+                    {selectedColumns.projectBrand && <TableHead>Project / brand</TableHead>}
+                    {selectedColumns.media && <TableHead>Media</TableHead>}
+                    {selectedColumns.jobType && <TableHead>Job type</TableHead>}
+                    {selectedColumns.hours && <TableHead>Hours</TableHead>}
+                    {selectedColumns.comments && <TableHead>Comments</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(() => {
+                    const previewEntry = allEntries[0] ?? entries[0]
+                    if (!previewEntry) {
+                      return (
+                        <TableRow>
+                          <TableCell colSpan={Object.values(selectedColumns).filter(Boolean).length || 1} className="text-center text-gray-400 text-sm">
+                            {t('admin.reports.downloadDialog.noDataToExport')}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    }
+                    return (
+                      <TableRow>
+                        {selectedColumns.company && <TableCell>{previewEntry.agencyName || '—'}</TableCell>}
+                        {selectedColumns.fullName && <TableCell>{previewEntry.userName || '—'}</TableCell>}
+                        {selectedColumns.date && (
+                          <TableCell>
+                            {new Date(previewEntry.entryDate).toLocaleDateString('uk-UA', {
+                              day: '2-digit', month: '2-digit', year: 'numeric',
+                            })}
+                          </TableCell>
+                        )}
+                        {selectedColumns.market && <TableCell>{previewEntry.marketName || '—'}</TableCell>}
+                        {selectedColumns.contractingAgency && <TableCell>{previewEntry.contractingAgencyName || '—'}</TableCell>}
+                        {selectedColumns.client && <TableCell>{previewEntry.clientName || '—'}</TableCell>}
+                        {selectedColumns.projectBrand && <TableCell>{previewEntry.projectBrandName || '—'}</TableCell>}
+                        {selectedColumns.media && <TableCell>{previewEntry.mediaName || '—'}</TableCell>}
+                        {selectedColumns.jobType && <TableCell>{previewEntry.jobTypeName || '—'}</TableCell>}
+                        {selectedColumns.hours && <TableCell>{msToHours(previewEntry.hoursMilliseconds).toFixed(1)}</TableCell>}
+                        {selectedColumns.comments && <TableCell>{previewEntry.comments || '—'}</TableCell>}
+                      </TableRow>
+                    )
+                  })()}
+                </TableBody>
+              </Table>
+            </div>
           </div>
 
           <DialogFooter>

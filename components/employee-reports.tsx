@@ -156,7 +156,6 @@ export function EmployeeReports() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t("calendar.menu.myReports")}</h1>
-        <p className="text-gray-500">{t("admin.reports.description")}</p>
       </div>
 
       <Card>
@@ -196,13 +195,26 @@ export function EmployeeReports() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">{t("admin.reports.summary.avgTimePerDay")}</CardTitle>
+            <CardTitle className="text-base">Середній час</CardTitle>
             <CardDescription>{t("admin.reports.summary.period")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {avgHoursPerEntry > 0 ? `${avgHoursPerEntry.toFixed(1)}` : "0"}{" "}
-              {t("calendar.totalPeriodHours")}
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold">
+                  {(() => {
+                    const uniqueDays = new Set(allEntries.map(e => e.entryDate.split('T')[0])).size
+                    return uniqueDays > 0 ? (totalHoursAll / uniqueDays).toFixed(1) : "0"
+                  })()}
+                </span>
+                <span className="text-sm text-muted-foreground">{t("calendar.totalPeriodHours")} / день</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold">
+                  {avgHoursPerEntry > 0 ? avgHoursPerEntry.toFixed(1) : "0"}
+                </span>
+                <span className="text-sm text-muted-foreground">{t("calendar.totalPeriodHours")} / запис</span>
+              </div>
             </div>
           </CardContent>
         </Card>
