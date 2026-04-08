@@ -13,6 +13,7 @@ import { useMobile } from '@/hooks/use-mobile'
 import { useAuthContext } from '@/lib/AuthContext'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { useTranslation } from 'react-i18next'
+import { getAgencyLogo } from '@/lib/utils/getAgencyLogo'
 
 interface DashboardSidebarProps {
   isAdmin?: boolean
@@ -50,9 +51,9 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
         <div className="p-4 border-b">
           <div className="h-8">
             <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%D0%91%D0%B5%D0%B7%20%D0%B7%D0%B0%D0%B3%D0%BE%D0%BB%D0%BE%D0%B2%D0%BA%D0%B0-fUH90pbu2g9blr3Tk2CoJfZWlS4CiP.png"
-              alt="Mediacom"
-              className="h-full"
+              src={getAgencyLogo(user?.agencyId ?? 0)}
+              alt={user?.agencyName ?? 'Agency'}
+              className="h-full object-contain"
             />
           </div>
           <p className="text-sm text-gray-500 mt-2">
