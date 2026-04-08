@@ -8,8 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePickerWithRange } from "@/components/date-range-picker"
-import { Download, FileSpreadsheet } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { FileSpreadsheet } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -21,164 +20,172 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useTranslation } from "react-i18next"
+import type { DateRange } from "react-day-picker"
+import type { TimeEntryListItem } from "@/lib/api/types"
 
-interface Employee {
-  id: number;
-  name: string;
-  email: string;
-  position: string;
-  department: string;
-  agency: string;
+const PAGE_SIZE = 50
+
+function msToHours(ms: number): number {
+  return Math.round((ms / 3600000) * 10) / 10
 }
 
-interface Report {
-  id: number;
-  employee: string;
-  employeeId: number;
-  period: string;
-  totalHours: number;
-  projects: number;
-  efficiency: number;
-  status: string;
-  date: string;
-  reportDate: Date;
-  market: string;
-  contractingAgency: string;
-  client: string | { id: number; name: string };
-  clientName?: string;
-  projectBrand: string;
-  media: string;
-  jobType: string;
-  comments: string;
-  hours: number;
-  company: string;
+interface ClientSummary {
+  clientName: string
+  totalHours: number
+  percentage: number
+}
+
+interface Employee {
+  id: number
+  name: string
 }
 
 export function EmployeeReports() {
   const { t } = useTranslation()
+
+  const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  const today = new Date()
+
   const [selectedEmployee, setSelectedEmployee] = useState("all")
-  const [dateRange, setDateRange] = useState({
-    from: new Date(new Date().setDate(1)), // First day of current month
-    to: new Date(), // Today
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: firstDayOfMonth,
+    to: today,
   })
 
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(true)
+
+  // Зведення — с пагинацией
+  const [entries, setEntries] = useState<TimeEntryListItem[]>([])
+  const [loadingSummary, setLoadingSummary] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+
+  // Детальний — все записи за период
+  const [allEntries, setAllEntries] = useState<TimeEntryListItem[]>([])
+  const [loadingDetailed, setLoadingDetailed] = useState(false)
+
+  // Диалог экспорта
   const [showDownloadDialog, setShowDownloadDialog] = useState(false)
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null)
-  const [previewReports, setPreviewReports] = useState<Report[]>([])
+  const [isDownloading, setIsDownloading] = useState(false)
   const [selectedColumns, setSelectedColumns] = useState({
+    company: true,
+    fullName: true,
+    date: true,
     market: true,
     contractingAgency: true,
     client: true,
     projectBrand: true,
     media: true,
     jobType: true,
-    comments: true,
     hours: true,
-    date: true,
-    fullName: true,
-    company: true,
+    comments: true,
   })
 
-  const [reports, setReports] = useState<Report[]>([])
-  const [employees, setEmployees] = useState<Employee[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isDownloading, setIsDownloading] = useState(false)
-  const [reportsLoading, setReportsLoading] = useState(false)
-
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalCount, setTotalCount] = useState(0)
-  const PAGE_SIZE = 50
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
-
-  // Загружаем юзеров только один раз
+  // Загрузка пользователей
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const usersRes = await usersService.getAll()
-        setEmployees(usersRes.map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          email: u.email ?? '',
-          position: u.position ?? '',
-          department: u.department ?? '',
-          agency: u.agencyName ?? '',
-        })))
-      } catch (error) {
-        console.error('Error fetching users:', error)
+        const users = await usersService.getAll()
+        setEmployees(users.map((u: any) => ({ id: u.id, name: u.name })))
+      } catch (err) {
+        console.error("Error fetching users:", err)
       } finally {
-        setLoading(false)
+        setLoadingUsers(false)
       }
     }
     fetchUsers()
   }, [])
 
-  // Загружаем отчёты при изменении фильтров
+  // Сброс страницы при смене фильтров
   useEffect(() => {
-    async function fetchReports() {
+    setCurrentPage(1)
+  }, [dateRange, selectedEmployee])
+
+  // Зведення — с пагинацией
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to) return
+
+    async function fetchSummary() {
       try {
-        setReportsLoading(true)
+        setLoadingSummary(true)
         const params: any = {
           pageSize: PAGE_SIZE,
           pageNumber: currentPage,
-          toDate: dateRange.to.toISOString(),
-          fromDate: dateRange.from.toISOString(),
+          fromDate: dateRange!.from!.toISOString(),
+          toDate: dateRange!.to!.toISOString(),
         }
-        if (selectedEmployee !== 'all') {
-          params.userId = Number.parseInt(selectedEmployee)
+        if (selectedEmployee !== "all") {
+          params.userId = Number(selectedEmployee)
         }
-        const timeEntriesRes = await httpClient.get<any>('/api/timeentries', { params })
-        const entries = timeEntriesRes.data?.entries ?? timeEntriesRes.data ?? []
-        const total = timeEntriesRes.data?.totalCount ?? entries.length
-        setTotalCount(total)
-        const mapped = entries.map((rd: any) => {
-          const reportDate = new Date(rd.entryDate)
-          const formattedDate = reportDate.toLocaleDateString('uk-UA', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-          })
-          return {
-            id: rd.id,
-            date: formattedDate,
-            reportDate: reportDate,
-            totalHours: rd.hoursMilliseconds / 3600000,
-            hours: rd.hoursMilliseconds / 3600000,
-            employee: rd.userName || 'Unknown',
-            companies: [rd.contractingAgencyName, rd.clientName].filter(Boolean).join(', '),
-            employeeId: rd.userId,
-            employeeName: rd.userName || 'Unknown',
-            market: rd.marketName || '-',
-            agency: rd.agencyName || '-',
-            projectBrand: rd.projectBrandName || '-',
-            media: rd.mediaName || '-',
-            jobType: rd.jobTypeName || '-',
-            comments: rd.comments || '-',
-            contractingAgency: rd.contractingAgencyName || '-',
-            client: rd.clientName || '-',
-            company: rd.agencyName || '-',
-            tasks: [{ company: rd.clientName || '', description: rd.jobTypeName || '', hours: rd.hoursMilliseconds / 3600000 }],
-          }
-        })
-        setReports(mapped)
-      } catch (error) {
-        console.error('Error fetching reports:', error)
+        const res = await httpClient.get<any>('/api/timeentries', { params })
+        const data = res.data
+        setEntries(data?.entries ?? data ?? [])
+        setTotalCount(data?.totalCount ?? 0)
+        setTotalPages(data?.totalPages ?? 1)
+      } catch (err) {
+        console.error("Error fetching summary:", err)
       } finally {
-        setReportsLoading(false)
+        setLoadingSummary(false)
       }
     }
-    fetchReports()
-  }, [currentPage, selectedEmployee, dateRange])
 
-  const handleEmployeeChange = (value: string) => {
-    setSelectedEmployee(value)
-    setCurrentPage(1)
-  }
+    fetchSummary()
+  }, [dateRange, selectedEmployee, currentPage])
 
-  // Функція для завантаження звіту з вибраними стовпцями
-  const handleDownloadWithColumns = async () => {
-    if (reports.length === 0) {
-      alert(t('admin.reports.filters.noReportsToDownload'))
-      return
+  // Детальний — все записи
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to) return
+
+    async function fetchAllEntries() {
+      try {
+        setLoadingDetailed(true)
+        const params: any = {
+          pageSize: 10000,
+          pageNumber: 1,
+          fromDate: dateRange!.from!.toISOString(),
+          toDate: dateRange!.to!.toISOString(),
+        }
+        if (selectedEmployee !== "all") {
+          params.userId = Number(selectedEmployee)
+        }
+        const res = await httpClient.get<any>('/api/timeentries', { params })
+        const data = res.data
+        setAllEntries(data?.entries ?? data ?? [])
+      } catch (err) {
+        console.error("Error fetching detailed:", err)
+      } finally {
+        setLoadingDetailed(false)
+      }
     }
 
+    fetchAllEntries()
+  }, [dateRange, selectedEmployee])
+
+  // Breakdown по клиентам
+  const clientSummary: ClientSummary[] = (() => {
+    const totalMs = allEntries.reduce((sum, e) => sum + e.hoursMilliseconds, 0)
+    const map: Record<string, number> = {}
+    allEntries.forEach((e) => {
+      const name = e.clientName || "—"
+      map[name] = (map[name] || 0) + e.hoursMilliseconds
+    })
+    return Object.entries(map)
+      .map(([clientName, ms]) => ({
+        clientName,
+        totalHours: msToHours(ms),
+        percentage: totalMs > 0 ? Math.round((ms / totalMs) * 100) : 0,
+      }))
+      .sort((a, b) => b.totalHours - a.totalHours)
+  })()
+
+  const totalHoursAll = allEntries.reduce((sum, e) => sum + msToHours(e.hoursMilliseconds), 0)
+  const avgHoursPerEntry = allEntries.length > 0 ? totalHoursAll / allEntries.length : 0
+
+  // Экспорт
+  const handleDownloadWithColumns = async () => {
+    if (!dateRange?.from || !dateRange?.to) return
     setIsDownloading(true)
     try {
       const columnsParam = Object.entries(selectedColumns)
@@ -211,7 +218,7 @@ export function EmployeeReports() {
         url = `/api/reports/export/flat`
         fileName = `AllReports_${fromStr}_${toStr}.xlsx`
       } else {
-        const userId = Number.parseInt(selectedEmployee)
+        const userId = Number(selectedEmployee)
         const emp = employees.find(e => e.id === userId)
         const empName = emp ? emp.name.replace(/\s+/g, '_') : `user_${userId}`
         url = `/api/reports/user/${userId}/export/flat`
@@ -237,43 +244,46 @@ export function EmployeeReports() {
       a.download = fileName
       a.click()
       URL.revokeObjectURL(blobUrl)
-
       setShowDownloadDialog(false)
     } catch (error) {
-      console.error(t('admin.reports.errors.downloadError'), error)
+      console.error("Download error:", error)
       alert(t('admin.reports.errors.excelCreationError'))
     } finally {
       setIsDownloading(false)
     }
   }
 
-  // Функция для скачивания всех отчетов в Excel формате
-  const downloadAllReports = async () => {
-    if (reports.length === 0) {
-      alert(t('admin.reports.filters.noReportsToDownload'))
-      return
-    }
-    const firstReport = reports[0]
-    setSelectedReport(firstReport)
-    setPreviewReports(reports.filter(r => r.id !== firstReport.id))
-    setShowDownloadDialog(true)
-  }
-
-  // Function to download a report
-  const downloadReportFromBackend = async () => {
-    if (reports.length === 0) {
-      alert(t('admin.reports.filters.noReportsToDownload'))
-      return
-    }
-    const firstReport = reports[0]
-    setSelectedReport(firstReport)
-    setPreviewReports(reports.filter(r => r.id !== firstReport.id))
-    setShowDownloadDialog(true)
-  }
-
-  if (loading) {
-    return <div>Loading employee reports...</div>;
-  }
+  const Pagination = () =>
+    totalPages > 1 ? (
+      <div className="flex items-center justify-between mt-4">
+        <p className="text-sm text-gray-500">
+          {t('admin.reports.pagination.showing', {
+            from: (currentPage - 1) * PAGE_SIZE + 1,
+            to: Math.min(currentPage * PAGE_SIZE, totalCount),
+            total: totalCount,
+          })}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1 || loadingSummary}
+          >
+            ←
+          </Button>
+          <span className="text-sm">{currentPage} / {totalPages}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages || loadingSummary}
+          >
+            →
+          </Button>
+        </div>
+      </div>
+    ) : null
 
   return (
     <div className="space-y-6">
@@ -282,12 +292,13 @@ export function EmployeeReports() {
           <h1 className="text-2xl font-bold tracking-tight">{t('admin.reports.title')}</h1>
           <p className="text-gray-500">{t('admin.reports.description')}</p>
         </div>
-        <Button onClick={downloadAllReports} className="gap-2">
+        <Button onClick={() => setShowDownloadDialog(true)} className="gap-2">
           <FileSpreadsheet className="h-4 w-4" />
           {t('admin.reports.exportAllToExcel')}
         </Button>
       </div>
 
+      {/* Фильтры */}
       <Card>
         <CardHeader>
           <CardTitle>{t('admin.reports.filters.title')}</CardTitle>
@@ -303,49 +314,63 @@ export function EmployeeReports() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('admin.reports.filters.allEmployees')}</SelectItem>
-                  {employees.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.id.toString()}>
-                      {employee.name}
-                    </SelectItem>
+                  {employees.map((e) => (
+                    <SelectItem key={e.id} value={String(e.id)}>{e.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="col-span-1 md:col-span-2">
               <label className="text-sm font-medium mb-2 block">{t('admin.reports.filters.period')}</label>
-              <div className="flex gap-2">
-                <div className="flex-grow">
-                  <DatePickerWithRange
-                    date={{
-                      from: dateRange.from,
-                      to: dateRange.to
-                    }}
-                    setDate={(value) => {
-                      if (value?.from && value?.to) {
-                        setDateRange({ from: value.from, to: value.to })
-                        setCurrentPage(1)
-                      }
-                    }}
-                  />
-                </div>
-                <Button variant="outline" size="sm" className="gap-2 self-end" onClick={downloadReportFromBackend}>
-                  <Download className="h-4 w-4" />
-                  <span>{t('admin.reports.filters.downloadReport')}</span>
-                </Button>
-              </div>
+              <DatePickerWithRange date={dateRange} setDate={setDateRange} />
             </div>
-          </div>
-
-          <div className="flex justify-end mt-4 gap-2">
           </div>
         </CardContent>
       </Card>
 
+      {/* Статистика */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">{t('admin.reports.summary.totalHoursTitle')}</CardTitle>
+            <CardDescription>{t('admin.reports.summary.period')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {totalHoursAll.toFixed(1)} {t('calendar.totalPeriodHours')}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">{t('admin.reports.summary.reportsCountTitle')}</CardTitle>
+            <CardDescription>{t('admin.reports.summary.period')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">{t('admin.reports.summary.avgTimePerDay')}</CardTitle>
+            <CardDescription>{t('admin.reports.summary.period')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {avgHoursPerEntry > 0 ? avgHoursPerEntry.toFixed(1) : "0"} {t('calendar.totalPeriodHours')}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Табы */}
       <Tabs defaultValue="summary">
         <TabsList>
           <TabsTrigger value="summary">{t('admin.reports.tabs.summary')}</TabsTrigger>
           <TabsTrigger value="detailed">{t('admin.reports.tabs.detailed')}</TabsTrigger>
         </TabsList>
+
+        {/* Зведення */}
         <TabsContent value="summary" className="mt-4">
           <Card>
             <CardHeader>
@@ -353,89 +378,69 @@ export function EmployeeReports() {
               <CardDescription>{t('admin.reports.summary.summaryDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
-              {reportsLoading && (
+              {loadingSummary && (
                 <div className="text-center py-2 text-sm text-gray-400">
-                  Оновлення...
+                  {t('admin.reports.loadingReports')}
                 </div>
               )}
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Agency</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Market</TableHead>
-                    <TableHead>Contracting Agency / Unit</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Project / brand</TableHead>
-                    <TableHead>Media</TableHead>
-                    <TableHead>Job type</TableHead>
-                    <TableHead>Hours</TableHead>
-                    <TableHead>Comments</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reports.length === 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={12} className="text-center">
-                        {t('admin.reports.summary.noReportsAvailable')}
-                      </TableCell>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Agency</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Market</TableHead>
+                      <TableHead>Contracting Agency / Unit</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Project / brand</TableHead>
+                      <TableHead>Media</TableHead>
+                      <TableHead>Job type</TableHead>
+                      <TableHead>Hours</TableHead>
+                      <TableHead>Comments</TableHead>
                     </TableRow>
-                  ) : (
-                    reports.map((report) => (
-                      <TableRow key={report.id}>
-                        <TableCell className="font-medium">{report.employee}</TableCell>
-                        <TableCell>{report.company}</TableCell>
-                        <TableCell>{report.date}</TableCell>
-                        <TableCell>{report.market}</TableCell>
-                        <TableCell>{report.contractingAgency}</TableCell>
-                        <TableCell>{typeof report.client === 'object' ? report.client.name : report.clientName || report.client}</TableCell>
-                        <TableCell>{report.projectBrand}</TableCell>
-                        <TableCell>{report.media}</TableCell>
-                        <TableCell>{report.jobType}</TableCell>
-                        <TableCell>{report.hours}</TableCell>
-                        <TableCell>{report.comments}</TableCell>
+                  </TableHeader>
+                  <TableBody>
+                    {entries.length === 0 && !loadingSummary ? (
+                      <TableRow>
+                        <TableCell colSpan={11} className="text-center">
+                          {t('admin.reports.summary.noReportsAvailable')}
+                        </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      entries.map((entry) => (
+                        <TableRow key={entry.id}>
+                          <TableCell className="whitespace-nowrap">{entry.userName || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">{entry.agencyName || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {new Date(entry.entryDate).toLocaleDateString('uk-UA', {
+                              day: '2-digit', month: '2-digit', year: 'numeric',
+                            })}
+                          </TableCell>
+                          <TableCell>{entry.marketName || "—"}</TableCell>
+                          <TableCell>{entry.contractingAgencyName || "—"}</TableCell>
+                          <TableCell>{entry.clientName || "—"}</TableCell>
+                          <TableCell>{entry.projectBrandName || "—"}</TableCell>
+                          <TableCell>{entry.mediaName || "—"}</TableCell>
+                          <TableCell>{entry.jobTypeName || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {msToHours(entry.hoursMilliseconds).toFixed(1)}
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate" title={entry.comments ?? ""}>
+                            {entry.comments || "—"}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              <Pagination />
             </CardContent>
           </Card>
-          {/* Пагинация */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-gray-500">
-                {t('admin.reports.pagination.showing', {
-                  from: (currentPage - 1) * PAGE_SIZE + 1,
-                  to: Math.min(currentPage * PAGE_SIZE, totalCount),
-                  total: totalCount,
-                })}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1 || loading}
-                >
-                  ←
-                </Button>
-                <span className="text-sm">
-                  {currentPage} / {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages || loading}
-                >
-                  →
-                </Button>
-              </div>
-            </div>
-          )}
         </TabsContent>
+
+        {/* Детальний */}
         <TabsContent value="detailed" className="mt-4">
           <Card>
             <CardHeader>
@@ -443,306 +448,125 @@ export function EmployeeReports() {
               <CardDescription>{t('admin.reports.detailed.description')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground mb-4">
-                {t('admin.reports.detailed.selectEmployeeMessage')}
-              </p>
-              {selectedEmployee !== "all" ? (
-                <div className="space-y-6">
-                  <div className="border rounded-lg p-4">
-                    <h3 className="font-medium mb-2">{t('admin.reports.detailed.timeDistribution')}</h3>
-                    <div className="space-y-3">
-                      <div>
+              {loadingDetailed && (
+                <div className="text-center py-2 text-sm text-gray-400">
+                  {t('admin.reports.loadingReports')}
+                </div>
+              )}
+
+              {clientSummary.length > 0 ? (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium mb-3">
+                    {t('admin.reports.detailed.timeDistribution')}
+                  </h3>
+                  <div className="space-y-3">
+                    {clientSummary.map((client) => (
+                      <div key={client.clientName}>
                         <div className="flex justify-between text-sm mb-1">
-                          <span>{t('admin.reports.detailed.rebranding')}</span>
-                          <span>24h (30%)</span>
+                          <span className="font-medium">{client.clientName}</span>
+                          <span className="text-gray-500">
+                            {client.totalHours.toFixed(1)}г ({client.percentage}%)
+                          </span>
                         </div>
                         <div className="w-full bg-gray-100 rounded-full h-2">
-                          <div className="bg-primary h-2 rounded-full" style={{ width: "30%" }}></div>
+                          <div
+                            className="bg-primary h-2 rounded-full transition-all"
+                            style={{ width: `${client.percentage}%` }}
+                          />
                         </div>
                       </div>
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>{t('admin.reports.detailed.marketingCampaign')}</span>
-                          <span>18h (22%)</span>
-                        </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2">
-                          <div className="bg-primary h-2 rounded-full" style={{ width: "22%" }}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>{t('admin.reports.detailed.websiteDevelopment')}</span>
-                          <span>32h (40%)</span>
-                        </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2">
-                          <div className="bg-primary h-2 rounded-full" style={{ width: "40%" }}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>{t('admin.reports.detailed.otherTasks')}</span>
-                          <span>6h (8%)</span>
-                        </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2">
-                          <div className="bg-primary h-2 rounded-full" style={{ width: "8%" }}></div>
-                        </div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
 
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t('admin.reports.detailed.date')}</TableHead>
-                        <TableHead>{t('admin.reports.detailed.project')}</TableHead>
-                        <TableHead>{t('admin.reports.detailed.task')}</TableHead>
-                        <TableHead>{t('admin.reports.detailed.hours')}</TableHead>
-                        <TableHead>{t('admin.reports.detailed.comment')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {reports.length === 0 ? (
+                  <div className="mt-4">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center">
-                            {t('admin.reports.summary.noReportsAvailable')}
-                          </TableCell>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Project / brand</TableHead>
+                          <TableHead>Job type</TableHead>
+                          <TableHead>Hours</TableHead>
+                          <TableHead>Comments</TableHead>
                         </TableRow>
-                      ) : (
-                        reports.map((report) => (
-                          <TableRow key={report.id}>
-                            <TableCell>{report.date}</TableCell>
-                            <TableCell>{report.projectBrand}</TableCell>
-                            <TableCell>{report.jobType}</TableCell>
-                            <TableCell>{report.hours}</TableCell>
-                            <TableCell>{report.comments}</TableCell>
+                      </TableHeader>
+                      <TableBody>
+                        {allEntries.map((entry) => (
+                          <TableRow key={entry.id}>
+                            <TableCell className="whitespace-nowrap">
+                              {new Date(entry.entryDate).toLocaleDateString('uk-UA', {
+                                day: '2-digit', month: '2-digit', year: 'numeric',
+                              })}
+                            </TableCell>
+                            <TableCell>{entry.projectBrandName || "—"}</TableCell>
+                            <TableCell>{entry.jobTypeName || "—"}</TableCell>
+                            <TableCell>{msToHours(entry.hoursMilliseconds).toFixed(1)}</TableCell>
+                            <TableCell className="max-w-[200px] truncate" title={entry.comments ?? ""}>
+                              {entry.comments || "—"}
+                            </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-
-                  <div className="flex justify-end">
-                    <Button onClick={downloadReportFromBackend} className="gap-2">
-                      <FileSpreadsheet className="h-4 w-4" />
-                      {t('admin.reports.detailed.exportToExcel')}
-                    </Button>
+                        ))}
+                        <TableRow className="border-t-2">
+                          <TableCell colSpan={3} className="font-semibold">Total</TableCell>
+                          <TableCell className="font-semibold">{totalHoursAll.toFixed(1)}</TableCell>
+                          <TableCell />
+                        </TableRow>
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <FileSpreadsheet className="h-16 w-16 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium mb-1">{t('admin.reports.detailed.selectEmployeeTitle')}</h3>
-                  <p className="text-muted-foreground">
-                    {t('admin.reports.detailed.selectEmployeeHint')}
+                !loadingDetailed && (
+                  <p className="text-center text-gray-500 py-8">
+                    {t('admin.reports.summary.noReportsAvailable')}
                   </p>
-                </div>
+                )
               )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Dialog for column selection and preview */}
+      {/* Диалог экспорта */}
       <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
-        <DialogContent className="sm:max-w-4xl max-h-screen flex flex-col">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{t('admin.reports.downloadDialog.title')}</DialogTitle>
-            <DialogDescription>
-              {t('admin.reports.downloadDialog.description')}
-            </DialogDescription>
+            <DialogDescription>{t('admin.reports.downloadDialog.description')}</DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-row flex-wrap gap-4 py-4 overflow-y-auto">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="company-checkbox"
-                checked={selectedColumns.company}
-                onCheckedChange={(checked) =>
-                  setSelectedColumns({ ...selectedColumns, company: !!checked })
-                }
-              />
-              <label htmlFor="company-checkbox" className="text-sm font-medium">
-                {t('admin.reports.tableHeaders.agency')}
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="fullName-checkbox"
-                checked={selectedColumns.fullName}
-                onCheckedChange={(checked) =>
-                  setSelectedColumns({ ...selectedColumns, fullName: !!checked })
-                }
-              />
-              <label htmlFor="fullName-checkbox" className="text-sm font-medium">
-                {t('admin.reports.tableHeaders.name')}
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="date-checkbox"
-                checked={selectedColumns.date}
-                onCheckedChange={(checked) =>
-                  setSelectedColumns({ ...selectedColumns, date: !!checked })
-                }
-              />
-              <label htmlFor="date-checkbox" className="text-sm font-medium">
-                {t('admin.reports.tableHeaders.date')}
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="market-checkbox"
-                checked={selectedColumns.market}
-                onCheckedChange={(checked) =>
-                  setSelectedColumns({ ...selectedColumns, market: !!checked })
-                }
-              />
-              <label htmlFor="market-checkbox" className="text-sm font-medium">
-                {t('admin.reports.tableHeaders.market')}
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="contractingAgency-checkbox"
-                checked={selectedColumns.contractingAgency}
-                onCheckedChange={(checked) =>
-                  setSelectedColumns({ ...selectedColumns, contractingAgency: !!checked })
-                }
-              />
-              <label htmlFor="contractingAgency-checkbox" className="text-sm font-medium">
-                {t('admin.reports.tableHeaders.contractingAgency')}
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="client-checkbox"
-                checked={selectedColumns.client}
-                onCheckedChange={(checked) =>
-                  setSelectedColumns({ ...selectedColumns, client: !!checked })
-                }
-              />
-              <label htmlFor="client-checkbox" className="text-sm font-medium">
-                {t('admin.reports.tableHeaders.client')}
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="projectBrand-checkbox"
-                checked={selectedColumns.projectBrand}
-                onCheckedChange={(checked) =>
-                  setSelectedColumns({ ...selectedColumns, projectBrand: !!checked })
-                }
-              />
-              <label htmlFor="projectBrand-checkbox" className="text-sm font-medium">
-                {t('admin.reports.tableHeaders.projectBrand')}
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="media-checkbox"
-                checked={selectedColumns.media}
-                onCheckedChange={(checked) =>
-                  setSelectedColumns({ ...selectedColumns, media: !!checked })
-                }
-              />
-              <label htmlFor="media-checkbox" className="text-sm font-medium">
-                {t('admin.reports.tableHeaders.media')}
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="jobType-checkbox"
-                checked={selectedColumns.jobType}
-                onCheckedChange={(checked) =>
-                  setSelectedColumns({ ...selectedColumns, jobType: !!checked })
-                }
-              />
-              <label htmlFor="jobType-checkbox" className="text-sm font-medium">
-                {t('admin.reports.tableHeaders.jobType')}
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="hours-checkbox"
-                checked={selectedColumns.hours}
-                onCheckedChange={(checked) =>
-                  setSelectedColumns({ ...selectedColumns, hours: !!checked })
-                }
-              />
-              <label htmlFor="hours-checkbox" className="text-sm font-medium">
-                {t('admin.reports.tableHeaders.hours')}
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="comments-checkbox"
-                checked={selectedColumns.comments}
-                onCheckedChange={(checked) =>
-                  setSelectedColumns({ ...selectedColumns, comments: !!checked })
-                }
-              />
-              <label htmlFor="comments-checkbox" className="text-sm font-medium">
-                {t('admin.reports.tableHeaders.comments')}
-              </label>
-            </div>
+          <div className="flex flex-row flex-wrap gap-4 py-4">
+            {(Object.keys(selectedColumns) as Array<keyof typeof selectedColumns>).map((key) => {
+              const labelMap: Record<keyof typeof selectedColumns, string> = {
+                company: 'Agency',
+                fullName: 'Name',
+                date: 'Date',
+                market: 'Market',
+                contractingAgency: 'Contracting Agency / Unit',
+                client: 'Client',
+                projectBrand: 'Project / brand',
+                media: 'Media',
+                jobType: 'Job type',
+                hours: 'Hours',
+                comments: 'Comments',
+              }
+              return (
+                <div key={key} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`col-${key}`}
+                    checked={selectedColumns[key]}
+                    onCheckedChange={(checked) =>
+                      setSelectedColumns({ ...selectedColumns, [key]: !!checked })
+                    }
+                  />
+                  <label htmlFor={`col-${key}`} className="text-sm font-medium">
+                    {labelMap[key]}
+                  </label>
+                </div>
+              )
+            })}
           </div>
 
-          <div className="overflow-y-auto" style={{ maxHeight: "350px" }}>
-            <h3 className="font-medium mb-2">
-              {t('admin.reports.downloadDialog.tablePreview')} ({previewReports.length + (selectedReport ? 1 : 0)} {t('admin.reports.downloadDialog.reports')})
-            </h3>
-            {selectedReport && (
-              <Table className="min-w-full">
-                <TableHeader>
-                  <TableRow>
-                    {selectedColumns.company && <TableHead>{t('admin.reports.tableHeaders.agency')}</TableHead>}
-                    {selectedColumns.fullName && <TableHead>{t('admin.reports.tableHeaders.name')}</TableHead>}
-                    {selectedColumns.date && <TableHead>{t('admin.reports.tableHeaders.date')}</TableHead>}
-                    {selectedColumns.market && <TableHead>{t('admin.reports.tableHeaders.market')}</TableHead>}
-                    {selectedColumns.contractingAgency && <TableHead>{t('admin.reports.tableHeaders.contractingAgency')}</TableHead>}
-                    {selectedColumns.client && <TableHead>{t('admin.reports.tableHeaders.client')}</TableHead>}
-                    {selectedColumns.projectBrand && <TableHead>{t('admin.reports.tableHeaders.projectBrand')}</TableHead>}
-                    {selectedColumns.media && <TableHead>{t('admin.reports.tableHeaders.media')}</TableHead>}
-                    {selectedColumns.jobType && <TableHead>{t('admin.reports.tableHeaders.jobType')}</TableHead>}
-                    {selectedColumns.hours && <TableHead>{t('admin.reports.tableHeaders.hours')}</TableHead>}
-                    {selectedColumns.comments && <TableHead>{t('admin.reports.tableHeaders.comments')}</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    {selectedColumns.company && <TableCell>{selectedReport.company}</TableCell>}
-                    {selectedColumns.fullName && <TableCell>{selectedReport.employee}</TableCell>}
-                    {selectedColumns.date && <TableCell>{selectedReport.date}</TableCell>}
-                    {selectedColumns.market && <TableCell>{selectedReport.market}</TableCell>}
-                    {selectedColumns.contractingAgency && <TableCell>{selectedReport.contractingAgency}</TableCell>}
-                    {selectedColumns.client && <TableCell>{typeof selectedReport.client === 'object' ? selectedReport.client.name : selectedReport.clientName || selectedReport.client}</TableCell>}
-                    {selectedColumns.projectBrand && <TableCell>{selectedReport.projectBrand}</TableCell>}
-                    {selectedColumns.media && <TableCell>{selectedReport.media}</TableCell>}
-                    {selectedColumns.jobType && <TableCell>{selectedReport.jobType}</TableCell>}
-                    {selectedColumns.hours && <TableCell>{selectedReport.hours}</TableCell>}
-                    {selectedColumns.comments && <TableCell>{selectedReport.comments}</TableCell>}
-                  </TableRow>
-                  {previewReports.map(report => (
-                    <TableRow key={`preview-${report.id}`}>
-                      {selectedColumns.company && <TableCell>{report.company}</TableCell>}
-                      {selectedColumns.fullName && <TableCell>{report.employee}</TableCell>}
-                      {selectedColumns.date && <TableCell>{report.date}</TableCell>}
-                      {selectedColumns.market && <TableCell>{report.market}</TableCell>}
-                      {selectedColumns.contractingAgency && <TableCell>{report.contractingAgency}</TableCell>}
-                      {selectedColumns.client && <TableCell>{typeof report.client === 'object' ? report.client.name : report.clientName || report.client}</TableCell>}
-                      {selectedColumns.projectBrand && <TableCell>{report.projectBrand}</TableCell>}
-                      {selectedColumns.media && <TableCell>{report.media}</TableCell>}
-                      {selectedColumns.jobType && <TableCell>{report.jobType}</TableCell>}
-                      {selectedColumns.hours && <TableCell>{report.hours}</TableCell>}
-                      {selectedColumns.comments && <TableCell>{report.comments}</TableCell>}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </div>
-
-          <DialogFooter className="flex justify-end space-x-2 pt-4 border-t">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setShowDownloadDialog(false)}>
               {t('admin.reports.downloadDialog.cancel')}
             </Button>
@@ -752,6 +576,6 @@ export function EmployeeReports() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div >
+    </div>
   )
 }
