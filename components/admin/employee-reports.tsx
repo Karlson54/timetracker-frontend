@@ -482,33 +482,29 @@ export function EmployeeReports() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Project / brand</TableHead>
-                          <TableHead>Job type</TableHead>
-                          <TableHead>Hours</TableHead>
-                          <TableHead>Comments</TableHead>
+                          <TableHead>Client</TableHead>
+                          <TableHead className="text-right">Hours</TableHead>
+                          <TableHead className="text-right">%</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {allEntries.map((entry) => (
-                          <TableRow key={entry.id}>
-                            <TableCell className="whitespace-nowrap">
-                              {new Date(entry.entryDate).toLocaleDateString('uk-UA', {
-                                day: '2-digit', month: '2-digit', year: 'numeric',
-                              })}
+                        {clientSummary.map((client) => (
+                          <TableRow key={client.clientName}>
+                            <TableCell>{client.clientName}</TableCell>
+                            <TableCell className="text-right font-medium">
+                              {client.totalHours.toFixed(1)}
                             </TableCell>
-                            <TableCell>{entry.projectBrandName || "—"}</TableCell>
-                            <TableCell>{entry.jobTypeName || "—"}</TableCell>
-                            <TableCell>{msToHours(entry.hoursMilliseconds).toFixed(1)}</TableCell>
-                            <TableCell className="max-w-[200px] truncate" title={entry.comments ?? ""}>
-                              {entry.comments || "—"}
+                            <TableCell className="text-right text-gray-500">
+                              {client.percentage}%
                             </TableCell>
                           </TableRow>
                         ))}
                         <TableRow className="border-t-2">
-                          <TableCell colSpan={3} className="font-semibold">Total</TableCell>
-                          <TableCell className="font-semibold">{totalHoursAll.toFixed(1)}</TableCell>
-                          <TableCell />
+                          <TableCell className="font-semibold">Total</TableCell>
+                          <TableCell className="text-right font-semibold">
+                            {totalHoursAll.toFixed(1)}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">100%</TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
