@@ -1,10 +1,23 @@
 import httpClient from '@/lib/api/httpClient'
 import type { TimeEntryListItem, CreateTimeEntryRequest, UpdateTimeEntryRequest } from '@/lib/api/types'
 
+interface PagedTimeEntriesResponse {
+  entries: TimeEntryListItem[]
+  totalCount: number
+  pageNumber: number
+  pageSize: number
+  totalPages: number
+}
+
 const timeEntriesService = {
-  async getMy(fromDate?: string, toDate?: string): Promise<TimeEntryListItem[]> {
-    const response = await httpClient.get<TimeEntryListItem[]>('/api/timeentries/my', {
-      params: { fromDate, toDate },
+  async getMy(
+    fromDate?: string,
+    toDate?: string,
+    pageNumber: number = 1,
+    pageSize: number = 50
+  ): Promise<PagedTimeEntriesResponse> {
+    const response = await httpClient.get<PagedTimeEntriesResponse>('/api/timeentries/my', {
+      params: { fromDate, toDate, pageNumber, pageSize },
     })
     return response.data
   },

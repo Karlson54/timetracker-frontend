@@ -5,17 +5,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { DatePickerWithRange } from "@/components/date-range-picker"
-import { Download, FileSpreadsheet } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { DateRange } from "react-day-picker"
-import { ReportExportModal } from "@/components/report-export-modal"
 import { useTranslation } from "react-i18next"
 import timeEntriesService from "@/lib/api/services/timeEntriesService"
 import type { TimeEntryListItem } from "@/lib/api/types"
 
-// Хелпер: миллисекунды → часы с 1 знаком
+const PAGE_SIZE = 50
+
 function msToHours(ms: number): number {
   return Math.round((ms / 3600000) * 10) / 10
+}
+
+interface ClientSummary {
+  clientName: string
+  totalHours: number
+  percentage: number
 }
 
 export function EmployeeReports() {
@@ -31,10 +36,14 @@ export function EmployeeReports() {
 
   const [entries, setEntries] = useState<TimeEntryListItem[]>([])
   const [loading, setLoading] = useState(false)
-  const [showExportModal, setShowExportModal] = useState(false)
-  const [exportData, setExportData] = useState<any[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
 
-  // Загрузка данных при изменении периода
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [dateRange])
+
   useEffect(() => {
     if (!dateRange?.from || !dateRange?.to) return
 
@@ -43,8 +52,10 @@ export function EmployeeReports() {
         setLoading(true)
         const fromStr = dateRange!.from!.toISOString().split("T")[0]
         const toStr = dateRange!.to!.toISOString().split("T")[0]
-        const data = await timeEntriesService.getMy(fromStr, toStr)
-        setEntries(data)
+        const result = await timeEntriesService.getMy(fromStr, toStr, currentPage, PAGE_SIZE)
+        setEntries(result.entries)
+        setTotalCount(result.totalCount)
+        setTotalPages(result.totalPages)
       } catch (err) {
         console.error("Error fetching time entries:", err)
       } finally {
@@ -53,63 +64,66 @@ export function EmployeeReports() {
     }
 
     fetchEntries()
-  }, [dateRange])
+  }, [dateRange, currentPage])
 
-  // Подготовка данных для экспорта
-  const prepareExportData = (entriesToExport: TimeEntryListItem[]) => {
-    return entriesToExport.map((entry) => ({
-      date: new Date(entry.entryDate).toLocaleDateString("uk-UA", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }),
-      market: entry.marketName || "-",
-      agency: "-", // агентство берётся из профиля пользователя, не из entry
-      fullName: entry.userName || "-",
-      company: entry.contractingAgencyName || "-",
-      client: entry.clientName || "-",
-      project: entry.projectBrandName || "-",
-      projectBrand: entry.projectBrandName || "-",
-      media: entry.mediaName || "-",
-      jobType: entry.jobTypeName || "-",
-      comments: entry.comments || "-",
-      hours: msToHours(entry.hoursMilliseconds),
-    }))
-  }
-
-  const downloadAllReports = () => {
-    if (entries.length === 0) {
-      alert(t("admin.reports.downloadDialog.noReportsToExport"))
-      return
-    }
-    const data = prepareExportData(entries)
-    setExportData(data)
-    setShowExportModal(true)
-  }
-
-  const downloadSingleEntry = (entry: TimeEntryListItem) => {
-    const data = prepareExportData([entry])
-    setExportData(data)
-    setShowExportModal(true)
-  }
+  // Підрахунок breakdown по клієнтах
+  const clientSummary: ClientSummary[] = (() => {
+    const totalMs = entries.reduce((sum, e) => sum + e.hoursMilliseconds, 0)
+    const map: Record<string, number> = {}
+    entries.forEach((e) => {
+      const name = e.clientName || "—"
+      map[name] = (map[name] || 0) + e.hoursMilliseconds
+    })
+    return Object.entries(map)
+      .map(([clientName, ms]) => ({
+        clientName,
+        totalHours: msToHours(ms),
+        percentage: totalMs > 0 ? Math.round((ms / totalMs) * 100) : 0,
+      }))
+      .sort((a, b) => b.totalHours - a.totalHours)
+  })()
 
   const totalHours = entries.reduce((sum, e) => sum + msToHours(e.hoursMilliseconds), 0)
 
-  if (loading) {
-    return <div>{t("admin.reports.loadingReports")}</div>
-  }
+  const Pagination = () =>
+    totalPages > 1 ? (
+      <div className="flex items-center justify-between mt-4">
+        <p className="text-sm text-gray-500">
+          {t("admin.reports.pagination.showing", {
+            from: (currentPage - 1) * PAGE_SIZE + 1,
+            to: Math.min(currentPage * PAGE_SIZE, totalCount),
+            total: totalCount,
+          })}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1 || loading}
+          >
+            ←
+          </Button>
+          <span className="text-sm">
+            {currentPage} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages || loading}
+          >
+            →
+          </Button>
+        </div>
+      </div>
+    ) : null
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("calendar.menu.myReports")}</h1>
-          <p className="text-gray-500">{t("admin.reports.description")}</p>
-        </div>
-        <Button onClick={downloadAllReports} className="gap-2">
-          <FileSpreadsheet className="h-4 w-4" />
-          <span>{t("admin.reports.exportAllToExcel")}</span>
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">{t("calendar.menu.myReports")}</h1>
+        <p className="text-gray-500">{t("admin.reports.description")}</p>
       </div>
 
       <Card>
@@ -118,11 +132,9 @@ export function EmployeeReports() {
           <CardDescription>{t("admin.reports.filters.description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="col-span-1 md:col-span-2">
-              <label className="text-sm font-medium mb-2 block">{t("admin.reports.filters.period")}</label>
-              <DatePickerWithRange date={dateRange} setDate={setDateRange} />
-            </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">{t("admin.reports.filters.period")}</label>
+            <DatePickerWithRange date={dateRange} setDate={setDateRange} />
           </div>
         </CardContent>
       </Card>
@@ -145,7 +157,7 @@ export function EmployeeReports() {
             <CardDescription>{t("admin.reports.summary.period")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{entries.length}</div>
+            <div className="text-2xl font-bold">{totalCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -155,9 +167,7 @@ export function EmployeeReports() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {entries.length
-                ? (totalHours / entries.length).toFixed(1)
-                : "0"}{" "}
+              {entries.length ? (totalHours / entries.length).toFixed(1) : "0"}{" "}
               {t("calendar.totalPeriodHours")}
             </div>
           </CardContent>
@@ -170,6 +180,7 @@ export function EmployeeReports() {
           <TabsTrigger value="detailed">{t("admin.reports.detailed.title")}</TabsTrigger>
         </TabsList>
 
+        {/* ===== ЗВЕДЕННЯ — таблица со всеми полями ===== */}
         <TabsContent value="summary" className="mt-4">
           <Card>
             <CardHeader>
@@ -177,56 +188,71 @@ export function EmployeeReports() {
               <CardDescription>{t("admin.reports.summary.summaryDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("admin.reports.tableHeaders.date")}</TableHead>
-                    <TableHead>{t("admin.reports.tableHeaders.client")}</TableHead>
-                    <TableHead>{t("admin.reports.tableHeaders.projectBrand")}</TableHead>
-                    <TableHead>{t("admin.reports.tableHeaders.jobType")}</TableHead>
-                    <TableHead>{t("admin.reports.tableHeaders.hours")}</TableHead>
-                    <TableHead>{t("admin.reports.tableHeaders.actions")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {entries.length === 0 ? (
+              {loading && (
+                <div className="text-center py-2 text-sm text-gray-400">
+                  {t("admin.reports.loadingReports")}
+                </div>
+              )}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center">
-                        {t("admin.reports.summary.noReportsAvailable")}
-                      </TableCell>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Agency</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Market</TableHead>
+                      <TableHead>Contracting Agency / Unit</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Project / Brand</TableHead>
+                      <TableHead>Media</TableHead>
+                      <TableHead>Job Type</TableHead>
+                      <TableHead>Hours</TableHead>
+                      <TableHead>Comments</TableHead>
                     </TableRow>
-                  ) : (
-                    entries.map((entry) => (
-                      <TableRow key={entry.id}>
-                        <TableCell>
-                          {new Date(entry.entryDate).toLocaleDateString("uk-UA", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          })}
-                        </TableCell>
-                        <TableCell>{entry.clientName || "—"}</TableCell>
-                        <TableCell>{entry.projectBrandName || "—"}</TableCell>
-                        <TableCell>{entry.jobTypeName || "—"}</TableCell>
-                        <TableCell>{msToHours(entry.hoursMilliseconds).toFixed(1)}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => downloadSingleEntry(entry)}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
+                  </TableHeader>
+                  <TableBody>
+                    {entries.length === 0 && !loading ? (
+                      <TableRow>
+                        <TableCell colSpan={11} className="text-center">
+                          {t("admin.reports.summary.noReportsAvailable")}
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      entries.map((entry) => (
+                        <TableRow key={entry.id}>
+                          <TableCell className="whitespace-nowrap">{entry.userName || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">{entry.agencyName || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {new Date(entry.entryDate).toLocaleDateString("uk-UA", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            })}
+                          </TableCell>
+                          <TableCell>{entry.marketName || "—"}</TableCell>
+                          <TableCell>{entry.contractingAgencyName || "—"}</TableCell>
+                          <TableCell>{entry.clientName || "—"}</TableCell>
+                          <TableCell>{entry.projectBrandName || "—"}</TableCell>
+                          <TableCell>{entry.mediaName || "—"}</TableCell>
+                          <TableCell>{entry.jobTypeName || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {msToHours(entry.hoursMilliseconds).toFixed(1)}
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate" title={entry.comments ?? ""}>
+                            {entry.comments || "—"}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              <Pagination />
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* ===== ДЕТАЛЬНИЙ — breakdown по клієнтах ===== */}
         <TabsContent value="detailed" className="mt-4">
           <Card>
             <CardHeader>
@@ -234,68 +260,83 @@ export function EmployeeReports() {
               <CardDescription>{t("admin.reports.detailed.description")}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("admin.reports.tableHeaders.date")}</TableHead>
-                    <TableHead>{t("admin.reports.tableHeaders.market")}</TableHead>
-                    <TableHead>{t("admin.reports.tableHeaders.contractingAgency")}</TableHead>
-                    <TableHead>{t("admin.reports.tableHeaders.client")}</TableHead>
-                    <TableHead>{t("admin.reports.tableHeaders.projectBrand")}</TableHead>
-                    <TableHead>{t("admin.reports.tableHeaders.media")}</TableHead>
-                    <TableHead>{t("admin.reports.tableHeaders.jobType")}</TableHead>
-                    <TableHead>{t("admin.reports.tableHeaders.hours")}</TableHead>
-                    <TableHead>{t("admin.reports.tableHeaders.comments")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {entries.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center">
-                        {t("admin.reports.summary.noReportsAvailable")}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    entries.map((entry) => (
-                      <TableRow key={entry.id}>
-                        <TableCell>
-                          {new Date(entry.entryDate).toLocaleDateString("uk-UA", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          })}
-                        </TableCell>
-                        <TableCell>{entry.marketName || "—"}</TableCell>
-                        <TableCell>{entry.contractingAgencyName || "—"}</TableCell>
-                        <TableCell>{entry.clientName || "—"}</TableCell>
-                        <TableCell>{entry.projectBrandName || "—"}</TableCell>
-                        <TableCell>{entry.mediaName || "—"}</TableCell>
-                        <TableCell>{entry.jobTypeName || "—"}</TableCell>
-                        <TableCell>{msToHours(entry.hoursMilliseconds).toFixed(1)}</TableCell>
-                        <TableCell className="max-w-[200px] truncate" title={entry.comments || ""}>
-                          {entry.comments || "—"}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-              <div className="flex justify-end mt-4">
-                <Button onClick={downloadAllReports} className="gap-2">
-                  <FileSpreadsheet className="h-4 w-4" />
-                  {t("admin.reports.detailed.exportToExcel")}
-                </Button>
-              </div>
+              {loading && (
+                <div className="text-center py-2 text-sm text-gray-400">
+                  {t("admin.reports.loadingReports")}
+                </div>
+              )}
+
+              {/* Client breakdown */}
+              {clientSummary.length > 0 ? (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium mb-3">
+                    {t("admin.reports.detailed.timeDistribution")}
+                  </h3>
+                  <div className="space-y-3">
+                    {clientSummary.map((client) => (
+                      <div key={client.clientName}>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="font-medium">{client.clientName}</span>
+                          <span className="text-gray-500">
+                            {client.totalHours.toFixed(1)}г ({client.percentage}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2">
+                          <div
+                            className="bg-primary h-2 rounded-full transition-all"
+                            style={{ width: `${client.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Таблица клиентов */}
+                  <div className="mt-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Client</TableHead>
+                          <TableHead className="text-right">Hours</TableHead>
+                          <TableHead className="text-right">%</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {clientSummary.map((client) => (
+                          <TableRow key={client.clientName}>
+                            <TableCell>{client.clientName}</TableCell>
+                            <TableCell className="text-right font-medium">
+                              {client.totalHours.toFixed(1)}
+                            </TableCell>
+                            <TableCell className="text-right text-gray-500">
+                              {client.percentage}%
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow className="border-t-2">
+                          <TableCell className="font-semibold">Total</TableCell>
+                          <TableCell className="text-right font-semibold">
+                            {totalHours.toFixed(1)}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">100%</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              ) : (
+                !loading && (
+                  <p className="text-center text-gray-500 py-8">
+                    {t("admin.reports.summary.noReportsAvailable")}
+                  </p>
+                )
+              )}
+
+              <Pagination />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-
-      <ReportExportModal
-        isOpen={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        reportData={exportData}
-      />
     </div>
   )
 }

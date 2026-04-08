@@ -76,8 +76,8 @@ export function WeeklyCalendar() {
       try {
         setLoading(true)
         setError(null)
-        const data = await timeEntriesService.getMy(weekFrom, weekTo)
-        setEntries(data)
+        const result = await timeEntriesService.getMy(weekFrom, weekTo, 1, 200)
+        setEntries(result.entries)
       } catch (err: any) {
         setError(err?.response?.data?.message ?? t('common.errors.loadFailed'))
       } finally {
