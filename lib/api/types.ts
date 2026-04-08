@@ -86,6 +86,7 @@ export interface TimeEntryListItem {
   id: number
   userId: number
   userName: string
+  agencyName: string | null   // <-- добавить
   entryDate: string
   hoursMilliseconds: number
   clientId: number | null

@@ -34,22 +34,29 @@ export function EmployeeReports() {
     to: today,
   })
 
+  // Данные для вкладки "Зведення" — с пагинацией
   const [entries, setEntries] = useState<TimeEntryListItem[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loadingSummary, setLoadingSummary] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
 
+  // Данные для вкладки "Детальний" — все записи за период
+  const [allEntries, setAllEntries] = useState<TimeEntryListItem[]>([])
+  const [loadingDetailed, setLoadingDetailed] = useState(false)
+
+  // Сброс страницы при смене дат
   useEffect(() => {
     setCurrentPage(1)
   }, [dateRange])
 
+  // Загрузка данных для "Зведення" (с пагинацией)
   useEffect(() => {
     if (!dateRange?.from || !dateRange?.to) return
 
-    async function fetchEntries() {
+    async function fetchSummaryEntries() {
       try {
-        setLoading(true)
+        setLoadingSummary(true)
         const fromStr = dateRange!.from!.toISOString().split("T")[0]
         const toStr = dateRange!.to!.toISOString().split("T")[0]
         const result = await timeEntriesService.getMy(fromStr, toStr, currentPage, PAGE_SIZE)
@@ -59,18 +66,40 @@ export function EmployeeReports() {
       } catch (err) {
         console.error("Error fetching time entries:", err)
       } finally {
-        setLoading(false)
+        setLoadingSummary(false)
       }
     }
 
-    fetchEntries()
+    fetchSummaryEntries()
   }, [dateRange, currentPage])
 
-  // Підрахунок breakdown по клієнтах
+  // Загрузка ВСЕХ данных для "Детальний" (без пагинации — большой pageSize)
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to) return
+
+    async function fetchAllEntries() {
+      try {
+        setLoadingDetailed(true)
+        const fromStr = dateRange!.from!.toISOString().split("T")[0]
+        const toStr = dateRange!.to!.toISOString().split("T")[0]
+        // Берём все записи за период (достаточно большой лимит)
+        const result = await timeEntriesService.getMy(fromStr, toStr, 1, 10000)
+        setAllEntries(result.entries)
+      } catch (err) {
+        console.error("Error fetching all time entries:", err)
+      } finally {
+        setLoadingDetailed(false)
+      }
+    }
+
+    fetchAllEntries()
+  }, [dateRange])
+
+  // Breakdown по клиентам — считаем по ВСЕМ записям за период
   const clientSummary: ClientSummary[] = (() => {
-    const totalMs = entries.reduce((sum, e) => sum + e.hoursMilliseconds, 0)
+    const totalMs = allEntries.reduce((sum, e) => sum + e.hoursMilliseconds, 0)
     const map: Record<string, number> = {}
-    entries.forEach((e) => {
+    allEntries.forEach((e) => {
       const name = e.clientName || "—"
       map[name] = (map[name] || 0) + e.hoursMilliseconds
     })
@@ -83,9 +112,13 @@ export function EmployeeReports() {
       .sort((a, b) => b.totalHours - a.totalHours)
   })()
 
-  const totalHours = entries.reduce((sum, e) => sum + msToHours(e.hoursMilliseconds), 0)
+  const totalHoursAll = allEntries.reduce((sum, e) => sum + msToHours(e.hoursMilliseconds), 0)
 
-  const Pagination = () =>
+  // Статистика в карточках тоже по всем записям
+  const totalEntriesCount = totalCount // общий count с бэка
+  const avgHoursPerEntry = allEntries.length > 0 ? totalHoursAll / allEntries.length : 0
+
+  const SummaryPagination = () =>
     totalPages > 1 ? (
       <div className="flex items-center justify-between mt-4">
         <p className="text-sm text-gray-500">
@@ -100,7 +133,7 @@ export function EmployeeReports() {
             variant="outline"
             size="sm"
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1 || loading}
+            disabled={currentPage === 1 || loadingSummary}
           >
             ←
           </Button>
@@ -111,7 +144,7 @@ export function EmployeeReports() {
             variant="outline"
             size="sm"
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages || loading}
+            disabled={currentPage === totalPages || loadingSummary}
           >
             →
           </Button>
@@ -139,6 +172,7 @@ export function EmployeeReports() {
         </CardContent>
       </Card>
 
+      {/* Карточки статистики — по всем записям за период */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -147,7 +181,7 @@ export function EmployeeReports() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {totalHours.toFixed(1)} {t("calendar.totalPeriodHours")}
+              {totalHoursAll.toFixed(1)} {t("calendar.totalPeriodHours")}
             </div>
           </CardContent>
         </Card>
@@ -157,7 +191,7 @@ export function EmployeeReports() {
             <CardDescription>{t("admin.reports.summary.period")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalCount}</div>
+            <div className="text-2xl font-bold">{totalEntriesCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -167,7 +201,7 @@ export function EmployeeReports() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {entries.length ? (totalHours / entries.length).toFixed(1) : "0"}{" "}
+              {avgHoursPerEntry > 0 ? `${avgHoursPerEntry.toFixed(1)}` : "0"}{" "}
               {t("calendar.totalPeriodHours")}
             </div>
           </CardContent>
@@ -180,7 +214,7 @@ export function EmployeeReports() {
           <TabsTrigger value="detailed">{t("admin.reports.detailed.title")}</TabsTrigger>
         </TabsList>
 
-        {/* ===== ЗВЕДЕННЯ — таблица со всеми полями ===== */}
+        {/* ===== ЗВЕДЕННЯ — с пагинацией ===== */}
         <TabsContent value="summary" className="mt-4">
           <Card>
             <CardHeader>
@@ -188,7 +222,7 @@ export function EmployeeReports() {
               <CardDescription>{t("admin.reports.summary.summaryDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
-              {loading && (
+              {loadingSummary && (
                 <div className="text-center py-2 text-sm text-gray-400">
                   {t("admin.reports.loadingReports")}
                 </div>
@@ -211,7 +245,7 @@ export function EmployeeReports() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {entries.length === 0 && !loading ? (
+                    {entries.length === 0 && !loadingSummary ? (
                       <TableRow>
                         <TableCell colSpan={11} className="text-center">
                           {t("admin.reports.summary.noReportsAvailable")}
@@ -247,12 +281,12 @@ export function EmployeeReports() {
                   </TableBody>
                 </Table>
               </div>
-              <Pagination />
+              <SummaryPagination />
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ===== ДЕТАЛЬНИЙ — breakdown по клієнтах ===== */}
+        {/* ===== ДЕТАЛЬНИЙ — без пагинации, все данные за период ===== */}
         <TabsContent value="detailed" className="mt-4">
           <Card>
             <CardHeader>
@@ -260,13 +294,12 @@ export function EmployeeReports() {
               <CardDescription>{t("admin.reports.detailed.description")}</CardDescription>
             </CardHeader>
             <CardContent>
-              {loading && (
+              {loadingDetailed && (
                 <div className="text-center py-2 text-sm text-gray-400">
                   {t("admin.reports.loadingReports")}
                 </div>
               )}
 
-              {/* Client breakdown */}
               {clientSummary.length > 0 ? (
                 <div className="mb-6">
                   <h3 className="text-sm font-medium mb-3">
@@ -291,7 +324,6 @@ export function EmployeeReports() {
                     ))}
                   </div>
 
-                  {/* Таблица клиентов */}
                   <div className="mt-4">
                     <Table>
                       <TableHeader>
@@ -316,7 +348,7 @@ export function EmployeeReports() {
                         <TableRow className="border-t-2">
                           <TableCell className="font-semibold">Total</TableCell>
                           <TableCell className="text-right font-semibold">
-                            {totalHours.toFixed(1)}
+                            {totalHoursAll.toFixed(1)}
                           </TableCell>
                           <TableCell className="text-right font-semibold">100%</TableCell>
                         </TableRow>
@@ -325,14 +357,13 @@ export function EmployeeReports() {
                   </div>
                 </div>
               ) : (
-                !loading && (
+                !loadingDetailed && (
                   <p className="text-center text-gray-500 py-8">
                     {t("admin.reports.summary.noReportsAvailable")}
                   </p>
                 )
               )}
-
-              <Pagination />
+              {/* Пагинации нет — намеренно */}
             </CardContent>
           </Card>
         </TabsContent>
