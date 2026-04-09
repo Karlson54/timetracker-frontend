@@ -22,6 +22,7 @@ import {
 import { useTranslation } from "react-i18next"
 import type { DateRange } from "react-day-picker"
 import type { TimeEntryListItem } from "@/lib/api/types"
+import { cn, formatEmployeeName, toLocalDateString } from '@/lib/utils'
 
 const PAGE_SIZE = 50
 
@@ -113,8 +114,8 @@ export function EmployeeReports() {
         const params: any = {
           pageSize: PAGE_SIZE,
           pageNumber: currentPage,
-          fromDate: dateRange!.from!.toISOString(),
-          toDate: dateRange!.to!.toISOString(),
+          fromDate: toLocalDateString(dateRange!.from!),
+          toDate: toLocalDateString(dateRange!.to!),
         }
         if (selectedEmployee !== "all") {
           params.userId = Number(selectedEmployee)
@@ -144,8 +145,8 @@ export function EmployeeReports() {
         const params: any = {
           pageSize: 10000,
           pageNumber: 1,
-          fromDate: dateRange!.from!.toISOString(),
-          toDate: dateRange!.to!.toISOString(),
+          fromDate: toLocalDateString(dateRange!.from!),
+          toDate: toLocalDateString(dateRange!.to!),
         }
         if (selectedEmployee !== "all") {
           params.userId = Number(selectedEmployee)
@@ -208,8 +209,8 @@ export function EmployeeReports() {
         })
         .join(',')
 
-      const fromStr = dateRange.from.toLocaleDateString('uk-UA').replace(/\./g, '-')
-      const toStr = dateRange.to.toLocaleDateString('uk-UA').replace(/\./g, '-')
+      const fromStr = toLocalDateString(dateRange.from).replace(/-/g, '-')
+      const toStr = toLocalDateString(dateRange.to).replace(/-/g, '-')
 
       let url: string
       let fileName: string
@@ -227,8 +228,8 @@ export function EmployeeReports() {
 
       const response = await httpClient.get(url, {
         params: {
-          fromDate: dateRange.from.toISOString(),
-          toDate: dateRange.to.toISOString(),
+          fromDate: toLocalDateString(dateRange.from),
+          toDate: toLocalDateString(dateRange.to),
           columns: columnsParam,
           locale: 'uk',
         },

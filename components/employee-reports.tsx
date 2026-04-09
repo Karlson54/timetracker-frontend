@@ -10,6 +10,7 @@ import type { DateRange } from "react-day-picker"
 import { useTranslation } from "react-i18next"
 import timeEntriesService from "@/lib/api/services/timeEntriesService"
 import type { TimeEntryListItem } from "@/lib/api/types"
+import { cn, formatEmployeeName, toLocalDateString } from '@/lib/utils'
 
 const PAGE_SIZE = 50
 
@@ -57,8 +58,8 @@ export function EmployeeReports() {
     async function fetchSummaryEntries() {
       try {
         setLoadingSummary(true)
-        const fromStr = dateRange!.from!.toISOString().split("T")[0]
-        const toStr = dateRange!.to!.toISOString().split("T")[0]
+        const fromStr = toLocalDateString(dateRange!.from!)
+        const toStr = toLocalDateString(dateRange!.to!)
         const result = await timeEntriesService.getMy(fromStr, toStr, currentPage, PAGE_SIZE)
         setEntries(result.entries)
         setTotalCount(result.totalCount)
@@ -80,8 +81,8 @@ export function EmployeeReports() {
     async function fetchAllEntries() {
       try {
         setLoadingDetailed(true)
-        const fromStr = dateRange!.from!.toISOString().split("T")[0]
-        const toStr = dateRange!.to!.toISOString().split("T")[0]
+        const fromStr = toLocalDateString(dateRange!.from!)
+        const toStr = toLocalDateString(dateRange!.to!)
         // Берём все записи за период (достаточно большой лимит)
         const result = await timeEntriesService.getMy(fromStr, toStr, 1, 10000)
         setAllEntries(result.entries)
