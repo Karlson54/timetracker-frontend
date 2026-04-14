@@ -352,7 +352,7 @@ export function EmployeeReports() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Середній час</CardTitle>
+            <CardTitle className="text-base">{t('calendar.AverageTime')}</CardTitle>
             <CardDescription>{t('admin.reports.summary.period')}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -364,13 +364,13 @@ export function EmployeeReports() {
                     return uniqueDays > 0 ? (totalHoursAll / uniqueDays).toFixed(1) : "0"
                   })()}
                 </span>
-                <span className="text-sm text-muted-foreground">{t('calendar.totalPeriodHours')} / день</span>
+                <span className="text-sm text-muted-foreground">{t('calendar.PeriodAverageTimeHours')} / {t('calendar.PeriodAverageTimeDay')}</span>
               </div>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold">
                   {avgHoursPerEntry > 0 ? avgHoursPerEntry.toFixed(1) : "0"}
                 </span>
-                <span className="text-sm text-muted-foreground">{t('calendar.totalPeriodHours')} / запис</span>
+                <span className="text-sm text-muted-foreground">{t('calendar.PeriodAverageTimeHours')} / {t('calendar.PeriodAverageTimeRecord')}</span>
               </div>
             </div>
           </CardContent>
