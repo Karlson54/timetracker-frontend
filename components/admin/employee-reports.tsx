@@ -360,7 +360,14 @@ export function EmployeeReports() {
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold">
                   {(() => {
-                    const uniqueDays = new Set(allEntries.map(e => e.entryDate.split('T')[0])).size
+                    const uniqueDays = new Set(
+                      allEntries
+                        .map(e => e.entryDate.split('T')[0])
+                        .filter(dateStr => {
+                          const day = new Date(dateStr).getDay() // 0=вс, 1=пн, ..., 6=сб
+                          return day >= 1 && day <= 5
+                        })
+                    ).size
                     return uniqueDays > 0 ? (totalHoursAll / uniqueDays).toFixed(1) : "0"
                   })()}
                 </span>

@@ -36,7 +36,7 @@
         "title": "Detailed Report",
         "description": "Detailed information about time spent",
         "selectEmployeeMessage": "Select an employee in the filters above to see a detailed report of projects and tasks",
-        "timeDistribution": "Time distribution by projects",
+        "timeDistribution": "Time distribution by clients",
         "rebranding": "Rebranding Acme Inc",
         "marketingCampaign": "Marketing Campaign",
         "websiteDevelopment": "Website Development",
