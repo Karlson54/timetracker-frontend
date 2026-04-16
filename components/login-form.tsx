@@ -7,16 +7,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AlertCircle } from 'lucide-react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuthContext } from '@/lib/AuthContext'
 import authService from '@/lib/api/services/authService'
+import { parseApiError } from '@/lib/utils'
 
 export function LoginForm() {
   const [loginOrEmail, setLoginOrEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const { login, isAdmin } = useAuthContext()
+  const { login } = useAuthContext()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,7 +28,6 @@ export function LoginForm() {
       const response = await authService.login({ loginOrEmail, password })
       login(response)
 
-      // Редирект по роли
       const roles = response.roles
       if (roles.includes('Admin')) {
         router.push('/admin')
@@ -36,8 +35,7 @@ export function LoginForm() {
         router.push('/dashboard')
       }
     } catch (err: any) {
-      const message = err.response?.data?.message
-      setError(message || 'Невірний логін або пароль')
+      setError(parseApiError(err, 'Невірний логін або пароль'))
     } finally {
       setIsLoading(false)
     }
@@ -46,10 +44,10 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{error}</span>
+        </div>
       )}
 
       <div className="space-y-2">
@@ -58,7 +56,7 @@ export function LoginForm() {
           id="loginOrEmail"
           type="text"
           value={loginOrEmail}
-          onChange={(e) => setLoginOrEmail(e.target.value)}
+          onChange={(e) => { setLoginOrEmail(e.target.value); setError('') }}
           placeholder="your.email@example.com"
           required
         />
@@ -75,7 +73,7 @@ export function LoginForm() {
           id="password"
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => { setPassword(e.target.value); setError('') }}
           required
         />
       </div>

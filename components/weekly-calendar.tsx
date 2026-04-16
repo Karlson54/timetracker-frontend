@@ -19,6 +19,9 @@ import { DayEntryForm } from "@/components/day-entry-form"
 import { useTranslation } from "react-i18next"
 import timeEntriesService from "@/lib/api/services/timeEntriesService"
 import type { TimeEntryListItem, CreateTimeEntryRequest } from "@/lib/api/types"
+import { ErrorToast } from '@/components/ui/error-toast'
+import { useErrorToast } from '@/hooks/use-error-toast'
+import { parseApiError } from '@/lib/utils'
 
 // Хелпер: Date -> "YYYY-MM-DD"
 function toISODate(date: Date): string {
@@ -40,7 +43,7 @@ export function WeeklyCalendar() {
   // --- Стан ---
   const [entries, setEntries] = useState<TimeEntryListItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { error, showError, clearError } = useErrorToast()
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
     const today = new Date()
     const day = today.getDay()
@@ -75,11 +78,10 @@ export function WeeklyCalendar() {
     async function fetchEntries() {
       try {
         setLoading(true)
-        setError(null)
         const result = await timeEntriesService.getMy(weekFrom, weekTo, 1, 200)
         setEntries(result.entries)
       } catch (err: any) {
-        setError(err?.response?.data?.message ?? t('common.errors.loadFailed'))
+        showError(err, t('common.errors.saveFailed'))
       } finally {
         setLoading(false)
       }
@@ -170,7 +172,7 @@ export function WeeklyCalendar() {
       setShowEntryForm(false)
       setEditingEntry(null)
     } catch (err: any) {
-      alert(err?.response?.data?.message ?? t('common.errors.saveFailed'))
+      showError(err, t('common.errors.saveFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -183,7 +185,7 @@ export function WeeklyCalendar() {
       await timeEntriesService.delete(id)
       setEntries((prev) => prev.filter((e) => e.id !== id))
     } catch (err: any) {
-      alert(err?.response?.data?.message ?? t('common.errors.deleteFailed'))
+      showError(err, t('common.errors.saveFailed'))
     }
   }
 
@@ -221,7 +223,7 @@ export function WeeklyCalendar() {
       }
       setEntries((prev) => [...prev, ...newEntries])
     } catch (err: any) {
-      alert(err?.response?.data?.message ?? t('common.errors.saveFailed'))
+      showError(err, t('common.errors.saveFailed'))
     } finally {
       setSubmitting(false)
       setShowCopyDialog(false)
@@ -549,6 +551,7 @@ export function WeeklyCalendar() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ErrorToast message={error} onClose={clearError} />
     </div>
   )
 }

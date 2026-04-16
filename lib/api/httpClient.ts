@@ -25,9 +25,6 @@ httpClient.interceptors.response.use(
 
     if (status === 401) {
       clearAuth()
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login'
-      }
     }
 
     // 403 и 500 пробрасываем дальше — обработка на уровне компонентов/сервисов

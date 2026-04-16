@@ -12,6 +12,28 @@ export function toLocalDateString(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
+export function parseApiError(err: any, fallback = 'Виникла помилка'): string {
+  const data = err?.response?.data
+
+  if (!data) return err?.message || fallback
+
+  // ValidationProblemDetails от [ApiController] — { errors: { field: ["msg"] } }
+  if (data.errors && typeof data.errors === 'object') {
+    const messages = Object.values(data.errors)
+      .flat()
+      .filter((m): m is string => typeof m === 'string')
+    if (messages.length > 0) return messages.join('\n')
+  }
+
+  // ExceptionMiddleware — { Message: "..." }
+  if (data.Message) return data.Message
+  if (data.message) return data.message
+  if (data.title) return data.title
+  if (typeof data === 'string') return data
+
+  return err?.message || fallback
+}
+
 /**
  * Format employee name for display
  * 

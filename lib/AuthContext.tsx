@@ -37,8 +37,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await authService.validate()
         setUser(savedUser)
       } catch {
-        // Токен невалидный или пользователь деактивирован — чистим всё
         clearAuth()
+        router.push('/login')
       } finally {
         setIsLoading(false)
       }
