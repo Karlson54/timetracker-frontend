@@ -3,24 +3,32 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthContext } from '@/lib/AuthContext'
+import authService from '@/lib/api/services/authService'
+import { clearAuth } from '@/lib/api/tokenStorage'
 
-// Защита страниц — редирект если не авторизован
 export function useAuthProtection() {
-  const { isAuthenticated, isLoading } = useAuthContext()
+  const { isAuthenticated, isLoading, logout } = useAuthContext()
   const router = useRouter()
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (isLoading) return
+    if (!isAuthenticated) {
       router.push('/login')
+      return
     }
+
+    // Перевіряємо токен на сервері
+    authService.validate().catch(() => {
+      clearAuth()
+      logout()
+    })
   }, [isAuthenticated, isLoading, router])
 
   return isAuthenticated
 }
 
-// Защита страниц — редирект если не админ
 export function useAdminProtection() {
-  const { isAuthenticated, isAdmin, isLoading } = useAuthContext()
+  const { isAuthenticated, isAdmin, isLoading, logout } = useAuthContext()
   const router = useRouter()
 
   useEffect(() => {
@@ -31,7 +39,14 @@ export function useAdminProtection() {
     }
     if (!isAdmin) {
       router.push('/dashboard')
+      return
     }
+
+    // Перевіряємо токен на сервері
+    authService.validate().catch(() => {
+      clearAuth()
+      logout()
+    })
   }, [isAuthenticated, isAdmin, isLoading, router])
 
   return isAdmin
