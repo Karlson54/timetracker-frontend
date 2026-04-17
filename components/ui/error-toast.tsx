@@ -9,7 +9,7 @@ interface ErrorToastProps {
   duration?: number
 }
 
-export function ErrorToast({ message, onClose, duration = 5000 }: ErrorToastProps) {
+export function ErrorToast({ message, onClose, duration = 10000 }: ErrorToastProps) {
   useEffect(() => {
     if (!message) return
     const timer = setTimeout(onClose, duration)

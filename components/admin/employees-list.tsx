@@ -33,6 +33,9 @@ import usersService from "@/lib/api/services/usersService"
 import { agenciesService } from "@/lib/api/services/dictionaryService"
 import rolesService from "@/lib/api/services/rolesService"
 import type { UserListItem, CreateUserRequest, UpdateUserRequest, DictionaryItem, RoleItem } from "@/lib/api/types"
+import { ErrorToast } from '@/components/ui/error-toast'
+import { useErrorToast } from '@/hooks/use-error-toast'
+import { parseApiError } from '@/lib/utils'
 
 const EMPTY_CREATE: CreateUserRequest = {
   login: "",
@@ -51,7 +54,7 @@ export function EmployeesList() {
   const [agencies, setAgencies] = useState<DictionaryItem[]>([])
   const [roles, setRoles] = useState<RoleItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { error, showError, clearError } = useErrorToast()
   const [searchTerm, setSearchTerm] = useState("")
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -71,7 +74,6 @@ export function EmployeesList() {
     async function fetchData() {
       try {
         setLoading(true)
-        setError(null)
         const [users, activeAgencies, activeRoles] = await Promise.all([
           usersService.getAll(),
           agenciesService.getActive(),
@@ -81,7 +83,7 @@ export function EmployeesList() {
         setAgencies(activeAgencies)
         setRoles(activeRoles)
       } catch (err: any) {
-        setError(err?.response?.data?.message ?? t('common.errors.loadFailed'))
+        showError(err, t('common.errors.saveFailed'))
       } finally {
         setLoading(false)
       }
@@ -118,7 +120,7 @@ export function EmployeesList() {
       setNewEmployee(EMPTY_CREATE)
       setIsAddDialogOpen(false)
     } catch (err: any) {
-      alert(err?.response?.data?.message ?? t('common.errors.saveFailed'))
+      showError(err)
     } finally {
       setSubmitting(false)
     }
@@ -154,7 +156,7 @@ export function EmployeesList() {
       setEmployees((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
       setIsEditDialogOpen(false)
     } catch (err: any) {
-      alert(err?.response?.data?.message ?? t('common.errors.saveFailed'))
+      showError(err)
     } finally {
       setSubmitting(false)
     }
@@ -172,7 +174,7 @@ export function EmployeesList() {
         prev.map((e) => (e.id === employee.id ? { ...e, isActive: !e.isActive } : e))
       )
     } catch (err: any) {
-      alert(err?.response?.data?.message ?? t('common.errors.saveFailed'))
+      showError(err)
     }
   }
 
@@ -190,7 +192,7 @@ export function EmployeesList() {
       setEmployees((prev) => prev.filter((e) => e.id !== employeeToDelete))
       setIsDeleteDialogOpen(false)
     } catch (err: any) {
-      alert(err?.response?.data?.message ?? t('common.errors.deleteFailed'))
+      showError(err)
     } finally {
       setSubmitting(false)
       setEmployeeToDelete(null)
@@ -209,14 +211,6 @@ export function EmployeesList() {
             <Skeleton key={i} className="h-10 w-full" />
           ))}
         </CardContent>
-      </Card>
-    )
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="pt-6 text-center text-red-500">{error}</CardContent>
       </Card>
     )
   }
@@ -508,6 +502,7 @@ export function EmployeesList() {
           </Table>
         </CardContent>
       </Card>
+      <ErrorToast message={error} onClose={clearError} />
     </>
   )
 }
