@@ -50,14 +50,14 @@ export function WeeklyCalendar() {
     const diff = today.getDate() - day + (day === 0 ? -6 : 1)
     return new Date(today.setDate(diff))
   })
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
   const [showEntryForm, setShowEntryForm] = useState(false)
   const [editingEntry, setEditingEntry] = useState<TimeEntryListItem | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   // Стан для копіювання
   const [copyingId, setCopyingId] = useState<number | null>(null)
-  const [copyDates, setCopyDates] = useState<Date[]>([])
+  const [copyDate, setCopyDate] = useState<Date | null>(null)
   const [showCopyDialog, setShowCopyDialog] = useState(false)
   const [copyMonth, setCopyMonth] = useState(new Date())
 
@@ -192,43 +192,39 @@ export function WeeklyCalendar() {
   // --- Копіювати ---
   const handleCopyReport = (id: number) => {
     setCopyingId(id)
-    setCopyDates([])
+    setCopyDate(null)
     setCopyMonth(new Date())
     setShowCopyDialog(true)
   }
 
   const executeCopy = async () => {
-    if (!copyingId || !copyDates.length) return
+    if (!copyingId || !copyDate) return
     const source = entries.find((e) => e.id === copyingId)
     if (!source) return
 
     try {
       setSubmitting(true)
-      const newEntries: TimeEntryListItem[] = []
-      for (const date of copyDates) {
-        const created = await timeEntriesService.create({
-          userId: user?.userId ?? 0,
-          agencyId: user?.agencyId ?? 0,
-          entryDate: toISODate(date),
-          hoursMilliseconds: source.hoursMilliseconds,
-          clientId: source.clientId,
-          projectBrand: source.projectBrandName ?? "",
-          marketId: source.marketId,
-          mediaId: source.mediaId,
-          jobTypeId: source.jobTypeId,
-          contractingAgencyId: source.contractingAgencyId,
-          comments: source.comments,
-        })
-        newEntries.push(created)
-      }
-      setEntries((prev) => [...prev, ...newEntries])
+      const created = await timeEntriesService.create({
+        userId: user?.userId ?? 0,
+        agencyId: user?.agencyId ?? 0,
+        entryDate: toISODate(copyDate),
+        hoursMilliseconds: source.hoursMilliseconds,
+        clientId: source.clientId,
+        projectBrand: source.projectBrandName ?? "",
+        marketId: source.marketId,
+        mediaId: source.mediaId,
+        jobTypeId: source.jobTypeId,
+        contractingAgencyId: source.contractingAgencyId,
+        comments: source.comments,
+      })
+      setEntries((prev) => [...prev, created])
     } catch (err: any) {
       showError(err, t('common.errors.saveFailed'))
     } finally {
       setSubmitting(false)
       setShowCopyDialog(false)
       setCopyingId(null)
-      setCopyDates([])
+      setCopyDate(null)
     }
   }
 
@@ -253,15 +249,11 @@ export function WeeklyCalendar() {
   })()
 
   const isDateSelected = (date: Date | null) =>
-    date ? copyDates.some((d) => isSameDay(d, date)) : false
+    date ? (copyDate ? isSameDay(date, copyDate) : false) : false
 
   const toggleCopyDate = (date: Date | null) => {
     if (!date) return
-    if (isDateSelected(date)) {
-      setCopyDates((prev) => prev.filter((d) => !isSameDay(d, date)))
-    } else {
-      setCopyDates((prev) => [...prev, date])
-    }
+    setCopyDate(copyDate && isSameDay(date, copyDate) ? null : date)
   }
 
   // --- Рендер ---
@@ -522,30 +514,39 @@ export function WeeklyCalendar() {
 
             {/* Клітинки */}
             <div className="grid grid-cols-7 gap-1">
-              {calendarDays.map((day, i) => (
-                <Button
-                  key={i}
-                  variant={isDateSelected(day) ? "default" : "ghost"}
-                  size="sm"
-                  className="h-8 w-full text-xs"
-                  disabled={!day}
-                  onClick={() => toggleCopyDate(day)}
-                >
-                  {day ? day.getDate() : ""}
-                </Button>
-              ))}
+              {calendarDays.map((day, i) => {
+                const todayFlag = day ? isToday(day) : false
+                const selected = isDateSelected(day)
+                return (
+                  <Button
+                    key={i}
+                    variant={selected ? "default" : "ghost"}
+                    size="sm"
+                    className={`h-8 w-full text-xs ${selected
+                      ? ""
+                      : todayFlag
+                        ? "bg-[rgb(15,40,84)] text-white hover:bg-[rgb(15,40,84)] hover:text-white"
+                        : ""
+                      }`}
+                    disabled={!day}
+                    onClick={() => toggleCopyDate(day)}
+                  >
+                    {day ? day.getDate() : ""}
+                  </Button>
+                )
+              })}
             </div>
 
-            {copyDates.length > 0 && (
+            {copyDate && (
               <p className="text-xs text-gray-500 mt-2">
-                {t('calendar.selectedDates', { count: copyDates.length })}
+                {copyDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             )}
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCopyDialog(false)}>{t('calendar.cancel')}</Button>
-            <Button onClick={executeCopy} disabled={!copyDates.length || submitting}>
+            <Button onClick={executeCopy} disabled={!copyDate || submitting}>
               {t('calendar.save')}
             </Button>
           </DialogFooter>
