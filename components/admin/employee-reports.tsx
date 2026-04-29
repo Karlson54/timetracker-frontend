@@ -181,7 +181,8 @@ export function EmployeeReports() {
       .sort((a, b) => b.totalHours - a.totalHours)
   })()
 
-  const totalHoursAll = allEntries.reduce((sum, e) => sum + msToHours(e.hoursMilliseconds), 0)
+  const totalMs = allEntries.reduce((sum, e) => sum + e.hoursMilliseconds, 0)
+  const totalHoursAll = msToHours(totalMs)
   const avgHoursPerEntry = allEntries.length > 0 ? totalHoursAll / allEntries.length : 0
 
   // Экспорт
