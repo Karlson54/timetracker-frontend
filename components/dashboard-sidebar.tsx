@@ -27,12 +27,13 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
   const { t } = useTranslation()
   const [isDictionariesOpen, setIsDictionariesOpen] = useState(false)
   const isDictionaryActive = pathname.startsWith('/admin/dictionaries')
+  const [isReportsOpen, setIsReportsOpen] = useState(false)
+  const isReportsActive = pathname.startsWith('/admin/reports')
 
   useEffect(() => {
-    if (isDictionaryActive) {
-      setIsDictionariesOpen(true)
-    }
-  }, [isDictionaryActive])
+    if (isDictionaryActive) setIsDictionariesOpen(true)
+    if (isReportsActive) setIsReportsOpen(true)
+  }, [isDictionaryActive, isReportsActive])
 
   const formattedName = user?.name ? formatEmployeeName(user.name) : null
 
@@ -85,9 +86,47 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                 </Link>
               </li>
               <li>
-                <Link href="/admin/reports" className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm', pathname === '/admin/reports' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50')}>
-                  <FileSpreadsheet className="h-4 w-4" />{t('admin.nav.reports')}
-                </Link>
+                <button
+                  onClick={() => setIsReportsOpen(!isReportsOpen)}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-gray-50',
+                    isReportsActive && 'bg-gray-100 font-medium'
+                  )}
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  <span className="flex-1 text-left">{t('admin.nav.reports')}</span>
+                  {isReportsOpen
+                    ? <ChevronDown className="h-3 w-3 text-gray-400" />
+                    : <ChevronRight className="h-3 w-3 text-gray-400" />
+                  }
+                </button>
+
+                {isReportsOpen && (
+                  <ul className="mt-1 ml-4 space-y-1 border-l pl-3">
+                    <li>
+                      <Link
+                        href="/admin/reports/employees"
+                        className={cn(
+                          'flex items-center px-2 py-1.5 rounded-md text-sm',
+                          pathname === '/admin/reports/employees' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50 text-gray-600'
+                        )}
+                      >
+                        {t('admin.nav.reports_employees')}
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/admin/reports/clients"
+                        className={cn(
+                          'flex items-center px-2 py-1.5 rounded-md text-sm',
+                          pathname === '/admin/reports/clients' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50 text-gray-600'
+                        )}
+                      >
+                        {t('admin.nav.reports_clients')}
+                      </Link>
+                    </li>
+                  </ul>
+                )}
               </li>
               <li>
                 <Link href="/dashboard" className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm', pathname === '/dashboard' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50')}>
