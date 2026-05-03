@@ -6,8 +6,7 @@ import I18nProvider from "@/lib/I18nProvider"
 
 export const metadata: Metadata = {
   title: "MediaCom TimeTracker",
-  description: "Ruban",
-  generator: "v0.dev",
+  description: "Система обліку робочого часу MediaCom",
 }
 
 export default function RootLayout({
