@@ -10,8 +10,8 @@ export default function ForgotPasswordPage() {
         <div className="flex justify-center">
           <div className="h-12 w-auto">
             <img
-              src="/images/logos/mediacom.png"
-              alt="Mediacom"
+              src="/images/logos/groupm.png"
+              alt="GroupM"
               className="h-full"
             />
           </div>
