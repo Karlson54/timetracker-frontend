@@ -6,28 +6,7 @@ import { useAuthContext } from '@/lib/AuthContext'
 import authService from '@/lib/api/services/authService'
 import { clearAuth } from '@/lib/api/tokenStorage'
 
-export function useAuthProtection() {
-  const { isAuthenticated, isLoading, logout } = useAuthContext()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (isLoading) return
-    if (!isAuthenticated) {
-      router.push('/login')
-      return
-    }
-
-    // Перевіряємо токен на сервері
-    authService.validate().catch(() => {
-      clearAuth()
-      logout()
-    })
-  }, [isAuthenticated, isLoading, router])
-
-  return isAuthenticated
-}
-
-export function useAdminProtection() {
+function useBaseProtection(requireAdmin = false) {
   const { isAuthenticated, isAdmin, isLoading, logout } = useAuthContext()
   const router = useRouter()
 
@@ -37,17 +16,23 @@ export function useAdminProtection() {
       router.push('/login')
       return
     }
-    if (!isAdmin) {
+    if (requireAdmin && !isAdmin) {
       router.push('/dashboard')
       return
     }
-
-    // Перевіряємо токен на сервері
     authService.validate().catch(() => {
       clearAuth()
       logout()
     })
   }, [isAuthenticated, isAdmin, isLoading, router])
 
-  return isAdmin
+  return requireAdmin ? isAdmin : isAuthenticated
+}
+
+export function useAuthProtection() {
+  return useBaseProtection(false)
+}
+
+export function useAdminProtection() {
+  return useBaseProtection(true)
 }
