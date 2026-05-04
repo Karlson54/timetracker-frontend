@@ -9,13 +9,13 @@ i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    supportedLngs: ['de', 'en', 'uk'],
+    supportedLngs: ['en', 'uk'],
     fallbackLng: "en",
     debug: process.env.NODE_ENV === "development",
     ns: ["translation"],
     defaultNS: "translation",
     interpolation: {
-      escapeValue: false, // not needed for React
+      escapeValue: false,
     },
     backend: {
       loadPath: "/locales/{{lng}}/{{ns}}.json",

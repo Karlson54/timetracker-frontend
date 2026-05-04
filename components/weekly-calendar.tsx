@@ -21,15 +21,7 @@ import timeEntriesService from "@/lib/api/services/timeEntriesService"
 import type { TimeEntryListItem, CreateTimeEntryRequest } from "@/lib/api/types"
 import { ErrorToast } from '@/components/ui/error-toast'
 import { useErrorToast } from '@/hooks/use-error-toast'
-import { parseApiError } from '@/lib/utils'
-
-// Хелпер: Date -> "YYYY-MM-DD"
-function toISODate(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+import { parseApiError, toLocalDateString } from '@/lib/utils'
 
 // Хелпер: мілісекунди -> години з 1 знаком після коми
 function msToHours(ms: number): number {
@@ -68,8 +60,8 @@ export function WeeklyCalendar() {
     return d
   })
 
-  const weekFrom = toISODate(weekDays[0])
-  const weekTo = toISODate(weekDays[6])
+  const weekFrom = toLocalDateString(weekDays[0])
+  const weekTo = toLocalDateString(weekDays[6])
 
   const { user } = useAuthContext()
 
@@ -118,11 +110,11 @@ export function WeeklyCalendar() {
     a.getDate() === b.getDate()
 
   const hasDayRecords = (date: Date) =>
-    entries.some((e) => e.entryDate.startsWith(toISODate(date)))
+    entries.some((e) => e.entryDate.startsWith(toLocalDateString(date)))
 
   // --- Фільтр записів за вибраний день ---
   const filteredEntries = selectedDate
-    ? entries.filter((e) => e.entryDate.startsWith(toISODate(selectedDate)))
+    ? entries.filter((e) => e.entryDate.startsWith(toLocalDateString(selectedDate)))
     : []
 
   // --- Статистика ---
@@ -148,7 +140,7 @@ export function WeeklyCalendar() {
       setSubmitting(true)
 
       const payload: CreateTimeEntryRequest = {
-        entryDate: toISODate(data.date instanceof Date ? data.date : selectedDate),
+        entryDate: toLocalDateString(data.date instanceof Date ? data.date : selectedDate),
         hoursMilliseconds: Number(data.hoursMilliseconds),
         userId: user?.userId ?? 0,
         agencyId: user?.agencyId ?? 0,
@@ -207,7 +199,7 @@ export function WeeklyCalendar() {
       const created = await timeEntriesService.create({
         userId: user?.userId ?? 0,
         agencyId: user?.agencyId ?? 0,
-        entryDate: toISODate(copyDate),
+        entryDate: toLocalDateString(copyDate),
         hoursMilliseconds: source.hoursMilliseconds,
         clientId: source.clientId,
         projectBrand: source.projectBrandName ?? "",
