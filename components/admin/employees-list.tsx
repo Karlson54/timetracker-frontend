@@ -27,7 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Pencil, Plus, Search, Trash, UserCheck, UserX } from "lucide-react"
+import { Pencil, Plus, Search, UserCheck, UserX } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import usersService from "@/lib/api/services/usersService"
 import { agenciesService } from "@/lib/api/services/dictionaryService"
@@ -35,7 +35,16 @@ import rolesService from "@/lib/api/services/rolesService"
 import type { UserListItem, CreateUserRequest, UpdateUserRequest, DictionaryItem, RoleItem } from "@/lib/api/types"
 import { ErrorToast } from '@/components/ui/error-toast'
 import { useErrorToast } from '@/hooks/use-error-toast'
-import { parseApiError } from '@/lib/utils'
+
+// --- Хелпер для строк формы ---
+function FormRow({ label, children }: { label: string, children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-4 items-center gap-4">
+      <Label className="text-right">{label}</Label>
+      <div className="col-span-3">{children}</div>
+    </div>
+  )
+}
 
 const EMPTY_CREATE: CreateUserRequest = {
   login: "",
@@ -69,7 +78,6 @@ export function EmployeesList() {
   const [submitting, setSubmitting] = useState(false)
   const [passwordError, setPasswordError] = useState("")
 
-  // --- Завантаження даних ---
   useEffect(() => {
     async function fetchData() {
       try {
@@ -91,19 +99,16 @@ export function EmployeesList() {
     fetchData()
   }, [])
 
-  // --- Фільтрація ---
   const filtered = employees.filter((e) =>
     [e.name, e.email, e.login, e.agencyName].some((field) =>
       field?.toLowerCase().includes(searchTerm.toLowerCase())
     )
   )
 
-  // --- Кількість активних адміністраторів ---
   const activeAdminCount = employees.filter(
     (e) => e.isActive && e.roles?.includes('Admin')
   ).length
 
-  // --- Додати ---
   const handleAdd = async () => {
     if (!newEmployee.name || !newEmployee.email || !newEmployee.login || !newEmployee.password || !newEmployee.agencyId || newEmployee.roleIds.length === 0) return
 
@@ -126,7 +131,6 @@ export function EmployeesList() {
     }
   }
 
-  // --- Редагувати ---
   const openEdit = (employee: UserListItem) => {
     setEditingEmployee(employee)
     setEditForm({
@@ -135,7 +139,7 @@ export function EmployeesList() {
       agencyId: employee.agencyId,
       login: employee.login,
       newPassword: "",
-      roleIds: [],  // не передаём — не меняем, пока не выберут
+      roleIds: [],
     })
     setIsEditDialogOpen(true)
   }
@@ -162,7 +166,6 @@ export function EmployeesList() {
     }
   }
 
-  // --- Активація / Деактивація ---
   const handleToggleActive = async (employee: UserListItem) => {
     try {
       if (employee.isActive) {
@@ -178,7 +181,6 @@ export function EmployeesList() {
     }
   }
 
-  // --- Видалити ---
   const confirmDelete = (id: number) => {
     setEmployeeToDelete(id)
     setIsDeleteDialogOpen(true)
@@ -188,7 +190,7 @@ export function EmployeesList() {
     if (!employeeToDelete) return
     try {
       setSubmitting(true)
-      await usersService.deactivate(employeeToDelete) // soft delete через деактивацію
+      await usersService.deactivate(employeeToDelete)
       setEmployees((prev) => prev.filter((e) => e.id !== employeeToDelete))
       setIsDeleteDialogOpen(false)
     } catch (err: any) {
@@ -199,7 +201,6 @@ export function EmployeesList() {
     }
   }
 
-  // --- Рендер ---
   if (loading) {
     return (
       <Card>
@@ -241,33 +242,20 @@ export function EmployeesList() {
             <DialogDescription>{t('admin.employees.add.description')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{t('admin.employees.fields.name')}</Label>
-              <Input className="col-span-3" value={newEmployee.name} onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{t('admin.employees.fields.login')}</Label>
-              <Input className="col-span-3" value={newEmployee.login} onChange={(e) => setNewEmployee({ ...newEmployee, login: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{t('admin.employees.fields.email')}</Label>
-              <Input className="col-span-3" type="email" value={newEmployee.email} onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })} />
-            </div>
-            {/* Пароль */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{t('admin.employees.fields.password')}</Label>
-              <Input
-                className="col-span-3"
-                type="password"
-                value={newEmployee.password}
-                onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
-              />
-            </div>
-
-            {/* Підтвердження пароля */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{t('admin.employees.fields.confirmPassword')}</Label>
-              <div className="col-span-3">
+            <FormRow label={t('admin.employees.fields.name')}>
+              <Input value={newEmployee.name} onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })} />
+            </FormRow>
+            <FormRow label={t('admin.employees.fields.login')}>
+              <Input value={newEmployee.login} onChange={(e) => setNewEmployee({ ...newEmployee, login: e.target.value })} />
+            </FormRow>
+            <FormRow label={t('admin.employees.fields.email')}>
+              <Input type="email" value={newEmployee.email} onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })} />
+            </FormRow>
+            <FormRow label={t('admin.employees.fields.password')}>
+              <Input type="password" value={newEmployee.password} onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })} />
+            </FormRow>
+            <FormRow label={t('admin.employees.fields.confirmPassword')}>
+              <div>
                 <Input
                   type="password"
                   value={newEmployee.confirmPassword}
@@ -280,11 +268,10 @@ export function EmployeesList() {
                   <p className="text-sm text-destructive mt-1">{passwordError}</p>
                 )}
               </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{t('admin.employees.fields.agency')}</Label>
+            </FormRow>
+            <FormRow label={t('admin.employees.fields.agency')}>
               <Select value={String(newEmployee.agencyId || "")} onValueChange={(v) => setNewEmployee({ ...newEmployee, agencyId: Number(v) })}>
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger>
                   <SelectValue placeholder={t('admin.employees.fields.selectAgency')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -293,14 +280,13 @@ export function EmployeesList() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{t('admin.employees.fields.role')}</Label>
+            </FormRow>
+            <FormRow label={t('admin.employees.fields.role')}>
               <Select
                 value={String(newEmployee.roleIds[0] ?? "")}
                 onValueChange={(v) => setNewEmployee({ ...newEmployee, roleIds: [Number(v)] })}
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger>
                   <SelectValue placeholder={t('admin.employees.fields.selectRole')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -309,8 +295,7 @@ export function EmployeesList() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
+            </FormRow>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => {
@@ -332,18 +317,15 @@ export function EmployeesList() {
             <DialogTitle>{t('admin.employees.edit.title')}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{t('admin.employees.fields.name')}</Label>
-              <Input className="col-span-3" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{t('admin.employees.fields.email')}</Label>
-              <Input className="col-span-3" type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{t('admin.employees.fields.agency')}</Label>
+            <FormRow label={t('admin.employees.fields.name')}>
+              <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+            </FormRow>
+            <FormRow label={t('admin.employees.fields.email')}>
+              <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+            </FormRow>
+            <FormRow label={t('admin.employees.fields.agency')}>
               <Select value={String(editForm.agencyId || "")} onValueChange={(v) => setEditForm({ ...editForm, agencyId: Number(v) })}>
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger>
                   <SelectValue placeholder={t('admin.employees.fields.selectAgency')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -352,21 +334,12 @@ export function EmployeesList() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            {/* Логін */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{t('admin.employees.fields.login')}</Label>
-              <Input
-                className="col-span-3"
-                value={editForm.login ?? ""}
-                onChange={(e) => setEditForm({ ...editForm, login: e.target.value })}
-              />
-            </div>
-
-            {/* Новий пароль */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{t('admin.employees.fields.password')}</Label>
-              <div className="col-span-3">
+            </FormRow>
+            <FormRow label={t('admin.employees.fields.login')}>
+              <Input value={editForm.login ?? ""} onChange={(e) => setEditForm({ ...editForm, login: e.target.value })} />
+            </FormRow>
+            <FormRow label={t('admin.employees.fields.password')}>
+              <div>
                 <Input
                   type="password"
                   placeholder={t('admin.employees.edit.passwordPlaceholder')}
@@ -377,16 +350,13 @@ export function EmployeesList() {
                   {t('admin.employees.edit.passwordNote')}
                 </p>
               </div>
-            </div>
-
-            {/* Роль */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{t('admin.employees.fields.role')}</Label>
+            </FormRow>
+            <FormRow label={t('admin.employees.fields.role')}>
               <Select
                 value={String(editForm.roleIds?.[0] ?? "")}
                 onValueChange={(v) => setEditForm({ ...editForm, roleIds: v ? [Number(v)] : [] })}
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger>
                   <SelectValue placeholder={t('admin.employees.fields.selectRole')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -395,7 +365,7 @@ export function EmployeesList() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </FormRow>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>{t('common.cancel')}</Button>
