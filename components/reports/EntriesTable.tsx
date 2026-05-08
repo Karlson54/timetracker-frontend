@@ -2,10 +2,7 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { TimeEntryListItem } from '@/lib/api/types'
-
-function msToHours(ms: number): number {
-  return Math.round((ms / 3600000) * 10) / 10
-}
+import { msToHours } from '@/lib/utils'
 
 interface EntriesTableProps {
   entries: TimeEntryListItem[]

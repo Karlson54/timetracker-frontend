@@ -3,10 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useTranslation } from 'react-i18next'
 import type { TimeEntryListItem } from '@/lib/api/types'
-
-function msToHours(ms: number): number {
-  return Math.round((ms / 3600000) * 10) / 10
-}
+import { msToHours } from '@/lib/utils'
 
 interface StatsCardsProps {
   allEntries: TimeEntryListItem[]

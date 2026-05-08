@@ -15,10 +15,7 @@ import { clientsService } from "@/lib/api/services/dictionaryService"
 import { toLocalDateString } from "@/lib/utils"
 import { ErrorToast } from "@/components/ui/error-toast"
 import { useErrorToast } from "@/hooks/use-error-toast"
-
-function msToHours(ms: number): number {
-  return Math.round((ms / 3600000) * 10) / 10
-}
+import { msToHours } from '@/lib/utils'
 
 interface UserContribution {
   userId: number

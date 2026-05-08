@@ -21,12 +21,7 @@ import timeEntriesService from "@/lib/api/services/timeEntriesService"
 import type { TimeEntryListItem, CreateTimeEntryRequest } from "@/lib/api/types"
 import { ErrorToast } from '@/components/ui/error-toast'
 import { useErrorToast } from '@/hooks/use-error-toast'
-import { parseApiError, toLocalDateString } from '@/lib/utils'
-
-// Хелпер: мілісекунди -> години з 1 знаком після коми
-function msToHours(ms: number): number {
-  return Math.round((ms / 3600000) * 10) / 10
-}
+import { parseApiError, toLocalDateString, msToHours } from '@/lib/utils'
 
 export function WeeklyCalendar() {
   const { t, i18n } = useTranslation()

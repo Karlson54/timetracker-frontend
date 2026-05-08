@@ -10,16 +10,12 @@ import type { DateRange } from "react-day-picker"
 import { useTranslation } from "react-i18next"
 import timeEntriesService from "@/lib/api/services/timeEntriesService"
 import type { TimeEntryListItem } from "@/lib/api/types"
-import { toLocalDateString } from '@/lib/utils'
 import { StatsCards } from '@/components/reports/StatsCards'
 import { Pagination } from '@/components/reports/Pagination'
 import { EntriesTable } from '@/components/reports/EntriesTable'
+import { toLocalDateString, msToHours } from '@/lib/utils'
 
 const PAGE_SIZE = 50
-
-function msToHours(ms: number): number {
-  return Math.round((ms / 3600000) * 10) / 10
-}
 
 interface ClientSummary {
   clientName: string
