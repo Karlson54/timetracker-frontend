@@ -202,9 +202,9 @@ export function DatePickerWithRange({ date, setDate }: DatePickerWithRangeProps)
             </div>
 
             <div className="grid grid-cols-7 gap-1 text-center mb-1">
-              {Array.from({ length: 7 }, (_v, i) => (
-                <div key={i} className="text-xs font-medium py-1">
-                  {t(`calendar.weekdayShort.${i}`)}
+              {[1, 2, 3, 4, 5, 6, 0].map((dayIndex) => (
+                <div key={dayIndex} className="text-xs font-medium py-1">
+                  {t(`calendar.weekdayShort.${dayIndex}`)}
                 </div>
               ))}
             </div>
