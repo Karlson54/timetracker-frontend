@@ -1,0 +1,129 @@
+{
+  "admin": {
+    "reports": {
+      "title": "Employee Reports",
+      "exportAllToExcel": "Export All Records to Excel",
+      "loadingReports": "Loading reports...",
+      "pagination": {
+        "showing": "Showing {{from}}-{{to}} of {{total}} records"
+      },
+      "tabs": {
+        "summary": "Summary",
+        "detailed": "Detailed Report"
+      },
+      "filters": {
+        "title": "Period",
+        "description": "Select parameters to display reports",
+        "employee": "Employee",
+        "selectEmployee": "Select an employee",
+        "allEmployees": "All employees",
+        "period": "Period"
+      },
+      "summary": {
+        "summaryTitle": "Summary of records",
+        "summaryDescription": "General information about employee reports",
+        "noReportsAvailable": "No reports available for the selected period",
+        "totalHoursTitle": "Total Hours",
+        "period": "For the selected period",
+        "reportsCountTitle": "Number of Records"
+      },
+      "detailed": {
+        "title": "Detailed Report",
+        "description": "Detailed information about time spent",
+        "timeDistribution": "Time distribution by clients"
+      },
+      "downloadDialog": {
+        "title": "Download Report",
+        "description": "Select columns to include in the Excel report",
+        "tablePreview": "Table Preview",
+        "download": "Download",
+        "cancel": "Cancel",
+        "noDataToExport": "No data to export"
+      },
+      "errors": {
+        "excelCreationError": "An error occurred while creating the Excel file"
+      }
+    },
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "description": "Manage employees, companies, and reports",
+      "topClients": "Top 5 Clients (this month)",
+      "noClientsData": "No data for this month",
+      "inactiveUsers": "No entries this week",
+      "allUsersActive": "All employees have made entries",
+      "lastEntry": "Last entry",
+      "neverEntered": "Never added entries",
+      "loading": "Loading dashboard stats..."
+    },
+    "employees": {
+      "title": "Employees",
+      "description": "Company employees management",
+      "add": {
+        "title": "Add New Employee",
+        "description": "Enter information about the new employee",
+        "button": "Add Employee"
+      },
+      "edit": {
+        "title": "Edit Employee",
+        "passwordPlaceholder": "Enter new password",
+        "passwordNote": "Leave empty if you don't want to change the password"
+      },
+      "delete": {
+        "title": "Delete Employee",
+        "confirmation": "Are you sure you want to delete this employee? This action cannot be undone.",
+        "cancel": "Cancel",
+        "delete": "Delete"
+      },
+      "fields": {
+        "name": "Full Name",
+        "login": "Login",
+        "email": "Email",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "agency": "Agency",
+        "selectAgency": "Select agency",
+        "role": "Role",
+        "selectRole": "Select role"
+      },
+      "list": {
+        "title": "Employees List",
+        "description": "Total employees: {{count}}",
+        "searchPlaceholder": "Search employees...",
+        "empty": "No employees found"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "tableHeaders": {
+        "employee": "Employee",
+        "email": "Email",
+        "agency": "Agency",
+        "login": "Login",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "errors": {
+        "lastAdmin": "Cannot deactivate the last administrator",
+        "passwordMismatch": "Passwords do not match"
+      }
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "employees": "Employees",
+      "companies": "Companies",
+      "reports": "Reports",
+      "dictionaries": "Dictionaries",
+      "reports_employees": "By Employees",
+      "reports_clients": "By Clients",
+      "dict": {
+        "agencies": "Agencies",
+        "markets": "Markets",
+        "clients": "Clients",
+        "media": "Media",
+        "jobTypes": "Job Types",
+        "contractingAgencies": "Contracting Agencies"
+      }
+    }
+  }
+}
