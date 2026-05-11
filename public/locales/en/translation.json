@@ -17,112 +17,31 @@
         "employee": "Employee",
         "selectEmployee": "Select an employee",
         "allEmployees": "All employees",
-        "period": "Period",
-        "downloadReport": "Download Report",
-        "noReportsToDownload": "No reports available for the selected filters"
+        "period": "Period"
       },
       "summary": {
-        "title": "Summary",
-        "detailed": "Detailed Report",
         "summaryTitle": "Summary of records",
         "summaryDescription": "General information about employee reports",
         "noReportsAvailable": "No reports available for the selected period",
         "totalHoursTitle": "Total Hours",
         "period": "For the selected period",
-        "reportsCountTitle": "Number of Records",
-        "avgTimePerDay": "Average Time per Day"
+        "reportsCountTitle": "Number of Records"
       },
       "detailed": {
         "title": "Detailed Report",
         "description": "Detailed information about time spent",
-        "selectEmployeeMessage": "Select an employee in the filters above to see a detailed report of projects and tasks",
-        "timeDistribution": "Time distribution by clients",
-        "rebranding": "Rebranding Acme Inc",
-        "marketingCampaign": "Marketing Campaign",
-        "websiteDevelopment": "Website Development",
-        "otherTasks": "Other Tasks",
-        "date": "Date",
-        "project": "Project",
-        "task": "Task",
-        "hours": "Hours",
-        "comment": "Comment",
-        "exportToExcel": "Export to Excel",
-        "selectEmployeeTitle": "Select an employee",
-        "selectEmployeeHint": "To view a detailed report, select a specific employee in the filters above",
-        "company": "Company"
+        "timeDistribution": "Time distribution by clients"
       },
       "downloadDialog": {
         "title": "Download Report",
         "description": "Select columns to include in the Excel report",
         "tablePreview": "Table Preview",
-        "reports": "reports",
         "download": "Download",
         "cancel": "Cancel",
-        "noDataToExport": "No data to export",
-        "noReportsToExport": "No reports to export"
-      },
-      "tableHeaders": {
-        "name": "Name",
-        "agency": "Agency",
-        "date": "Date",
-        "market": "Market",
-        "contractingAgency": "Contracting Agency / Unit",
-        "client": "Client",
-        "projectBrand": "Project / brand",
-        "media": "Media",
-        "jobType": "Job type",
-        "hours": "Hours",
-        "comments": "Comments",
-        "employee": "Employee",
-        "companies": "Companies",
-        "actions": "Actions",
-        "company": "Company"
+        "noDataToExport": "No data to export"
       },
       "errors": {
-        "excelCreationError": "An error occurred while creating the Excel file",
-        "downloadError": "An error occurred while downloading the report",
-        "reportNotFound": "Report with ID {reportId} not found"
-      }
-    },
-    "companies": {
-      "title": "Company Management",
-      "description": "Add and edit client companies",
-      "addCompany": "Add Company",
-      "clientCompanies": "Client Companies",
-      "clientCompaniesDesc": "List of companies the agency works with",
-      "noCompanies": "No companies available",
-      "loading": "Loading companies...",
-      "deleteConfirm": "Are you sure you want to delete this company?",
-      "deleteSuccess": "Company deleted successfully",
-      "add": {
-        "title": "Add New Company",
-        "description": "Enter information about the new client company",
-        "name": "Company Name",
-        "contact": "Contact Person",
-        "email": "Email",
-        "phone": "Phone",
-        "address": "Address",
-        "notes": "Notes",
-        "cancel": "Cancel",
-        "add": "Add"
-      },
-      "edit": {
-        "title": "Edit Company",
-        "description": "Change company information",
-        "save": "Save",
-        "cancel": "Cancel",
-        "updating": "Updating...",
-        "successMessage": "Company updated successfully"
-      },
-      "tableHeaders": {
-        "name": "Name",
-        "contact": "Contact Person",
-        "email": "Email",
-        "phone": "Phone",
-        "projects": "Active Projects",
-        "actions": "Actions",
-        "edit": "Edit",
-        "delete": "Delete"
+        "excelCreationError": "An error occurred while creating the Excel file"
       }
     },
     "dashboard": {
@@ -134,84 +53,20 @@
       "allUsersActive": "All employees have made entries",
       "lastEntry": "Last entry",
       "neverEntered": "Never added entries",
-      "stats": {
-        "employees": "Total Employees",
-        "activeAccounts": "Active accounts",
-        "companies": "Client Companies",
-        "totalInDatabase": "Total in database"
-      },
-      "tabs": {
-        "employees": "Employees",
-        "companies": "Companies",
-        "reports": "Recent Reports"
-      },
       "loading": "Loading dashboard stats..."
     },
     "employees": {
-      "overview": {
-        "title": "Employee Overview",
-        "description": "Management and monitoring of employee activity",
-        "employee": "Employee",
-        "reportPeriod": "Report Period",
-        "actions": "Actions",
-        "noEmployees": "No employees available",
-        "loading": "Loading employee data...",
-        "excel": "Excel",
-        "downloadMessage": "Report for employee ID: {employeeId} for the period {startDate} - {endDate} is downloading..."
-      },
       "title": "Employees",
       "description": "Company employees management",
-      "loading": "Loading employees...",
-      "addEmployee": "Add Employee",
-      "status": {
-        "active": "Active",
-        "inactive": "Inactive"
-      },
-      "roles": {
-        "admin": "Administrator"
-      },
-      "positions": {
-        "accountant": "Accountant",
-        "chiefAccountant": "Chief Accountant"
-      },
-      "departments": {
-        "accounting": "Accounting"
-      },
       "add": {
         "title": "Add New Employee",
         "description": "Enter information about the new employee",
-        "name": "Full Name",
-        "email": "Email",
-        "password": "Password",
-        "position": "Position",
-        "selectPosition": "Select position",
-        "department": "Department",
-        "selectDepartment": "Select department",
-        "agency": "Agency",
-        "selectAgency": "Select agency",
-        "cancel": "Cancel",
-        "add": "Add",
         "button": "Add Employee"
       },
       "edit": {
         "title": "Edit Employee",
-        "description": "Change employee information",
-        "name": "Full Name",
-        "email": "Email",
-        "position": "Position",
-        "selectPosition": "Select position",
-        "department": "Department",
-        "selectDepartment": "Select department",
-        "password": "Password",
         "passwordPlaceholder": "Enter new password",
-        "passwordNote": "Leave empty if you don't want to change the password",
-        "agency": "Agency",
-        "selectAgency": "Select agency",
-        "adminRole": "Administrator Rights",
-        "adminRoleDescription": "Provides full access to the admin panel and user management",
-        "cancel": "Cancel",
-        "save": "Save",
-        "updating": "Updating..."
+        "passwordNote": "Leave empty if you don't want to change the password"
       },
       "delete": {
         "title": "Delete Employee",
@@ -234,14 +89,15 @@
         "title": "Employees List",
         "description": "Total employees: {{count}}",
         "searchPlaceholder": "Search employees...",
-        "noEmployees": "No employees found",
         "empty": "No employees found"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
       },
       "tableHeaders": {
         "employee": "Employee",
         "email": "Email",
-        "position": "Position",
-        "department": "Department",
         "agency": "Agency",
         "login": "Login",
         "status": "Status",
@@ -251,32 +107,6 @@
         "lastAdmin": "Cannot deactivate the last administrator",
         "passwordMismatch": "Passwords do not match"
       }
-    },
-    "companyOverview": {
-      "title": "Company Overview",
-      "description": "Client companies and their active projects",
-      "name": "Name",
-      "contact": "Contact Person",
-      "email": "Email",
-      "activeProjects": "Active Projects",
-      "totalRevenue": "Total Revenue",
-      "noCompanies": "No companies available",
-      "loading": "Loading company data...",
-      "manageCompanies": "Manage Companies"
-    },
-    "recentReports": {
-      "title": "Recent Reports",
-      "description": "Recently added time entries",
-      "employee": "Employee",
-      "date": "Date",
-      "hours": "Hours",
-      "companies": "Companies",
-      "actions": "Actions",
-      "noReports": "No reports available",
-      "loading": "Loading recent reports...",
-      "download": "Download",
-      "downloadMessage": "Report ID: {reportId} is downloading in Excel format...",
-      "allReports": "All Reports"
     },
     "nav": {
       "dashboard": "Dashboard",
@@ -292,7 +122,6 @@
         "clients": "Clients",
         "media": "Media",
         "jobTypes": "Job Types",
-        "projectBrands": "Project Brands",
         "contractingAgencies": "Contracting Agencies"
       }
     }
@@ -307,10 +136,16 @@
     "admin": "Administrator",
     "user": "Employee"
   },
+  "auth": {
+    "title": "System Login",
+    "email": "Email",
+    "password": "Password",
+    "loginInProgress": "Login in Progress...",
+    "login": "Login"
+  },
   "calendar": {
     "title": "Working Time Calendar",
     "description": "Select a day to add or view entries",
-    "adminRole": "Administrator",
     "week": "Week {{from}} - {{to}}",
     "entriesForDate": "Entries for {{date}}",
     "addEntry": "Add Entry",
@@ -319,8 +154,6 @@
     "onDate": "on {{date}}",
     "specifyDetails": "Specify company, work description, and time spent",
     "totalHours": "Total Hours",
-    "forDate": "For {{date}}",
-    "hours": "Hours",
     "totalPeriodHours": "Hours",
     "PeriodAverageTimeHours": "Hours",
     "PeriodAverageTimeDay": "day",
@@ -342,12 +175,9 @@
     "edit": "Edit",
     "delete": "Delete",
     "deleteConfirm": "Are you sure you want to delete this entry?",
-    "copy": "Copy",
     "noEntriesForDate": "No entries for this date",
     "noEntriesForDateDesc": "No entries have been added for {{date}} yet",
     "addFirstEntry": "Add First Entry",
-    "copyEntry": "Copy Entry",
-    "selectDateToCopy": "Select a date to copy the entry to",
     "selectDatesToCopy": "Select dates to copy",
     "weekdayShort": {
       "0": "Sun",
@@ -358,20 +188,11 @@
       "5": "Fri",
       "6": "Sat"
     },
-    "selectedDates": "Selected {{count}} date(s)",
     "selectDatesToCopyHint": "Select dates to copy the entry",
     "cancel": "Cancel",
     "save": "Save",
-    "userFunctions": "User Functions",
-    "adminFunctions": "Admin Functions",
     "menu": {
-      "calendar": "Calendar",
-      "myReports": "My Reports",
-      "dashboard": "Dashboard",
-      "reports": "Reports",
-      "companies": "Companies",
-      "employees": "Employees",
-      "logout": "Logout"
+      "myReports": "My Reports"
     },
     "loading": "Loading...",
     "selectProjectBrand": "Select project/brand",
@@ -389,38 +210,6 @@
     "spentTime": "Time spent (minutes)",
     "minutesHint": "90 = 1:30 h",
     "commentsPlaceholder": "Additional comments..."
-  },
-  "markets": {
-    "ukraine": "Ukraine",
-    "europe": "Europe",
-    "usa": "USA",
-    "asia": "Asia",
-    "global": "Global"
-  },
-  "dateRangePicker": {
-    "placeholder": "Select period"
-  },
-  "auth": {
-    "loading": "Loading...",
-    "title": "System Login",
-    "systemName": "Time Tracking System",
-    "email": "Email",
-    "password": "Password",
-    "loginInProgress": "Login in Progress...",
-    "login": "Login",
-    "registrationStatus": "Checking Registration Status...",
-    "notRegistered": "Still not registered ?",
-    "createAccount": "Create Account",
-    "forbidden": "Registration of new users is forbidden by Administrator",
-    "code": "Confirmation Code",
-    "checking": "Checking...",
-    "submit": "Submit",
-    "redirecting": "Redirecting...",
-    "checkingStatus": "Checking authentication status..."
-  },
-  "logout": {
-    "signingOut": "Signing out...",
-    "signingOutAndRedirecting": "Signing out and redirecting to login page."
   },
   "dictionaries": {
     "agencies": {
@@ -487,5 +276,8 @@
       "saveFailed": "Failed to save",
       "deleteFailed": "Failed to delete"
     }
+  },
+  "dateRangePicker": {
+    "placeholder": "Select period"
   }
 }
