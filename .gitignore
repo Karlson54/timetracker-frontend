@@ -46,5 +46,3 @@ __pycache__/
 # OS файлы
 .DS_Store
 Thumbs.db
-
-pnpm-lock.yaml

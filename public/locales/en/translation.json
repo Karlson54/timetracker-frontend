@@ -278,6 +278,12 @@
     }
   },
   "dateRangePicker": {
-    "placeholder": "Select period"
+    "placeholder": "Select period",
+    "from": "From",
+    "to": "To",
+    "selectedPeriod": "Selected period:",
+    "selectEndDate": "(select end date)",
+    "clear": "Clear",
+    "apply": "Apply"
   }
 }

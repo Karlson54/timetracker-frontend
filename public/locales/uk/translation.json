@@ -278,6 +278,12 @@
     }
   },
   "dateRangePicker": {
-    "placeholder": "Виберіть період"
+    "placeholder": "Виберіть період",
+    "from": "Від",
+    "to": "До",
+    "selectedPeriod": "Обраний період:",
+    "selectEndDate": "(виберіть кінцеву дату)",
+    "clear": "Очистити",
+    "apply": "Застосувати"
   }
 }

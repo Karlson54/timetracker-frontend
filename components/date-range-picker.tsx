@@ -20,10 +20,10 @@ export function DatePickerWithRange({ date, setDate }: DatePickerWithRangeProps)
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [localDateRange, setLocalDateRange] = useState<DateRange | undefined>(date);
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const locale = i18n.language === 'uk' ? 'uk-UA' : 'en-US';
   const monthName = currentMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
-  
+
   // Calendar helper functions
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate();
@@ -85,47 +85,47 @@ export function DatePickerWithRange({ date, setDate }: DatePickerWithRangeProps)
 
   const isDateSelected = (day: number, month: number, year: number) => {
     if (!localDateRange) return false;
-    
+
     // Check if this date is within the selected range
     const currentDate = new Date(year, month, day);
     const from = localDateRange.from;
     const to = localDateRange.to || localDateRange.from;
-    
+
     return from && to && currentDate >= from && currentDate <= to;
   };
 
   const isStartDate = (day: number, month: number, year: number) => {
     if (!localDateRange || !localDateRange.from) return false;
-    
+
     const currentDate = new Date(year, month, day);
     const from = localDateRange.from;
-    
-    return currentDate.getDate() === from.getDate() && 
-           currentDate.getMonth() === from.getMonth() && 
-           currentDate.getFullYear() === from.getFullYear();
+
+    return currentDate.getDate() === from.getDate() &&
+      currentDate.getMonth() === from.getMonth() &&
+      currentDate.getFullYear() === from.getFullYear();
   };
 
   const isEndDate = (day: number, month: number, year: number) => {
     if (!localDateRange || !localDateRange.to) return false;
-    
+
     const currentDate = new Date(year, month, day);
     const to = localDateRange.to;
-    
-    return currentDate.getDate() === to.getDate() && 
-           currentDate.getMonth() === to.getMonth() && 
-           currentDate.getFullYear() === to.getFullYear();
+
+    return currentDate.getDate() === to.getDate() &&
+      currentDate.getMonth() === to.getMonth() &&
+      currentDate.getFullYear() === to.getFullYear();
   };
 
   const handleDateSelection = (day: number, month: number, year: number) => {
     const selectedDate = new Date(year, month, day);
-    
+
     if (!localDateRange || !localDateRange.from || localDateRange.to) {
       // New selection or complete selection - start new from date
       setLocalDateRange({ from: selectedDate, to: undefined });
     } else {
       // We have a from date but no to date
       const from = localDateRange.from;
-      
+
       if (selectedDate < from) {
         // If clicking earlier than the from date, make it the new from
         setLocalDateRange({ from: selectedDate, to: from });
@@ -214,7 +214,7 @@ export function DatePickerWithRange({ date, setDate }: DatePickerWithRangeProps)
                 const isStart = isStartDate(day.day, day.month, day.year);
                 const isEnd = isEndDate(day.day, day.month, day.year);
                 const isSelected = isDateSelected(day.day, day.month, day.year);
-                
+
                 return (
                   <Button
                     key={i}
@@ -230,10 +230,14 @@ export function DatePickerWithRange({ date, setDate }: DatePickerWithRangeProps)
                   >
                     {day.day}
                     {isStart && (
-                      <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-[10px]">Від</span>
+                      <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-[10px]">
+                        {t('dateRangePicker.from')}
+                      </span>
                     )}
                     {isEnd && (
-                      <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-[10px]">До</span>
+                      <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-[10px]">
+                        {t('dateRangePicker.to')}
+                      </span>
                     )}
                   </Button>
                 )
@@ -243,20 +247,22 @@ export function DatePickerWithRange({ date, setDate }: DatePickerWithRangeProps)
             <div className="flex items-center space-x-2">
               {localDateRange?.from && (
                 <div className="text-sm">
-                  <span className="font-medium">Обраний період:</span>{" "}
+                  <span className="font-medium">{t('dateRangePicker.selectedPeriod')}</span>{" "}
                   {format(localDateRange.from, "dd.MM.yyyy")}
-                  {localDateRange.to ? ` - ${format(localDateRange.to, "dd.MM.yyyy")}` : " (виберіть кінцеву дату)"}
+                  {localDateRange.to
+                    ? ` - ${format(localDateRange.to, "dd.MM.yyyy")}`
+                    : ` ${t('dateRangePicker.selectEndDate')}`}
                 </div>
               )}
             </div>
 
             <div className="flex justify-between pt-2">
               <Button variant="outline" size="sm" onClick={clearSelection}>
-                Очистити
+                {t('dateRangePicker.clear')}
               </Button>
               <Button size="sm" onClick={applyDateRange} disabled={!localDateRange?.from || !localDateRange?.to}>
                 <Check className="h-4 w-4 mr-2" />
-                Застосувати
+                {t('dateRangePicker.apply')}
               </Button>
             </div>
           </div>
