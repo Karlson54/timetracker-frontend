@@ -11,6 +11,7 @@ import { useAuthContext } from '@/lib/AuthContext'
 import { LanguageSwitcher } from './language-switcher'
 import { useTranslation } from 'react-i18next'
 import { getAgencyLogo } from '@/lib/utils/getAgencyLogo'
+import { ThemeToggle } from './theme-toggle'
 
 export function SimpleSidebar() {
   const isMobile = useMobile()
@@ -74,7 +75,10 @@ export function SimpleSidebar() {
           </ul>
         </nav>
         <div className="p-4 border-t space-y-2">
-          <LanguageSwitcher />
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
           <Button variant="ghost" className="w-full justify-start gap-3 text-sm" onClick={logout}>
             <LogOut className="h-4 w-4" />{t('nav.logout')}
           </Button>
