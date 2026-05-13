@@ -289,10 +289,10 @@ export function WeeklyCalendar() {
                     className={`h-auto flex flex-col py-2 ${isToday(day)
                       ? "border-primary bg-[rgb(15,40,84)] text-white hover:bg-[rgb(15,40,84)] hover:text-white"
                       : isSelected
-                        ? "bg-accent border-primary text-accent-foreground"
+                        ? "bg-primary/10 border-primary text-foreground"
                         : hasRecords
-                          ? "bg-muted hover:bg-muted/80 text-foreground"
-                          : "bg-background hover:bg-accent/50 text-foreground"
+                          ? "bg-gray-300 hover:bg-gray-400 dark:bg-muted dark:hover:bg-muted/80 text-foreground"
+                          : "bg-gray-50 hover:bg-gray-100 dark:bg-background dark:hover:bg-accent/50 text-foreground"
                       }`}
                     onClick={() => {
                       setSelectedDate(day)
