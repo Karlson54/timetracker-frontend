@@ -4,9 +4,17 @@ export const dynamic = 'force-dynamic'
 
 import { LoginForm } from '@/components/login-form'
 import { useTranslation } from 'react-i18next'
+import { useEffect, useState } from 'react'
 
 export default function LoginPage() {
   const { t } = useTranslation()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

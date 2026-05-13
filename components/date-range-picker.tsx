@@ -21,7 +21,8 @@ export function DatePickerWithRange({ date, setDate }: DatePickerWithRangeProps)
   const [isOpen, setIsOpen] = useState(false)
 
   const locale = i18n.language === 'uk' ? 'uk-UA' : 'en-US'
-  const monthName = currentMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+  const rawMonthName = currentMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+  const monthName = rawMonthName.charAt(0).toLowerCase() + rawMonthName.slice(1)
 
   const getDaysInMonth = (year: number, month: number) =>
     new Date(year, month + 1, 0).getDate()
@@ -178,7 +179,7 @@ export function DatePickerWithRange({ date, setDate }: DatePickerWithRangeProps)
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={goToPreviousMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <div className="font-medium text-sm text-foreground capitalize">
+              <div className="font-medium text-sm text-foreground">
                 {monthName}
               </div>
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={goToNextMonth}>
@@ -221,16 +222,6 @@ export function DatePickerWithRange({ date, setDate }: DatePickerWithRangeProps)
                     )}
                   >
                     {day.day}
-                    {isStart && !isEnd && (
-                      <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[9px] leading-none opacity-80">
-                        {t('dateRangePicker.from')}
-                      </span>
-                    )}
-                    {isEnd && !isStart && (
-                      <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[9px] leading-none opacity-80">
-                        {t('dateRangePicker.to')}
-                      </span>
-                    )}
                   </button>
                 )
               })}

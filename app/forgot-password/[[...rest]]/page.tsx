@@ -7,9 +7,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useTranslation } from 'react-i18next'
+import { useEffect, useState } from 'react'
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslation()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
 
   return (
     <div className="flex min-h-screen bg-background flex-col justify-center py-12 sm:px-6 lg:px-8">
