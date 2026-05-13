@@ -3,6 +3,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { TimeEntryListItem } from '@/lib/api/types'
 import { msToHours } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 interface EntriesTableProps {
   entries: TimeEntryListItem[]
@@ -11,11 +12,13 @@ interface EntriesTableProps {
 }
 
 export function EntriesTable({ entries, loading, emptyText }: EntriesTableProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="overflow-x-auto">
       {loading && (
-        <div className="text-center py-2 text-sm text-gray-400">
-          Завантаження...
+        <div className="text-center py-2 text-sm text-muted-foreground">
+          {t('loading')}
         </div>
       )}
       <Table>
@@ -37,8 +40,8 @@ export function EntriesTable({ entries, loading, emptyText }: EntriesTableProps)
         <TableBody>
           {entries.length === 0 && !loading ? (
             <TableRow>
-              <TableCell colSpan={11} className="text-center">
-                {emptyText ?? 'Немає даних'}
+              <TableCell colSpan={11} className="text-center text-muted-foreground">
+                {emptyText ?? t('common.noData')}
               </TableCell>
             </TableRow>
           ) : (

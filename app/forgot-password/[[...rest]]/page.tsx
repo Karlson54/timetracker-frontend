@@ -1,32 +1,35 @@
+'use client'
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useTranslation } from 'react-i18next'
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation()
+
   return (
-    <div className="flex min-h-screen bg-gray-50 flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen bg-background flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <div className="h-12 w-auto">
-            <img
-              src="/images/logos/groupm.png"
-              alt="GroupM"
-              className="h-full"
-            />
+            <img src="/images/logos/groupm.png" alt="GroupM" className="h-full" />
           </div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">Відновлення паролю</h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Введіть вашу електронну адресу, і ми надішлемо вам посилання для скидання паролю
+        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-foreground">
+          {t('forgotPassword.title')}
+        </h2>
+        <p className="mt-2 text-center text-sm text-muted-foreground">
+          {t('forgotPassword.description')}
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-card py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-border">
           <form className="space-y-6" action="#" method="POST">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('forgotPassword.email')}</Label>
               <div className="mt-1">
                 <Input
                   id="email"
@@ -38,10 +41,9 @@ export default function ForgotPasswordPage() {
                 />
               </div>
             </div>
-
             <div>
               <Button type="submit" className="w-full">
-                Надіслати посилання для скидання
+                {t('forgotPassword.submit')}
               </Button>
             </div>
           </form>
@@ -49,16 +51,17 @@ export default function ForgotPasswordPage() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">Або</span>
+                <span className="bg-card px-2 text-muted-foreground">
+                  {t('forgotPassword.or')}
+                </span>
               </div>
             </div>
-
             <div className="mt-6 text-center">
-              <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                Повернутися до входу
+              <Link href="/login" className="font-medium text-primary hover:text-primary/80">
+                {t('forgotPassword.backToLogin')}
               </Link>
             </div>
           </div>
@@ -66,4 +69,4 @@ export default function ForgotPasswordPage() {
       </div>
     </div>
   )
-} 
+}

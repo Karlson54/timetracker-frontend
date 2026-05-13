@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Calendar, Menu, X, FileText, LogOut, BarChart3, Users, Building, FileSpreadsheet } from 'lucide-react'
+import { Calendar, Menu, X, FileText, LogOut, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn, formatEmployeeName } from '@/lib/utils'
 import { useMobile } from '@/hooks/use-mobile'
@@ -30,7 +30,7 @@ export function SimpleSidebar() {
         </Button>
       )}
       <div className={cn(
-        'bg-white border-r w-64 flex flex-col transition-all duration-300 z-40',
+        'bg-background border-r w-64 flex flex-col transition-all duration-300 z-40',
         isMobile && 'fixed h-full',
         isMobile && !isOpen && '-translate-x-full',
       )}>
@@ -44,10 +44,10 @@ export function SimpleSidebar() {
           </div>
           {user && (
             <>
-              <p className="text-sm font-medium mt-2">
+              <p className="text-sm font-medium mt-2 text-foreground">
                 {formattedName?.firstName} {formattedName?.lastName}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {isAdmin ? t('roles.admin') : t('roles.user')}
               </p>
             </>
@@ -56,18 +56,33 @@ export function SimpleSidebar() {
         <nav className="flex-1 p-4">
           <ul className="space-y-1">
             <li>
-              <Link href="/dashboard" className={cn('flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-50', pathname === '/dashboard' ? 'bg-gray-100 font-medium' : 'text-gray-500')}>
+              <Link href="/dashboard" className={cn(
+                'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+                pathname === '/dashboard'
+                  ? 'bg-accent text-accent-foreground font-medium'
+                  : 'text-foreground hover:bg-accent/50'
+              )}>
                 <Calendar className="h-4 w-4" />{t('nav.calendar')}
               </Link>
             </li>
             <li>
-              <Link href="/reports" className={cn('flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-50', pathname === '/reports' ? 'bg-gray-100 font-medium' : 'text-gray-500')}>
+              <Link href="/reports" className={cn(
+                'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+                pathname === '/reports'
+                  ? 'bg-accent text-accent-foreground font-medium'
+                  : 'text-foreground hover:bg-accent/50'
+              )}>
                 <FileText className="h-4 w-4" />{t('nav.reports')}
               </Link>
             </li>
             {isAdmin && (
               <li>
-                <Link href="/admin" className={cn('flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-50', pathname.startsWith('/admin') ? 'bg-gray-100 font-medium' : 'text-gray-500')}>
+                <Link href="/admin" className={cn(
+                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+                  pathname.startsWith('/admin')
+                    ? 'bg-accent text-accent-foreground font-medium'
+                    : 'text-foreground hover:bg-accent/50'
+                )}>
                   <BarChart3 className="h-4 w-4" />{t('nav.admin')}
                 </Link>
               </li>
@@ -79,7 +94,7 @@ export function SimpleSidebar() {
             <LanguageSwitcher />
             <ThemeToggle />
           </div>
-          <Button variant="ghost" className="w-full justify-start gap-3 text-sm" onClick={logout}>
+          <Button variant="ghost" className="w-full justify-start gap-3 text-sm text-foreground" onClick={logout}>
             <LogOut className="h-4 w-4" />{t('nav.logout')}
           </Button>
         </div>

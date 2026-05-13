@@ -3,10 +3,12 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthContext } from '@/lib/AuthContext'
+import { useTranslation } from 'react-i18next'
 
 export default function Home() {
   const { isAuthenticated, isLoading, isAdmin } = useAuthContext()
   const router = useRouter()
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (isLoading) return
@@ -22,8 +24,8 @@ export default function Home() {
   }, [isLoading, isAuthenticated, isAdmin, router])
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <p className="text-gray-500">Завантаження...</p>
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <p className="text-muted-foreground">{t('loading')}</p>
     </div>
   )
 }

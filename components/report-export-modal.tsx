@@ -199,7 +199,7 @@ export function ReportExportModal({ isOpen, onClose, reportData }: ReportExportM
           <DialogTitle>{t('admin.reports.downloadDialog.title')}</DialogTitle>
         </DialogHeader>
         <div className="py-4 overflow-x-auto">
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             {t('admin.reports.downloadDialog.description')}
           </p>
           
@@ -294,7 +294,7 @@ export function ReportExportModal({ isOpen, onClose, reportData }: ReportExportM
             </div>
           </div>
           
-          <h3 className="text-sm font-medium mb-2">{t('admin.reports.downloadDialog.tablePreview')}</h3>
+          <h3 className="text-sm font-medium mb-2 text-foreground">{t('admin.reports.downloadDialog.tablePreview')}</h3>
           <div className="border rounded-md overflow-auto" style={{ maxHeight: "400px" }}>
             <Table>
               <TableHeader>

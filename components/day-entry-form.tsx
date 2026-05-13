@@ -56,7 +56,7 @@ function DictionaryCombo({
         onFocus={onOpen}
       />
       {isOpen && (
-        <div className="absolute w-full z-50 mt-1 bg-white border rounded-md shadow-lg">
+        <div className="absolute w-full z-50 mt-1 bg-popover border border-border rounded-md shadow-lg">
           <Command>
             <CommandEmpty>{notFoundText}</CommandEmpty>
             <CommandGroup>

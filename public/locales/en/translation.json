@@ -285,5 +285,30 @@
     "selectEndDate": "(select end date)",
     "clear": "Clear",
     "apply": "Apply"
+  },
+  "login": {
+    "title": "Sign in to system",
+    "emailOrLogin": "Email or login",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "submitting": "Loading...",
+    "submit": "Sign in"
+  },
+  "logout": {
+    "title": "Signing out...",
+    "description": "Signing out and redirecting to login page."
+  },
+  "signup": {
+    "title": "Registration",
+    "description": "New user registration is performed by the system administrator.",
+    "backToLogin": "Back to login"
+  },
+  "forgotPassword": {
+    "title": "Password recovery",
+    "description": "Enter your email address and we will send you a password reset link",
+    "email": "Email",
+    "submit": "Send reset link",
+    "or": "Or",
+    "backToLogin": "Back to login"
   }
 }

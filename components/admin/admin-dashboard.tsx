@@ -53,7 +53,7 @@ export function AdminDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t('admin.dashboard.title')}</h1>
-        <p className="text-gray-500">{t('admin.dashboard.description')}</p>
+        <p className="text-muted-foreground">{t('admin.dashboard.description')}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -64,20 +64,20 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent>
             {loadingClients ? (
-              <p className="text-sm text-gray-400">{t('admin.dashboard.loading')}</p>
+              <p className="text-sm text-muted-foreground">{t('admin.dashboard.loading')}</p>
             ) : topClients.length === 0 ? (
-              <p className="text-sm text-gray-400">{t('admin.dashboard.noClientsData')}</p>
+              <p className="text-sm text-muted-foreground">{t('admin.dashboard.noClientsData')}</p>
             ) : (
               <div className="space-y-4">
                 {topClients.map((client) => (
                   <div key={client.clientId}>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="font-medium">{client.clientName}</span>
-                      <span className="text-gray-500">
+                      <span className="text-muted-foreground">
                         {client.totalHours} ({client.percentage}%)
                       </span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className="bg-primary h-2 rounded-full transition-all"
                         style={{ width: `${client.percentage}%` }}
@@ -97,15 +97,15 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent>
             {loadingUsers ? (
-              <p className="text-sm text-gray-400">{t('admin.dashboard.loading')}</p>
+              <p className="text-sm text-muted-foreground">{t('admin.dashboard.loading')}</p>
             ) : inactiveUsers.length === 0 ? (
-              <p className="text-sm text-gray-400">{t('admin.dashboard.allUsersActive')}</p>
+              <p className="text-sm text-muted-foreground">{t('admin.dashboard.allUsersActive')}</p>
             ) : (
               <div className="space-y-2">
                 {inactiveUsers.map((user) => (
-                  <div key={user.userId} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <span className="text-sm font-medium">{user.userName}</span>
-                    <span className="text-xs text-gray-400">
+                  <div key={user.userId} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                    <span className="text-sm font-medium text-foreground">{user.userName}</span>
+                    <span className="text-xs text-muted-foreground">
                       {user.lastEntryDate
                         ? `${t('admin.dashboard.lastEntry')}: ${new Date(user.lastEntryDate).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
                         : t('admin.dashboard.neverEntered')}

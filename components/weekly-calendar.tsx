@@ -248,7 +248,7 @@ export function WeeklyCalendar() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t('calendar.title')}</h1>
-        <p className="text-gray-500">{t('calendar.description')}</p>
+        <p className="text-muted-foreground">{t('calendar.description')}</p>
       </div>
 
       {/* Тижневий навігатор */}
@@ -289,10 +289,10 @@ export function WeeklyCalendar() {
                     className={`h-auto flex flex-col py-2 ${isToday(day)
                       ? "border-primary bg-[rgb(15,40,84)] text-white hover:bg-[rgb(15,40,84)] hover:text-white"
                       : isSelected
-                        ? "bg-primary/10 border-primary"
+                        ? "bg-accent border-primary text-accent-foreground"
                         : hasRecords
-                          ? "bg-gray-300 hover:bg-gray-400"
-                          : "bg-gray-50 hover:bg-gray-100"
+                          ? "bg-muted hover:bg-muted/80 text-foreground"
+                          : "bg-background hover:bg-accent/50 text-foreground"
                       }`}
                     onClick={() => {
                       setSelectedDate(day)
@@ -449,8 +449,8 @@ export function WeeklyCalendar() {
             !showEntryForm && (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-8">
-                  <p className="text-lg font-medium mb-2">{t('calendar.noEntriesForDate')}</p>
-                  <p className="text-gray-500 mb-4">
+                  <p className="text-lg font-medium mb-2 text-foreground">{t('calendar.noEntriesForDate')}</p>
+                  <p className="text-muted-foreground mb-4">
                     {t('calendar.noEntriesForDateDesc', {
                       date: selectedDate.toLocaleDateString(locale, { day: 'numeric', month: 'long' }),
                     })}
@@ -482,7 +482,7 @@ export function WeeklyCalendar() {
               }}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="font-medium text-sm">
+              <span className="font-medium text-sm text-foreground">
                 {copyMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
               </span>
               <Button variant="ghost" size="icon" onClick={() => {
@@ -495,7 +495,7 @@ export function WeeklyCalendar() {
             {/* Дні тижня */}
             <div className="grid grid-cols-7 gap-1 mb-1">
               {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"].map((d) => (
-                <div key={d} className="text-center text-xs text-gray-400 font-medium py-1">{d}</div>
+                <div key={d} className="text-center text-xs text-muted-foreground font-medium py-1">{d}</div>
               ))}
             </div>
 
@@ -513,7 +513,7 @@ export function WeeklyCalendar() {
                       ? ""
                       : todayFlag
                         ? "bg-[rgb(15,40,84)] text-white hover:bg-[rgb(15,40,84)] hover:text-white"
-                        : ""
+                        : "text-foreground hover:bg-accent/50"
                       }`}
                     disabled={!day}
                     onClick={() => toggleCopyDate(day)}
@@ -525,7 +525,7 @@ export function WeeklyCalendar() {
             </div>
 
             {copyDate && (
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 {copyDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             )}

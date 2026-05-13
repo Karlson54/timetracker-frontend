@@ -451,8 +451,8 @@ export function EmployeesList() {
                               }
                             >
                               {employee.isActive
-                                ? <UserX className="h-4 w-4 text-yellow-500" />
-                                : <UserCheck className="h-4 w-4 text-green-500" />
+                                ? <UserX className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+                                : <UserCheck className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
                               }
                             </Button>
                           )
@@ -463,7 +463,7 @@ export function EmployeesList() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                     {t('admin.employees.list.empty')}
                   </TableCell>
                 </TableRow>

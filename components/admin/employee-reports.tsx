@@ -324,7 +324,7 @@ export function EmployeeReports() {
             </CardHeader>
             <CardContent>
               {loadingDetailed && (
-                <div className="text-center py-2 text-sm text-gray-400">
+                <div className="text-center py-2 text-sm text-muted-foreground">
                   {t('admin.reports.loadingReports')}
                 </div>
               )}
@@ -338,11 +338,11 @@ export function EmployeeReports() {
                       <div key={client.clientName}>
                         <div className="flex justify-between text-sm mb-1">
                           <span className="font-medium">{client.clientName}</span>
-                          <span className="text-gray-500">
+                          <span className="text-muted-foreground">
                             {client.totalHours.toFixed(1)}г ({client.percentage}%)
                           </span>
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2">
+                        <div className="w-full bg-muted rounded-full h-2">
                           <div
                             className="bg-primary h-2 rounded-full transition-all"
                             style={{ width: `${client.percentage}%` }}
@@ -367,12 +367,12 @@ export function EmployeeReports() {
                             <TableCell className="text-right font-medium">
                               {client.totalHours.toFixed(1)}
                             </TableCell>
-                            <TableCell className="text-right text-gray-500">
+                            <TableCell className="text-right text-muted-foreground">
                               {client.percentage}%
                             </TableCell>
                           </TableRow>
                         ))}
-                        <TableRow className="border-t-2">
+                        <TableRow className="border-t-2 border-border">
                           <TableCell className="font-semibold">Total</TableCell>
                           <TableCell className="text-right font-semibold">
                             {totalHoursAll.toFixed(1)}

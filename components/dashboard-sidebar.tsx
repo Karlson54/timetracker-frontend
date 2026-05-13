@@ -46,7 +46,7 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
         </Button>
       )}
       <div className={cn(
-        'bg-white border-r w-64 flex flex-col transition-all duration-300 z-40',
+        'bg-background border-r w-64 flex flex-col transition-all duration-300 z-40',
         isMobile && 'fixed h-full',
         isMobile && !isOpen && '-translate-x-full',
       )}>
@@ -58,11 +58,11 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
               className="h-full object-contain"
             />
           </div>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-muted-foreground mt-2">
             {isAdmin ? t('admin.dashboard.title') : t('calendar.title')}
           </p>
           {user && (
-            <p className="text-sm font-medium mt-1">
+            <p className="text-sm font-medium mt-1 text-foreground">
               {formattedName?.firstName} {formattedName?.lastName}
             </p>
           )}
@@ -72,17 +72,32 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
           {isAdmin ? (
             <ul className="space-y-1">
               <li>
-                <Link href="/admin" className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm', pathname === '/admin' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50')}>
+                <Link href="/admin" className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                  pathname === '/admin'
+                    ? 'bg-accent text-accent-foreground font-medium'
+                    : 'text-foreground hover:bg-accent/50'
+                )}>
                   <BarChart3 className="h-4 w-4" />{t('admin.nav.dashboard')}
                 </Link>
               </li>
               <li>
-                <Link href="/admin/employees" className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm', pathname === '/admin/employees' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50')}>
+                <Link href="/admin/employees" className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                  pathname === '/admin/employees'
+                    ? 'bg-accent text-accent-foreground font-medium'
+                    : 'text-foreground hover:bg-accent/50'
+                )}>
                   <Users className="h-4 w-4" />{t('admin.nav.employees')}
                 </Link>
               </li>
               <li>
-                <Link href="/admin/dictionaries/clients" className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm', pathname === '/admin/companies' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50')}>
+                <Link href="/admin/dictionaries/clients" className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                  pathname === '/admin/companies'
+                    ? 'bg-accent text-accent-foreground font-medium'
+                    : 'text-foreground hover:bg-accent/50'
+                )}>
                   <Building className="h-4 w-4" />{t('admin.nav.companies')}
                 </Link>
               </li>
@@ -90,26 +105,30 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                 <button
                   onClick={() => setIsReportsOpen(!isReportsOpen)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-gray-50',
-                    isReportsActive && 'bg-gray-100 font-medium'
+                    'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                    isReportsActive
+                      ? 'bg-accent text-accent-foreground font-medium'
+                      : 'text-foreground hover:bg-accent/50'
                   )}
                 >
                   <FileSpreadsheet className="h-4 w-4" />
                   <span className="flex-1 text-left">{t('admin.nav.reports')}</span>
                   {isReportsOpen
-                    ? <ChevronDown className="h-3 w-3 text-gray-400" />
-                    : <ChevronRight className="h-3 w-3 text-gray-400" />
+                    ? <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                    : <ChevronRight className="h-3 w-3 text-muted-foreground" />
                   }
                 </button>
 
                 {isReportsOpen && (
-                  <ul className="mt-1 ml-4 space-y-1 border-l pl-3">
+                  <ul className="mt-1 ml-4 space-y-1 border-l border-border pl-3">
                     <li>
                       <Link
                         href="/admin/reports/employees"
                         className={cn(
-                          'flex items-center px-2 py-1.5 rounded-md text-sm',
-                          pathname === '/admin/reports/employees' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50 text-gray-600'
+                          'flex items-center px-2 py-1.5 rounded-md text-sm transition-colors',
+                          pathname === '/admin/reports/employees'
+                            ? 'bg-accent text-accent-foreground font-medium'
+                            : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                         )}
                       >
                         {t('admin.nav.reports_employees')}
@@ -119,8 +138,10 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                       <Link
                         href="/admin/reports/clients"
                         className={cn(
-                          'flex items-center px-2 py-1.5 rounded-md text-sm',
-                          pathname === '/admin/reports/clients' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50 text-gray-600'
+                          'flex items-center px-2 py-1.5 rounded-md text-sm transition-colors',
+                          pathname === '/admin/reports/clients'
+                            ? 'bg-accent text-accent-foreground font-medium'
+                            : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                         )}
                       >
                         {t('admin.nav.reports_clients')}
@@ -130,30 +151,36 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                 )}
               </li>
               <li>
-                <Link href="/dashboard" className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm', pathname === '/dashboard' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50')}>
+                <Link href="/dashboard" className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                  pathname === '/dashboard'
+                    ? 'bg-accent text-accent-foreground font-medium'
+                    : 'text-foreground hover:bg-accent/50'
+                )}>
                   <Clock className="h-4 w-4" />{t('nav.calendar')}
                 </Link>
               </li>
 
-              {/* Довідники — collapsible секція */}
               <li>
                 <button
                   onClick={() => setIsDictionariesOpen(!isDictionariesOpen)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-gray-50',
-                    isDictionaryActive && 'bg-gray-100 font-medium'
+                    'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                    isDictionaryActive
+                      ? 'bg-accent text-accent-foreground font-medium'
+                      : 'text-foreground hover:bg-accent/50'
                   )}
                 >
                   <BookOpen className="h-4 w-4" />
                   <span className="flex-1 text-left">{t('admin.nav.dictionaries')}</span>
                   {isDictionariesOpen
-                    ? <ChevronDown className="h-3 w-3 text-gray-400" />
-                    : <ChevronRight className="h-3 w-3 text-gray-400" />
+                    ? <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                    : <ChevronRight className="h-3 w-3 text-muted-foreground" />
                   }
                 </button>
 
                 {isDictionariesOpen && (
-                  <ul className="mt-1 ml-4 space-y-1 border-l pl-3">
+                  <ul className="mt-1 ml-4 space-y-1 border-l border-border pl-3">
                     {[
                       { href: '/admin/dictionaries/agencies', label: t('admin.nav.dict.agencies') },
                       { href: '/admin/dictionaries/markets', label: t('admin.nav.dict.markets') },
@@ -166,8 +193,10 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                         <Link
                           href={href}
                           className={cn(
-                            'flex items-center px-2 py-1.5 rounded-md text-sm',
-                            pathname === href ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50 text-gray-600'
+                            'flex items-center px-2 py-1.5 rounded-md text-sm transition-colors',
+                            pathname === href
+                              ? 'bg-accent text-accent-foreground font-medium'
+                              : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                           )}
                         >
                           {label}
@@ -181,12 +210,22 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
           ) : (
             <ul className="space-y-1">
               <li>
-                <Link href="/dashboard" className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm', pathname === '/dashboard' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50')}>
+                <Link href="/dashboard" className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                  pathname === '/dashboard'
+                    ? 'bg-accent text-accent-foreground font-medium'
+                    : 'text-foreground hover:bg-accent/50'
+                )}>
                   <Calendar className="h-4 w-4" />{t('nav.calendar')}
                 </Link>
               </li>
               <li>
-                <Link href="/reports" className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm', pathname === '/reports' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50')}>
+                <Link href="/reports" className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                  pathname === '/reports'
+                    ? 'bg-accent text-accent-foreground font-medium'
+                    : 'text-foreground hover:bg-accent/50'
+                )}>
                   <FileText className="h-4 w-4" />{t('nav.reports')}
                 </Link>
               </li>
@@ -199,7 +238,7 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
             <LanguageSwitcher />
             <ThemeToggle />
           </div>
-          <Button variant="ghost" className="w-full justify-start gap-3 text-sm" onClick={logout}>
+          <Button variant="ghost" className="w-full justify-start gap-3 text-sm text-foreground" onClick={logout}>
             <LogOut className="h-4 w-4" />{t('nav.logout')}
           </Button>
         </div>

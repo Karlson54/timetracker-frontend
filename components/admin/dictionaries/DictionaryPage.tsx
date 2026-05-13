@@ -176,7 +176,7 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
   if (error) {
     return (
       <Card>
-        <CardContent className="pt-6 text-center text-red-500">{error}</CardContent>
+        <CardContent className="pt-6 text-center text-destructive">{error}</CardContent>
       </Card>
     )
   }
@@ -299,8 +299,8 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
                             title={item.isActive ? t('common.deactivate') : t('common.activate')}
                           >
                             {item.isActive
-                              ? <UserX className="h-4 w-4 text-yellow-500" />
-                              : <UserCheck className="h-4 w-4 text-green-500" />
+                              ? <UserX className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+                              : <UserCheck className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
                             }
                           </Button>
                         )}
@@ -308,7 +308,7 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => confirmDelete(item.id)}>
-                          <Trash className="h-4 w-4 text-red-500" />
+                          <Trash className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
                     </TableCell>
@@ -316,7 +316,7 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-6 text-gray-500">
+                  <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
                     {t('common.noData')}
                   </TableCell>
                 </TableRow>

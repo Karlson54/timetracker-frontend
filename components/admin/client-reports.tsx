@@ -197,8 +197,8 @@ export function ClientReports() {
       {!selectedClientId && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <p className="text-lg font-medium text-gray-500 mb-2">Оберіть клієнта</p>
-            <p className="text-sm text-gray-400">
+            <p className="text-lg font-medium text-muted-foreground mb-2">Оберіть клієнта</p>
+            <p className="text-sm text-muted-foreground">
               Виберіть клієнта у фільтрі вище щоб побачити звіт
             </p>
           </CardContent>
@@ -209,7 +209,7 @@ export function ClientReports() {
       {selectedClientId && loadingReport && (
         <Card>
           <CardContent className="flex items-center justify-center py-16">
-            <p className="text-gray-400">Завантаження звіту...</p>
+            <p className="text-muted-foreground">Завантаження звіту...</p>
           </CardContent>
         </Card>
       )}
@@ -274,7 +274,7 @@ export function ClientReports() {
                           {msToHours(user.totalHoursMs).toFixed(1)}г ({Math.round(user.contributionPercentage)}%)
                         </span>
                       </div>
-                      <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div className="w-full bg-muted rounded-full h-2">
                         <div
                           className="bg-primary h-2 rounded-full transition-all"
                           style={{ width: `${user.contributionPercentage}%` }}
@@ -303,15 +303,15 @@ export function ClientReports() {
                         <TableCell className="text-right font-medium">
                           {msToHours(user.totalHoursMs).toFixed(1)}
                         </TableCell>
-                        <TableCell className="text-right text-gray-500">
+                        <TableCell className="text-right text-muted-foreground">
                           {user.entriesCount}
                         </TableCell>
-                        <TableCell className="text-right text-gray-500">
+                        <TableCell className="text-right text-muted-foreground">
                           {Math.round(user.contributionPercentage)}%
                         </TableCell>
                       </TableRow>
                     ))}
-                    <TableRow className="border-t-2">
+                    <TableRow className="border-t-2 border-border">
                       <TableCell className="font-semibold" colSpan={2}>Всього</TableCell>
                       <TableCell className="text-right font-semibold">
                         {totalHoursAll.toFixed(1)}
@@ -331,7 +331,7 @@ export function ClientReports() {
           {report.userContributions.length === 0 && (
             <Card>
               <CardContent className="flex items-center justify-center py-12">
-                <p className="text-gray-400">
+                <p className="text-muted-foreground">
                   Немає записів для клієнта {report.clientName} за обраний період
                 </p>
               </CardContent>
