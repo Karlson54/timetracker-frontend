@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useEffect } from 'react'
 import { useAuthContext } from '@/lib/AuthContext'
 import { useTranslation } from 'react-i18next'
