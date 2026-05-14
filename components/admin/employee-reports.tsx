@@ -206,7 +206,7 @@ export function EmployeeReports() {
           fromDate: fromStr,
           toDate: toStr,
           columns: columnsParam,
-          locale: 'uk',
+          locale: 'en',
         },
         responseType: 'blob',
       })
