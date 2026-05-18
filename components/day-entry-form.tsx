@@ -18,7 +18,6 @@ import {
 } from "@/lib/api/services/dictionaryService"
 import type { DictionaryItem } from "@/lib/api/types"
 
-// --- DictionaryCombo компонент ---
 interface DictionaryComboProps {
   id: string
   items: DictionaryItem[]
@@ -83,7 +82,6 @@ function DictionaryCombo({
   )
 }
 
-// --- Основной компонент ---
 interface DayEntryFormProps {
   date: Date
   fields?: {
@@ -101,13 +99,13 @@ interface DayEntryFormProps {
   filterStartsWith?: boolean
   showInputInField?: boolean
   onClose: () => void
-  onSave: (data: any) => void
+  onSave: (data: any) => Promise<void> | void
 }
 
 function getNameById(id: string | number | undefined, items: DictionaryItem[]): string {
   if (!id) return ""
   const found = items.find((i) => String(i.id) === String(id))
-  return found ? found.name : String(id)
+  return found ? found.name : ""
 }
 
 export function DayEntryForm({
@@ -193,9 +191,9 @@ export function DayEntryForm({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onSave({
+    await onSave({
       date,
       marketId: formData.market ? Number(formData.market) : null,
       contractingAgencyId: formData.contractingAgency ? Number(formData.contractingAgency) : null,
@@ -230,8 +228,14 @@ export function DayEntryForm({
                 items={markets}
                 value={formData.market}
                 inputValue={marketInput}
-                onInputChange={setMarketInput}
-                onSelect={(item) => { setFormData({ ...formData, market: String(item.id) }); setMarketInput(item.name) }}
+                onInputChange={(v) => {
+                  setMarketInput(v)
+                  setFormData(prev => ({ ...prev, market: "" }))
+                }}
+                onSelect={(item) => {
+                  setFormData(prev => ({ ...prev, market: String(item.id) }))
+                  setMarketInput(item.name)
+                }}
                 placeholder={t('calendar.selectMarket')}
                 notFoundText={t('calendar.marketNotFound')}
                 isOpen={openDropdown === "market"}
@@ -247,8 +251,14 @@ export function DayEntryForm({
                 items={contractingAgencies}
                 value={formData.contractingAgency}
                 inputValue={agencyInput}
-                onInputChange={setAgencyInput}
-                onSelect={(item) => { setFormData({ ...formData, contractingAgency: String(item.id) }); setAgencyInput(item.name) }}
+                onInputChange={(v) => {
+                  setAgencyInput(v)
+                  setFormData(prev => ({ ...prev, contractingAgency: "" }))
+                }}
+                onSelect={(item) => {
+                  setFormData(prev => ({ ...prev, contractingAgency: String(item.id) }))
+                  setAgencyInput(item.name)
+                }}
                 placeholder={t('calendar.selectAgency')}
                 notFoundText={t('calendar.agencyNotFound')}
                 isOpen={openDropdown === "agency"}
@@ -264,8 +274,14 @@ export function DayEntryForm({
                 items={clients}
                 value={formData.client}
                 inputValue={clientInput}
-                onInputChange={setClientInput}
-                onSelect={(item) => { setFormData({ ...formData, client: String(item.id) }); setClientInput(item.name) }}
+                onInputChange={(v) => {
+                  setClientInput(v)
+                  setFormData(prev => ({ ...prev, client: "" }))
+                }}
+                onSelect={(item) => {
+                  setFormData(prev => ({ ...prev, client: String(item.id) }))
+                  setClientInput(item.name)
+                }}
                 placeholder={t('calendar.selectClient')}
                 notFoundText={t('calendar.clientNotFound')}
                 isOpen={openDropdown === "client"}
@@ -283,7 +299,7 @@ export function DayEntryForm({
                 className="h-8 text-sm"
                 placeholder={t('calendar.projectBrandPlaceholder')}
                 value={formData.projectBrand}
-                onChange={(e) => setFormData({ ...formData, projectBrand: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, projectBrand: e.target.value }))}
               />
             )}
             {fields.media && renderField("media", t('calendar.media'),
@@ -292,8 +308,14 @@ export function DayEntryForm({
                 items={mediaTypes}
                 value={formData.media}
                 inputValue={mediaInput}
-                onInputChange={setMediaInput}
-                onSelect={(item) => { setFormData({ ...formData, media: String(item.id) }); setMediaInput(item.name) }}
+                onInputChange={(v) => {
+                  setMediaInput(v)
+                  setFormData(prev => ({ ...prev, media: "" }))
+                }}
+                onSelect={(item) => {
+                  setFormData(prev => ({ ...prev, media: String(item.id) }))
+                  setMediaInput(item.name)
+                }}
                 placeholder={t('calendar.selectMedia')}
                 notFoundText={t('calendar.mediaNotFound')}
                 isOpen={openDropdown === "media"}
@@ -309,8 +331,14 @@ export function DayEntryForm({
                 items={jobTypes}
                 value={formData.jobType}
                 inputValue={jobTypeInput}
-                onInputChange={setJobTypeInput}
-                onSelect={(item) => { setFormData({ ...formData, jobType: String(item.id) }); setJobTypeInput(item.name) }}
+                onInputChange={(v) => {
+                  setJobTypeInput(v)
+                  setFormData(prev => ({ ...prev, jobType: "" }))
+                }}
+                onSelect={(item) => {
+                  setFormData(prev => ({ ...prev, jobType: String(item.id) }))
+                  setJobTypeInput(item.name)
+                }}
                 placeholder={t('calendar.selectJobType')}
                 notFoundText={t('calendar.jobTypeNotFound')}
                 isOpen={openDropdown === "jobType"}
@@ -330,7 +358,7 @@ export function DayEntryForm({
                 rows={2}
                 placeholder={t('calendar.commentsPlaceholder')}
                 value={formData.comments}
-                onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
               />
             )}
             {fields.hours && renderField("hours", t('calendar.spentTime'),
@@ -343,7 +371,7 @@ export function DayEntryForm({
                   step="1"
                   placeholder="60"
                   value={formData.hours}
-                  onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, hours: e.target.value }))}
                   required
                 />
                 <p className="text-xs text-muted-foreground mt-1">{t('calendar.minutesHint')}</p>
@@ -361,8 +389,14 @@ export function DayEntryForm({
                 items={markets}
                 value={formData.market}
                 inputValue={marketInput}
-                onInputChange={setMarketInput}
-                onSelect={(item) => { setFormData({ ...formData, market: String(item.id) }); setMarketInput(item.name) }}
+                onInputChange={(v) => {
+                  setMarketInput(v)
+                  setFormData(prev => ({ ...prev, market: "" }))
+                }}
+                onSelect={(item) => {
+                  setFormData(prev => ({ ...prev, market: String(item.id) }))
+                  setMarketInput(item.name)
+                }}
                 placeholder={t('calendar.selectMarket')}
                 notFoundText={t('calendar.marketNotFound')}
                 isOpen={openDropdown === "market"}
@@ -380,8 +414,14 @@ export function DayEntryForm({
                 items={contractingAgencies}
                 value={formData.contractingAgency}
                 inputValue={agencyInput}
-                onInputChange={setAgencyInput}
-                onSelect={(item) => { setFormData({ ...formData, contractingAgency: String(item.id) }); setAgencyInput(item.name) }}
+                onInputChange={(v) => {
+                  setAgencyInput(v)
+                  setFormData(prev => ({ ...prev, contractingAgency: "" }))
+                }}
+                onSelect={(item) => {
+                  setFormData(prev => ({ ...prev, contractingAgency: String(item.id) }))
+                  setAgencyInput(item.name)
+                }}
                 placeholder={t('calendar.selectAgency')}
                 notFoundText={t('calendar.agencyNotFound')}
                 isOpen={openDropdown === "agency"}
@@ -399,8 +439,14 @@ export function DayEntryForm({
                 items={clients}
                 value={formData.client}
                 inputValue={clientInput}
-                onInputChange={setClientInput}
-                onSelect={(item) => { setFormData({ ...formData, client: String(item.id) }); setClientInput(item.name) }}
+                onInputChange={(v) => {
+                  setClientInput(v)
+                  setFormData(prev => ({ ...prev, client: "" }))
+                }}
+                onSelect={(item) => {
+                  setFormData(prev => ({ ...prev, client: String(item.id) }))
+                  setClientInput(item.name)
+                }}
                 placeholder={t('calendar.selectClient')}
                 notFoundText={t('calendar.clientNotFound')}
                 isOpen={openDropdown === "client"}
@@ -416,7 +462,7 @@ export function DayEntryForm({
               <Input
                 placeholder={t('calendar.projectBrandPlaceholder')}
                 value={formData.projectBrand}
-                onChange={(e) => setFormData({ ...formData, projectBrand: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, projectBrand: e.target.value }))}
               />
             </div>
           )}
@@ -428,8 +474,14 @@ export function DayEntryForm({
                 items={mediaTypes}
                 value={formData.media}
                 inputValue={mediaInput}
-                onInputChange={setMediaInput}
-                onSelect={(item) => { setFormData({ ...formData, media: String(item.id) }); setMediaInput(item.name) }}
+                onInputChange={(v) => {
+                  setMediaInput(v)
+                  setFormData(prev => ({ ...prev, media: "" }))
+                }}
+                onSelect={(item) => {
+                  setFormData(prev => ({ ...prev, media: String(item.id) }))
+                  setMediaInput(item.name)
+                }}
                 placeholder={t('calendar.selectMedia')}
                 notFoundText={t('calendar.mediaNotFound')}
                 isOpen={openDropdown === "media"}
@@ -447,8 +499,14 @@ export function DayEntryForm({
                 items={jobTypes}
                 value={formData.jobType}
                 inputValue={jobTypeInput}
-                onInputChange={setJobTypeInput}
-                onSelect={(item) => { setFormData({ ...formData, jobType: String(item.id) }); setJobTypeInput(item.name) }}
+                onInputChange={(v) => {
+                  setJobTypeInput(v)
+                  setFormData(prev => ({ ...prev, jobType: "" }))
+                }}
+                onSelect={(item) => {
+                  setFormData(prev => ({ ...prev, jobType: String(item.id) }))
+                  setJobTypeInput(item.name)
+                }}
                 placeholder={t('calendar.selectJobType')}
                 notFoundText={t('calendar.jobTypeNotFound')}
                 isOpen={openDropdown === "jobType"}
@@ -465,7 +523,7 @@ export function DayEntryForm({
                 rows={3}
                 placeholder={t('calendar.commentsPlaceholder')}
                 value={formData.comments}
-                onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
               />
             </div>
           )}
@@ -478,7 +536,7 @@ export function DayEntryForm({
                 step="1"
                 placeholder="60"
                 value={formData.hours}
-                onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, hours: e.target.value }))}
                 required
               />
               <p className="text-xs text-muted-foreground">{t('calendar.minutesHint')}</p>
