@@ -70,6 +70,8 @@ export function EmployeeReports() {
     company: true,
     fullName: true,
     date: true,
+    month: true,
+    year: true,
     market: true,
     contractingAgency: true,
     client: true,
@@ -177,6 +179,8 @@ export function EmployeeReports() {
             company: 'agency',
             fullName: 'fullname',
             date: 'date',
+            month: 'month',
+            year: 'year',
             market: 'market',
             contractingAgency: 'contractingagency',
             client: 'client',
@@ -232,6 +236,8 @@ export function EmployeeReports() {
     company: 'Agency',
     fullName: 'Name',
     date: 'Date',
+    month: 'Month',
+    year: 'Year',
     market: 'Market',
     contractingAgency: 'Contracting Agency / Unit',
     client: 'Client',
@@ -429,6 +435,8 @@ export function EmployeeReports() {
                     {selectedColumns.company && <TableHead>Agency</TableHead>}
                     {selectedColumns.fullName && <TableHead>Name</TableHead>}
                     {selectedColumns.date && <TableHead>Date</TableHead>}
+                    {selectedColumns.month && <TableHead>Month</TableHead>}
+                    {selectedColumns.year && <TableHead>Year</TableHead>}
                     {selectedColumns.market && <TableHead>Market</TableHead>}
                     {selectedColumns.contractingAgency && <TableHead>Contracting Agency / Unit</TableHead>}
                     {selectedColumns.client && <TableHead>Client</TableHead>}
@@ -463,6 +471,20 @@ export function EmployeeReports() {
                             {new Date(preview.entryDate).toLocaleDateString('uk-UA', {
                               day: '2-digit', month: '2-digit', year: 'numeric',
                             })}
+                          </TableCell>
+                        )}
+                        {selectedColumns.month && (
+                          <TableCell>
+                            {preview.entryDate
+                              ? new Date(preview.entryDate).toLocaleString('en-US', { month: 'long' })
+                              : '—'}
+                          </TableCell>
+                        )}
+                        {selectedColumns.year && (
+                          <TableCell>
+                            {preview.entryDate
+                              ? new Date(preview.entryDate).getFullYear()
+                              : '—'}
                           </TableCell>
                         )}
                         {selectedColumns.market && <TableCell>{preview.marketName || '—'}</TableCell>}
