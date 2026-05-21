@@ -402,110 +402,109 @@ export function EmployeeReports() {
 
       {/* Діалог експорту */}
       <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
-        <DialogContent className="max-w-[95vw] overflow-hidden">
+        <DialogContent className="max-w-[90vw] w-full max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{t('admin.reports.downloadDialog.title')}</DialogTitle>
             <DialogDescription>{t('admin.reports.downloadDialog.description')}</DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-row flex-wrap gap-4 py-4">
-            {(Object.keys(selectedColumns) as Array<keyof typeof selectedColumns>).map((key) => (
-              <div key={key} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`col-${key}`}
-                  checked={selectedColumns[key]}
-                  onCheckedChange={(checked) =>
-                    setSelectedColumns({ ...selectedColumns, [key]: !!checked })
-                  }
-                />
-                <label htmlFor={`col-${key}`} className="text-sm font-medium">
-                  {columnLabels[key]}
-                </label>
-              </div>
-            ))}
-          </div>
-
-          {/* Preview таблица в диалоге */}
-          <div>
-            <h3 className="text-sm font-medium mb-2">{t('admin.reports.downloadDialog.tablePreview')}</h3>
-            <div className="border rounded-md overflow-auto" style={{ maxHeight: "300px" }}>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {selectedColumns.company && <TableHead>Agency</TableHead>}
-                    {selectedColumns.fullName && <TableHead>Name</TableHead>}
-                    {selectedColumns.date && <TableHead>Date</TableHead>}
-                    {selectedColumns.month && <TableHead>Month</TableHead>}
-                    {selectedColumns.year && <TableHead>Year</TableHead>}
-                    {selectedColumns.market && <TableHead>Market</TableHead>}
-                    {selectedColumns.contractingAgency && <TableHead>Contracting Agency / Unit</TableHead>}
-                    {selectedColumns.client && <TableHead>Client</TableHead>}
-                    {selectedColumns.projectBrand && <TableHead>Project / brand</TableHead>}
-                    {selectedColumns.media && <TableHead>Media</TableHead>}
-                    {selectedColumns.jobType && <TableHead>Job type</TableHead>}
-                    {selectedColumns.hours && <TableHead>Hours</TableHead>}
-                    {selectedColumns.comments && <TableHead>Comments</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(() => {
-                    const preview = allEntries[0] ?? entries[0]
-                    if (!preview) {
-                      return (
-                        <TableRow>
-                          <TableCell
-                            colSpan={Object.values(selectedColumns).filter(Boolean).length || 1}
-                            className="text-center text-gray-400 text-sm"
-                          >
-                            {t('admin.reports.downloadDialog.noDataToExport')}
-                          </TableCell>
-                        </TableRow>
-                      )
+          <div className="flex-1 overflow-y-auto space-y-4 py-2">
+            {/* Чекбоксы — горизонтально с переносом */}
+            <div className="flex flex-wrap gap-x-6 gap-y-3">
+              {(Object.keys(selectedColumns) as Array<keyof typeof selectedColumns>).map((key) => (
+                <div key={key} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`col-${key}`}
+                    checked={selectedColumns[key]}
+                    onCheckedChange={(checked) =>
+                      setSelectedColumns({ ...selectedColumns, [key]: !!checked })
                     }
-                    return (
-                      <TableRow>
-                        {selectedColumns.company && <TableCell>{preview.agencyName || '—'}</TableCell>}
-                        {selectedColumns.fullName && <TableCell>{preview.userName || '—'}</TableCell>}
-                        {selectedColumns.date && (
-                          <TableCell>
-                            {new Date(preview.entryDate).toLocaleDateString('uk-UA', {
-                              day: '2-digit', month: '2-digit', year: 'numeric',
-                            })}
-                          </TableCell>
-                        )}
-                        {selectedColumns.month && (
-                          <TableCell>
-                            {preview.entryDate
-                              ? new Date(preview.entryDate).toLocaleString('en-US', { month: 'long' })
-                              : '—'}
-                          </TableCell>
-                        )}
-                        {selectedColumns.year && (
-                          <TableCell>
-                            {preview.entryDate
-                              ? new Date(preview.entryDate).getFullYear()
-                              : '—'}
-                          </TableCell>
-                        )}
-                        {selectedColumns.market && <TableCell>{preview.marketName || '—'}</TableCell>}
-                        {selectedColumns.contractingAgency && <TableCell>{preview.contractingAgencyName || '—'}</TableCell>}
-                        {selectedColumns.client && <TableCell>{preview.clientName || '—'}</TableCell>}
-                        {selectedColumns.projectBrand && <TableCell>{preview.projectBrandName || '—'}</TableCell>}
-                        {selectedColumns.media && <TableCell>{preview.mediaName || '—'}</TableCell>}
-                        {selectedColumns.jobType && <TableCell>{preview.jobTypeName || '—'}</TableCell>}
-                        {selectedColumns.hours && (
-                          <TableCell>{msToHours(preview.hoursMilliseconds).toFixed(1)}</TableCell>
-                        )}
-                        {selectedColumns.comments && <TableCell>{preview.comments || '—'}</TableCell>}
-                      </TableRow>
-                    )
-                  })()}
-                </TableBody>
-              </Table>
+                  />
+                  <label htmlFor={`col-${key}`} className="text-sm font-medium cursor-pointer">
+                    {columnLabels[key]}
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            {/* Превью таблицы */}
+            <div>
+              <h3 className="text-sm font-medium mb-2">{t('admin.reports.downloadDialog.tablePreview')}</h3>
+              <div className="border rounded-md overflow-auto max-h-[300px]">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      {selectedColumns.company && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Agency</th>}
+                      {selectedColumns.fullName && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Name</th>}
+                      {selectedColumns.date && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Date</th>}
+                      {selectedColumns.month && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Month</th>}
+                      {selectedColumns.year && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Year</th>}
+                      {selectedColumns.market && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Market</th>}
+                      {selectedColumns.contractingAgency && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Contracting Agency / Unit</th>}
+                      {selectedColumns.client && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Client</th>}
+                      {selectedColumns.projectBrand && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Project / brand</th>}
+                      {selectedColumns.media && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Media</th>}
+                      {selectedColumns.jobType && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Job type</th>}
+                      {selectedColumns.hours && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Hours</th>}
+                      {selectedColumns.comments && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Comments</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const preview = allEntries[0] ?? entries[0]
+                      if (!preview) {
+                        return (
+                          <tr>
+                            <td
+                              colSpan={Object.values(selectedColumns).filter(Boolean).length || 1}
+                              className="px-3 py-4 text-center text-muted-foreground text-sm"
+                            >
+                              {t('admin.reports.downloadDialog.noDataToExport')}
+                            </td>
+                          </tr>
+                        )
+                      }
+                      return (
+                        <tr className="border-b">
+                          {selectedColumns.company && <td className="px-3 py-2 whitespace-nowrap">{preview.agencyName || '—'}</td>}
+                          {selectedColumns.fullName && <td className="px-3 py-2 whitespace-nowrap">{preview.userName || '—'}</td>}
+                          {selectedColumns.date && (
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              {new Date(preview.entryDate).toLocaleDateString('uk-UA', {
+                                day: '2-digit', month: '2-digit', year: 'numeric',
+                              })}
+                            </td>
+                          )}
+                          {selectedColumns.month && (
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              {preview.entryDate ? new Date(preview.entryDate).toLocaleString('en-US', { month: 'long' }) : '—'}
+                            </td>
+                          )}
+                          {selectedColumns.year && (
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              {preview.entryDate ? new Date(preview.entryDate).getFullYear() : '—'}
+                            </td>
+                          )}
+                          {selectedColumns.market && <td className="px-3 py-2 whitespace-nowrap">{preview.marketName || '—'}</td>}
+                          {selectedColumns.contractingAgency && <td className="px-3 py-2 whitespace-nowrap">{preview.contractingAgencyName || '—'}</td>}
+                          {selectedColumns.client && <td className="px-3 py-2 whitespace-nowrap">{preview.clientName || '—'}</td>}
+                          {selectedColumns.projectBrand && <td className="px-3 py-2 whitespace-nowrap">{preview.projectBrandName || '—'}</td>}
+                          {selectedColumns.media && <td className="px-3 py-2 whitespace-nowrap">{preview.mediaName || '—'}</td>}
+                          {selectedColumns.jobType && <td className="px-3 py-2 whitespace-nowrap">{preview.jobTypeName || '—'}</td>}
+                          {selectedColumns.hours && (
+                            <td className="px-3 py-2 whitespace-nowrap">{msToHours(preview.hoursMilliseconds).toFixed(1)}</td>
+                          )}
+                          {selectedColumns.comments && <td className="px-3 py-2 whitespace-nowrap">{preview.comments || '—'}</td>}
+                        </tr>
+                      )
+                    })()}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-2">
             <Button variant="outline" onClick={() => setShowDownloadDialog(false)}>
               {t('admin.reports.downloadDialog.cancel')}
             </Button>
