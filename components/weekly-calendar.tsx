@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ChevronLeft, ChevronRight, Pencil, Trash, Plus, Copy } from "lucide-react"
+import { ChevronLeft, ChevronRight, Pencil, Trash, Plus, Copy, Calendar as CalendarIcon } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Dialog,
@@ -26,6 +26,9 @@ import { parseApiError, toLocalDateString, msToHours } from '@/lib/utils'
 export function WeeklyCalendar() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language === "uk" ? "uk-UA" : "en-US"
+
+  const [showWeekPicker, setShowWeekPicker] = useState(false)
+  const [pickerMonth, setPickerMonth] = useState(new Date())
 
   // --- Стан ---
   const [entries, setEntries] = useState<TimeEntryListItem[]>([])
@@ -54,6 +57,44 @@ export function WeeklyCalendar() {
     d.setDate(currentWeekStart.getDate() + i)
     return d
   })
+
+  // --- Вибір тижня з календаря ---
+  const handlePickWeek = (date: Date) => {
+    const day = date.getDay()
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1)
+    const monday = new Date(date)
+    monday.setDate(diff)
+    setCurrentWeekStart(monday)
+    setSelectedDate(null)
+    setShowEntryForm(false)
+    setShowWeekPicker(false)
+  }
+
+  // --- Календар для вибору тижня ---
+  const pickerDays = (() => {
+    const y = pickerMonth.getFullYear()
+    const m = pickerMonth.getMonth()
+    const daysInMonth = new Date(y, m + 1, 0).getDate()
+    const firstDay = (() => {
+      const d = new Date(y, m, 1).getDay()
+      return d === 0 ? 6 : d - 1
+    })()
+    const total = Math.ceil((firstDay + daysInMonth) / 7) * 7
+    return Array.from({ length: total }, (_, i) => {
+      const dayNum = i - firstDay + 1
+      if (dayNum < 1 || dayNum > daysInMonth) return null
+      return new Date(y, m, dayNum)
+    })
+  })()
+
+  const isInCurrentWeek = (date: Date | null) => {
+    if (!date) return false
+    const day = date.getDay()
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1)
+    const monday = new Date(date)
+    monday.setDate(diff)
+    return monday.toDateString() === currentWeekStart.toDateString()
+  }
 
   const weekFrom = toLocalDateString(weekDays[0])
   const weekTo = toLocalDateString(weekDays[6])
@@ -256,12 +297,118 @@ export function WeeklyCalendar() {
             <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <CardTitle className="text-center">
-              {t('calendar.week', {
-                from: weekDays[0].toLocaleDateString(locale, { day: 'numeric', month: 'long' }),
-                to: weekDays[6].toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }),
-              })}
-            </CardTitle>
+
+            <div className="flex items-center gap-2 relative">
+              <CardTitle className="text-center">
+                {t('calendar.week', {
+                  from: weekDays[0].toLocaleDateString(locale, { day: 'numeric', month: 'long' }),
+                  to: weekDays[6].toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }),
+                })}
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setPickerMonth(new Date(currentWeekStart))
+                  setShowWeekPicker(!showWeekPicker)
+                }}
+                title="Вибрати тиждень"
+              >
+                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+              </Button>
+
+              {/* Попап-календарь */}
+              {showWeekPicker && (
+                <>
+                  {/* Оверлей для закрытия */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowWeekPicker(false)}
+                  />
+                  <div className="absolute top-10 left-1/2 -translate-x-1/2 z-50 bg-popover border border-border rounded-lg shadow-xl p-4 w-72">
+                    {/* Навигация по месяцам */}
+                    <div className="flex items-center justify-between mb-3">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => {
+                          const d = new Date(pickerMonth)
+                          d.setMonth(d.getMonth() - 1)
+                          setPickerMonth(d)
+                        }}
+                      >
+                        <ChevronLeft className="h-3 w-3" />
+                      </Button>
+                      <span className="text-sm font-medium text-foreground">
+                        {pickerMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => {
+                          const d = new Date(pickerMonth)
+                          d.setMonth(d.getMonth() + 1)
+                          setPickerMonth(d)
+                        }}
+                      >
+                        <ChevronRight className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    {/* Дни недели */}
+                    <div className="grid grid-cols-7 gap-0.5 mb-1">
+                      {[1, 2, 3, 4, 5, 6, 0].map(dayIndex => (
+                        <div key={dayIndex} className="text-center text-[10px] text-muted-foreground font-medium py-1">
+                          {t(`calendar.weekdayShort.${dayIndex}`)}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Дни месяца */}
+                    <div className="grid grid-cols-7 gap-0.5">
+                      {pickerDays.map((day, i) => {
+                        const inCurrentWeek = isInCurrentWeek(day)
+                        const todayFlag = day ? isToday(day) : false
+                        return (
+                          <button
+                            key={i}
+                            disabled={!day}
+                            onClick={() => day && handlePickWeek(day)}
+                            className={`
+                      h-8 w-full rounded text-xs transition-colors
+                      ${!day ? 'invisible' : ''}
+                      ${inCurrentWeek
+                                ? 'bg-primary text-primary-foreground font-semibold'
+                                : todayFlag
+                                  ? 'bg-[rgb(15,40,84)] text-white'
+                                  : 'text-foreground hover:bg-accent cursor-pointer'
+                              }
+                    `}
+                          >
+                            {day ? day.getDate() : ''}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {/* Кнопка "Сегодня" */}
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={() => handlePickWeek(new Date())}
+                      >
+                        {t('calendar.currentWeek')}
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
             <Button variant="outline" size="icon" onClick={goToNextWeek}>
               <ChevronRight className="h-4 w-4" />
             </Button>

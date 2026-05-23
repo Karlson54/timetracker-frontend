@@ -209,7 +209,8 @@
     "jobTypeNotFound": "Тип роботи не знайдено.",
     "spentTime": "Time spent (minutes)",
     "minutesHint": "90 = 1:30 год",
-    "commentsPlaceholder": "Додаткові коментарі..."
+    "commentsPlaceholder": "Додаткові коментарі...",
+    "currentWeek": "Поточний тиждень"
   },
   "dictionaries": {
     "agencies": {

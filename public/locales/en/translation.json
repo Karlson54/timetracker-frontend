@@ -209,7 +209,8 @@
     "jobTypeNotFound": "Job type not found.",
     "spentTime": "Time spent (minutes)",
     "minutesHint": "90 = 1:30 h",
-    "commentsPlaceholder": "Additional comments..."
+    "commentsPlaceholder": "Additional comments...",
+    "currentWeek": "Current week"
   },
   "dictionaries": {
     "agencies": {
