@@ -10,7 +10,8 @@ i18n
   .use(initReactI18next)
   .init({
     supportedLngs: ['en', 'uk'],
-    fallbackLng: "en",
+    fallbackLng: "uk",
+    lng: "uk",
     debug: process.env.NODE_ENV === "development",
     ns: ["translation"],
     defaultNS: "translation",
@@ -21,7 +22,7 @@ i18n
       loadPath: "/locales/{{lng}}/{{ns}}.json",
     },
     detection: {
-      order: ['navigator', 'localStorage', 'querystring', 'cookie'],
+      order: ['localStorage', 'querystring', 'cookie'],
       caches: ['localStorage'],
     },
   })

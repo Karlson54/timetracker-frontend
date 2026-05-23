@@ -138,7 +138,6 @@ export function WeeklyCalendar() {
         entryDate: toLocalDateString(data.date instanceof Date ? data.date : selectedDate),
         hoursMilliseconds: Number(data.hoursMilliseconds),
         userId: user?.userId ?? 0,
-        agencyId: user?.agencyId ?? 0,
         clientId: data.clientId ?? null,
         projectBrand: data.projectBrand || "",
         marketId: data.marketId ?? null,
@@ -193,7 +192,6 @@ export function WeeklyCalendar() {
       setSubmitting(true)
       const created = await timeEntriesService.create({
         userId: user?.userId ?? 0,
-        agencyId: user?.agencyId ?? 0,
         entryDate: toLocalDateString(copyDate),
         hoursMilliseconds: source.hoursMilliseconds,
         clientId: source.clientId,
