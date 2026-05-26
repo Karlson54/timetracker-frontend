@@ -1,0 +1,246 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
+import { ErrorToast } from '@/components/ui/error-toast'
+import { useErrorToast } from '@/hooks/use-error-toast'
+import { useAuthContext } from '@/lib/AuthContext'
+import profileService from '@/lib/api/services/profileService'
+import { parseApiError } from '@/lib/utils'
+
+export function ProfilePage() {
+  const { t } = useTranslation()
+  const { user } = useAuthContext()
+  const { error, showError, clearError } = useErrorToast()
+
+  const [loading, setLoading] = useState(true)
+  const [profileSubmitting, setProfileSubmitting] = useState(false)
+  const [passwordSubmitting, setPasswordSubmitting] = useState(false)
+  const [profileSuccess, setProfileSuccess] = useState(false)
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
+
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    email: '',
+    login: '',
+  })
+
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  })
+  const [passwordError, setPasswordError] = useState('')
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        setLoading(true)
+        const data = await profileService.getMe()
+        setProfileForm({
+          name: data.name ?? '',
+          email: data.email ?? '',
+          login: data.login ?? '',
+        })
+      } catch (err) {
+        showError(err, 'Помилка завантаження профілю')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProfile()
+  }, [])
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      setProfileSubmitting(true)
+      setProfileSuccess(false)
+      await profileService.updateProfile({
+        name: profileForm.name,
+        email: profileForm.email,
+        login: profileForm.login || undefined,
+      })
+      setProfileSuccess(true)
+      setTimeout(() => setProfileSuccess(false), 3000)
+    } catch (err) {
+      showError(err, 'Помилка збереження профілю')
+    } finally {
+      setProfileSubmitting(false)
+    }
+  }
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError('')
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('Паролі не співпадають')
+      return
+    }
+
+    if (!user?.userId) return
+
+    try {
+      setPasswordSubmitting(true)
+      setPasswordSuccess(false)
+      await profileService.changePassword(user.userId, {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+        confirmPassword: passwordForm.confirmPassword,
+      })
+      setPasswordSuccess(true)
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      setTimeout(() => setPasswordSuccess(false), 3000)
+    } catch (err) {
+      showError(err, 'Помилка зміни пароля')
+    } finally {
+      setPasswordSubmitting(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6 max-w-2xl">
+        <Skeleton className="h-8 w-48" />
+        <Card>
+          <CardHeader><Skeleton className="h-6 w-32" /></CardHeader>
+          <CardContent className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Мій профіль</h1>
+        <p className="text-muted-foreground">Управління особистими даними</p>
+      </div>
+
+      {/* Форма профілю */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Особисті дані</CardTitle>
+          <CardDescription>Змініть ім'я, email або логін</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleProfileSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Повне ім'я</Label>
+              <Input
+                id="name"
+                value={profileForm.name}
+                onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={profileForm.email}
+                onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="login">Логін</Label>
+              <Input
+                id="login"
+                value={profileForm.login}
+                onChange={(e) => setProfileForm({ ...profileForm, login: e.target.value })}
+              />
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <Button type="submit" disabled={profileSubmitting}>
+                {profileSubmitting ? 'Збереження...' : 'Зберегти'}
+              </Button>
+              {profileSuccess && (
+                <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                  Дані збережено
+                </p>
+              )}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Форма зміни пароля */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Зміна пароля</CardTitle>
+          <CardDescription>Введіть поточний пароль для підтвердження</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Поточний пароль</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={(e) => {
+                  setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
+                  setPasswordError('')
+                }}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">Новий пароль</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(e) => {
+                  setPasswordForm({ ...passwordForm, newPassword: e.target.value })
+                  setPasswordError('')
+                }}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Підтвердження пароля</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => {
+                  setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
+                  setPasswordError('')
+                }}
+                required
+              />
+              {passwordError && (
+                <p className="text-sm text-destructive">{passwordError}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <Button type="submit" disabled={passwordSubmitting}>
+                {passwordSubmitting ? 'Збереження...' : 'Змінити пароль'}
+              </Button>
+              {passwordSuccess && (
+                <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                  Пароль змінено
+                </p>
+              )}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <ErrorToast message={error} onClose={clearError} />
+    </div>
+  )
+}

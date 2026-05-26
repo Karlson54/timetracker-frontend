@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Calendar, Menu, X, FileText, LogOut, BarChart3 } from 'lucide-react'
+import { Calendar, Menu, X, FileText, LogOut, BarChart3, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn, formatEmployeeName } from '@/lib/utils'
 import { useMobile } from '@/hooks/use-mobile'
@@ -73,6 +73,16 @@ export function SimpleSidebar() {
                   : 'text-foreground hover:bg-accent/50'
               )}>
                 <FileText className="h-4 w-4" />{t('nav.reports')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/profile" className={cn(
+                'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+                pathname === '/profile'
+                  ? 'bg-accent text-accent-foreground font-medium'
+                  : 'text-foreground hover:bg-accent/50'
+              )}>
+                <User className="h-4 w-4" />{t('nav.profile')}
               </Link>
             </li>
             {isAdmin && (

@@ -130,7 +130,8 @@
     "calendar": "Calendar",
     "reports": "My Reports",
     "logout": "Logout",
-    "admin": "Admin Panel"
+    "admin": "Admin Panel",
+    "profile": "My Profile"
   },
   "roles": {
     "admin": "Administrator",
