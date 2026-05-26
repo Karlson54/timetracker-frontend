@@ -11,7 +11,6 @@ import { ErrorToast } from '@/components/ui/error-toast'
 import { useErrorToast } from '@/hooks/use-error-toast'
 import { useAuthContext } from '@/lib/AuthContext'
 import profileService from '@/lib/api/services/profileService'
-import { parseApiError } from '@/lib/utils'
 
 export function ProfilePage() {
   const { t } = useTranslation()
@@ -48,7 +47,7 @@ export function ProfilePage() {
           login: data.login ?? '',
         })
       } catch (err) {
-        showError(err, 'Помилка завантаження профілю')
+        showError(err, t('common.errors.loadFailed'))
       } finally {
         setLoading(false)
       }
@@ -69,7 +68,7 @@ export function ProfilePage() {
       setProfileSuccess(true)
       setTimeout(() => setProfileSuccess(false), 3000)
     } catch (err) {
-      showError(err, 'Помилка збереження профілю')
+      showError(err, t('common.errors.saveFailed'))
     } finally {
       setProfileSubmitting(false)
     }
@@ -80,7 +79,7 @@ export function ProfilePage() {
     setPasswordError('')
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError('Паролі не співпадають')
+      setPasswordError(t('admin.employees.errors.passwordMismatch'))
       return
     }
 
@@ -98,7 +97,7 @@ export function ProfilePage() {
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
       setTimeout(() => setPasswordSuccess(false), 3000)
     } catch (err) {
-      showError(err, 'Помилка зміни пароля')
+      showError(err, t('common.errors.saveFailed'))
     } finally {
       setPasswordSubmitting(false)
     }
@@ -123,20 +122,20 @@ export function ProfilePage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Мій профіль</h1>
-        <p className="text-muted-foreground">Управління особистими даними</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('profile.title')}</h1>
+        <p className="text-muted-foreground">{t('profile.description')}</p>
       </div>
 
       {/* Форма профілю */}
       <Card>
         <CardHeader>
-          <CardTitle>Особисті дані</CardTitle>
-          <CardDescription>Змініть ім'я, email або логін</CardDescription>
+          <CardTitle>{t('profile.personalData.title')}</CardTitle>
+          <CardDescription>{t('profile.personalData.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleProfileSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Повне ім'я</Label>
+              <Label htmlFor="name">{t('profile.personalData.fullName')}</Label>
               <Input
                 id="name"
                 value={profileForm.name}
@@ -145,7 +144,7 @@ export function ProfilePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('profile.personalData.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -155,7 +154,7 @@ export function ProfilePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="login">Логін</Label>
+              <Label htmlFor="login">{t('profile.personalData.login')}</Label>
               <Input
                 id="login"
                 value={profileForm.login}
@@ -164,11 +163,11 @@ export function ProfilePage() {
             </div>
             <div className="flex items-center gap-3 pt-2">
               <Button type="submit" disabled={profileSubmitting}>
-                {profileSubmitting ? 'Збереження...' : 'Зберегти'}
+                {profileSubmitting ? t('common.saving') : t('common.save')}
               </Button>
               {profileSuccess && (
                 <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                  Дані збережено
+                  {t('profile.personalData.savedSuccess')}
                 </p>
               )}
             </div>
@@ -179,13 +178,13 @@ export function ProfilePage() {
       {/* Форма зміни пароля */}
       <Card>
         <CardHeader>
-          <CardTitle>Зміна пароля</CardTitle>
-          <CardDescription>Введіть поточний пароль для підтвердження</CardDescription>
+          <CardTitle>{t('profile.changePassword.title')}</CardTitle>
+          <CardDescription>{t('profile.changePassword.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="currentPassword">Поточний пароль</Label>
+              <Label htmlFor="currentPassword">{t('profile.changePassword.currentPassword')}</Label>
               <Input
                 id="currentPassword"
                 type="password"
@@ -198,7 +197,7 @@ export function ProfilePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="newPassword">Новий пароль</Label>
+              <Label htmlFor="newPassword">{t('profile.changePassword.newPassword')}</Label>
               <Input
                 id="newPassword"
                 type="password"
@@ -211,7 +210,7 @@ export function ProfilePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Підтвердження пароля</Label>
+              <Label htmlFor="confirmPassword">{t('profile.changePassword.confirmPassword')}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -228,11 +227,11 @@ export function ProfilePage() {
             </div>
             <div className="flex items-center gap-3 pt-2">
               <Button type="submit" disabled={passwordSubmitting}>
-                {passwordSubmitting ? 'Збереження...' : 'Змінити пароль'}
+                {passwordSubmitting ? t('common.saving') : t('profile.changePassword.submit')}
               </Button>
               {passwordSuccess && (
                 <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                  Пароль змінено
+                  {t('profile.changePassword.savedSuccess')}
                 </p>
               )}
             </div>

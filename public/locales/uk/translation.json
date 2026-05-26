@@ -273,6 +273,7 @@
     "activate": "Активувати",
     "deactivate": "Деактивувати",
     "noData": "Даних не знайдено",
+    "saving": "Збереження...",
     "errors": {
       "loadFailed": "Помилка завантаження даних",
       "saveFailed": "Помилка збереження",
@@ -312,5 +313,26 @@
     "submit": "Надіслати посилання для скидання",
     "or": "Або",
     "backToLogin": "Повернутися до входу"
+  },
+  "profile": {
+    "title": "Мій профіль",
+    "description": "Управління особистими даними",
+    "personalData": {
+      "title": "Особисті дані",
+      "description": "Змініть ім'я, email або логін",
+      "fullName": "Повне ім'я",
+      "email": "Email",
+      "login": "Логін",
+      "savedSuccess": "Дані збережено"
+    },
+    "changePassword": {
+      "title": "Зміна пароля",
+      "description": "Введіть поточний пароль для підтвердження",
+      "currentPassword": "Поточний пароль",
+      "newPassword": "Новий пароль",
+      "confirmPassword": "Підтвердження пароля",
+      "submit": "Змінити пароль",
+      "savedSuccess": "Пароль змінено"
+    }
   }
 }

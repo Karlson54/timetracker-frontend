@@ -273,6 +273,7 @@
     "activate": "Activate",
     "deactivate": "Deactivate",
     "noData": "No data found",
+    "saving": "Saving...",
     "errors": {
       "loadFailed": "Failed to load data",
       "saveFailed": "Failed to save",
@@ -312,5 +313,26 @@
     "submit": "Send reset link",
     "or": "Or",
     "backToLogin": "Back to login"
+  },
+  "profile": {
+    "title": "My Profile",
+    "description": "Manage your personal information",
+    "personalData": {
+      "title": "Personal Data",
+      "description": "Change your name, email or login",
+      "fullName": "Full Name",
+      "email": "Email",
+      "login": "Login",
+      "savedSuccess": "Data saved"
+    },
+    "changePassword": {
+      "title": "Change Password",
+      "description": "Enter your current password to confirm",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Change Password",
+      "savedSuccess": "Password changed"
+    }
   }
 }
