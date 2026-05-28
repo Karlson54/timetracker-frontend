@@ -6,8 +6,8 @@ import I18nProvider from "@/lib/I18nProvider"
 import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata: Metadata = {
-  title: "MediaCom TimeTracker",
-  description: "Система обліку робочого часу MediaCom",
+  title: "WPPMedia TimeTracker",
+  description: "Система обліку робочого часу WPPMedia",
 }
 
 export default function RootLayout({

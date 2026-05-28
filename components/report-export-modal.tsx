@@ -110,7 +110,7 @@ export function ReportExportModal({ isOpen, onClose, reportData }: ReportExportM
       // Create a new workbook and worksheet
       const workbook = new ExcelJS.Workbook()
       workbook.creator = 'MediaCom'
-      workbook.lastModifiedBy = 'MediaCom Report System'
+      workbook.lastModifiedBy = 'WPPMedia TimeTracker'
       workbook.created = new Date()
       workbook.modified = new Date()
       
