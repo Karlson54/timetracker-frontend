@@ -6,6 +6,16 @@ import { Button } from "@/components/ui/button"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
+import { FileSpreadsheet } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 import { useTranslation } from "react-i18next"
 import timeEntriesService from "@/lib/api/services/timeEntriesService"
@@ -14,6 +24,8 @@ import { StatsCards } from '@/components/reports/StatsCards'
 import { Pagination } from '@/components/reports/Pagination'
 import { EntriesTable } from '@/components/reports/EntriesTable'
 import { toLocalDateString, msToHours } from '@/lib/utils'
+import { useAuthContext } from '@/lib/AuthContext'
+import httpClient from '@/lib/api/httpClient'
 
 const PAGE_SIZE = 50
 
@@ -25,6 +37,7 @@ interface ClientSummary {
 
 export function EmployeeReports() {
   const { t } = useTranslation()
+  const { user } = useAuthContext()
 
   const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   const today = new Date()
@@ -42,6 +55,41 @@ export function EmployeeReports() {
 
   const [allEntries, setAllEntries] = useState<TimeEntryListItem[]>([])
   const [loadingDetailed, setLoadingDetailed] = useState(false)
+
+  // Export dialog state
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [selectedColumns, setSelectedColumns] = useState({
+    company: true,
+    fullName: true,
+    date: true,
+    month: true,
+    year: true,
+    market: true,
+    contractingAgency: true,
+    client: true,
+    projectBrand: true,
+    media: true,
+    jobType: true,
+    hours: true,
+    comments: true,
+  })
+
+  const columnLabels: Record<keyof typeof selectedColumns, string> = {
+    company: 'Agency',
+    fullName: 'Name',
+    date: 'Date',
+    month: 'Month',
+    year: 'Year',
+    market: 'Market',
+    contractingAgency: 'Contracting Agency / Unit',
+    client: 'Client',
+    projectBrand: 'Project / brand',
+    media: 'Media',
+    jobType: 'Job type',
+    hours: 'Hours',
+    comments: 'Comments',
+  }
 
   useEffect(() => {
     setCurrentPage(1)
@@ -109,10 +157,73 @@ export function EmployeeReports() {
 
   const totalHoursAll = msToHours(allEntries.reduce((sum, e) => sum + e.hoursMilliseconds, 0))
 
+  const handleDownloadWithColumns = async () => {
+    if (!dateRange?.from || !dateRange?.to || !user?.userId) return
+    setIsDownloading(true)
+    try {
+      const columnsParam = Object.entries(selectedColumns)
+        .filter(([, enabled]) => enabled)
+        .map(([key]) => {
+          const keyMap: Record<string, string> = {
+            company: 'agency',
+            fullName: 'fullname',
+            date: 'date',
+            month: 'month',
+            year: 'year',
+            market: 'market',
+            contractingAgency: 'contractingagency',
+            client: 'client',
+            projectBrand: 'projectbrand',
+            media: 'media',
+            jobType: 'jobtype',
+            hours: 'hours',
+            comments: 'comments',
+          }
+          return keyMap[key] ?? key
+        })
+        .join(',')
+
+      const fromStr = toLocalDateString(dateRange.from)
+      const toStr = toLocalDateString(dateRange.to)
+
+      const response = await httpClient.get(
+        `/api/reports/user/${user.userId}/export/flat`,
+        {
+          params: {
+            fromDate: fromStr,
+            toDate: toStr,
+            columns: columnsParam,
+          },
+          responseType: 'blob',
+        }
+      )
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = `MyReport_${fromStr}_${toStr}.xlsx`
+      a.click()
+      URL.revokeObjectURL(blobUrl)
+      setShowDownloadDialog(false)
+    } catch (error) {
+      console.error("Download error:", error)
+      alert(t('admin.reports.errors.excelCreationError'))
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold tracking-tight">{t("calendar.menu.myReports")}</h1>
+        <Button onClick={() => setShowDownloadDialog(true)} className="gap-2">
+          <FileSpreadsheet className="h-4 w-4" />
+          {t('admin.reports.exportAllToExcel')}
+        </Button>
       </div>
 
       <Card>
@@ -238,6 +349,119 @@ export function EmployeeReports() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Export Dialog */}
+      <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
+        <DialogContent className="max-w-[90vw] w-full max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{t('admin.reports.downloadDialog.title')}</DialogTitle>
+            <DialogDescription>{t('admin.reports.downloadDialog.description')}</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-4 py-2">
+            <div className="flex flex-wrap gap-x-6 gap-y-3">
+              {(Object.keys(selectedColumns) as Array<keyof typeof selectedColumns>).map((key) => (
+                <div key={key} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`col-${key}`}
+                    checked={selectedColumns[key]}
+                    onCheckedChange={(checked) =>
+                      setSelectedColumns({ ...selectedColumns, [key]: !!checked })
+                    }
+                  />
+                  <label htmlFor={`col-${key}`} className="text-sm font-medium cursor-pointer">
+                    {columnLabels[key]}
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium mb-2">{t('admin.reports.downloadDialog.tablePreview')}</h3>
+              <div className="border rounded-md overflow-auto max-h-[300px]">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      {selectedColumns.company && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Agency</th>}
+                      {selectedColumns.fullName && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Name</th>}
+                      {selectedColumns.date && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Date</th>}
+                      {selectedColumns.month && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Month</th>}
+                      {selectedColumns.year && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Year</th>}
+                      {selectedColumns.market && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Market</th>}
+                      {selectedColumns.contractingAgency && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Contracting Agency / Unit</th>}
+                      {selectedColumns.client && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Client</th>}
+                      {selectedColumns.projectBrand && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Project / brand</th>}
+                      {selectedColumns.media && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Media</th>}
+                      {selectedColumns.jobType && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Job type</th>}
+                      {selectedColumns.hours && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Hours</th>}
+                      {selectedColumns.comments && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Comments</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const preview = allEntries[0] ?? entries[0]
+                      if (!preview) {
+                        return (
+                          <tr>
+                            <td
+                              colSpan={Object.values(selectedColumns).filter(Boolean).length || 1}
+                              className="px-3 py-4 text-center text-muted-foreground text-sm"
+                            >
+                              {t('admin.reports.downloadDialog.noDataToExport')}
+                            </td>
+                          </tr>
+                        )
+                      }
+                      return (
+                        <tr className="border-b">
+                          {selectedColumns.company && <td className="px-3 py-2 whitespace-nowrap">{preview.agencyName || '—'}</td>}
+                          {selectedColumns.fullName && <td className="px-3 py-2 whitespace-nowrap">{preview.userName || '—'}</td>}
+                          {selectedColumns.date && (
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              {new Date(preview.entryDate).toLocaleDateString('uk-UA', {
+                                day: '2-digit', month: '2-digit', year: 'numeric',
+                              })}
+                            </td>
+                          )}
+                          {selectedColumns.month && (
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              {preview.entryDate ? new Date(preview.entryDate).toLocaleString('en-US', { month: 'long' }) : '—'}
+                            </td>
+                          )}
+                          {selectedColumns.year && (
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              {preview.entryDate ? new Date(preview.entryDate).getFullYear() : '—'}
+                            </td>
+                          )}
+                          {selectedColumns.market && <td className="px-3 py-2 whitespace-nowrap">{preview.marketName || '—'}</td>}
+                          {selectedColumns.contractingAgency && <td className="px-3 py-2 whitespace-nowrap">{preview.contractingAgencyName || '—'}</td>}
+                          {selectedColumns.client && <td className="px-3 py-2 whitespace-nowrap">{preview.clientName || '—'}</td>}
+                          {selectedColumns.projectBrand && <td className="px-3 py-2 whitespace-nowrap">{preview.projectBrandName || '—'}</td>}
+                          {selectedColumns.media && <td className="px-3 py-2 whitespace-nowrap">{preview.mediaName || '—'}</td>}
+                          {selectedColumns.jobType && <td className="px-3 py-2 whitespace-nowrap">{preview.jobTypeName || '—'}</td>}
+                          {selectedColumns.hours && (
+                            <td className="px-3 py-2 whitespace-nowrap">{msToHours(preview.hoursMilliseconds).toFixed(1)}</td>
+                          )}
+                          {selectedColumns.comments && <td className="px-3 py-2 whitespace-nowrap">{preview.comments || '—'}</td>}
+                        </tr>
+                      )
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button variant="outline" onClick={() => setShowDownloadDialog(false)}>
+              {t('admin.reports.downloadDialog.cancel')}
+            </Button>
+            <Button onClick={handleDownloadWithColumns} disabled={isDownloading}>
+              {isDownloading ? '...' : t('admin.reports.downloadDialog.download')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
