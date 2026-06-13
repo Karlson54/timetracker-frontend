@@ -83,7 +83,10 @@
         "agency": "Агенція",
         "selectAgency": "Оберіть агенцію",
         "role": "Роль",
-        "selectRole": "Оберіть роль"
+        "selectRole": "Оберіть роль",
+        "department": "Відділ",
+        "selectDepartment": "Оберіть відділ",
+        "selectAgencyFirst": "Спочатку оберіть агенцію"
       },
       "list": {
         "title": "Список співробітників",
@@ -101,7 +104,8 @@
         "agency": "Агенція",
         "login": "Логін",
         "status": "Статус",
-        "actions": "Дії"
+        "actions": "Дії",
+        "department": "Відділ"
       },
       "errors": {
         "lastAdmin": "Неможливо деактивувати останнього адміністратора",
@@ -122,7 +126,8 @@
         "clients": "Клієнти",
         "media": "Медіа",
         "jobTypes": "Типи роботи",
-        "contractingAgencies": "Підрядні агенції"
+        "contractingAgencies": "Підрядні агенції",
+        "departments": "Відділи"
       }
     }
   },
@@ -260,6 +265,18 @@
       "name": "Назва",
       "status": "Статус",
       "actions": "Дії"
+    },
+    "departments": {
+      "title": "Відділи",
+      "description": "Відділи агенцій",
+      "add": {
+        "title": "Додати відділ"
+      },
+      "edit": {
+        "title": "Редагувати відділ"
+      },
+      "selectAgencyHint": "Оберіть агенцію для перегляду відділів",
+      "usersCount": "Співробітників"
     }
   },
   "common": {

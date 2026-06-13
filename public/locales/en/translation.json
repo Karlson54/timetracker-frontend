@@ -83,7 +83,10 @@
         "agency": "Agency",
         "selectAgency": "Select agency",
         "role": "Role",
-        "selectRole": "Select role"
+        "selectRole": "Select role",
+        "department": "Department",
+        "selectDepartment": "Select department",
+        "selectAgencyFirst": "Select agency first"
       },
       "list": {
         "title": "Employees List",
@@ -101,7 +104,8 @@
         "agency": "Agency",
         "login": "Login",
         "status": "Status",
-        "actions": "Actions"
+        "actions": "Actions",
+        "department": "Department"
       },
       "errors": {
         "lastAdmin": "Cannot deactivate the last administrator",
@@ -122,7 +126,8 @@
         "clients": "Clients",
         "media": "Media",
         "jobTypes": "Job Types",
-        "contractingAgencies": "Contracting Agencies"
+        "contractingAgencies": "Contracting Agencies",
+        "departments": "Departments"
       }
     }
   },
@@ -260,6 +265,18 @@
       "name": "Name",
       "status": "Status",
       "actions": "Actions"
+    },
+    "departments": {
+      "title": "Departments",
+      "description": "Agency departments",
+      "add": {
+        "title": "Add Department"
+      },
+      "edit": {
+        "title": "Edit Department"
+      },
+      "selectAgencyHint": "Select an agency to view departments",
+      "usersCount": "Employees"
     }
   },
   "common": {

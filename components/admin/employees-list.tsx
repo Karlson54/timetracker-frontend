@@ -35,6 +35,7 @@ import rolesService from "@/lib/api/services/rolesService"
 import type { UserListItem, CreateUserRequest, UpdateUserRequest, DictionaryItem, RoleItem } from "@/lib/api/types"
 import { ErrorToast } from '@/components/ui/error-toast'
 import { useErrorToast } from '@/hooks/use-error-toast'
+import departmentsService, { Department } from '@/lib/api/services/departmentsService'
 
 // --- Хелпер для строк формы ---
 function FormRow({ label, children }: { label: string, children: React.ReactNode }) {
@@ -53,6 +54,7 @@ const EMPTY_CREATE: CreateUserRequest = {
   password: "",
   confirmPassword: "",
   agencyId: 0,
+  departmentId: 0,
   roleIds: [],
 }
 
@@ -78,6 +80,9 @@ export function EmployeesList() {
   const [submitting, setSubmitting] = useState(false)
   const [passwordError, setPasswordError] = useState("")
 
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [editDepartments, setEditDepartments] = useState<Department[]>([])
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -98,6 +103,17 @@ export function EmployeesList() {
     }
     fetchData()
   }, [])
+
+  useEffect(() => {
+    const agencyId = newEmployee.agencyId
+    if (!agencyId) {
+      setDepartments([])
+      return
+    }
+    departmentsService.getActiveByAgency(agencyId)
+      .then(setDepartments)
+      .catch(err => showError(err))
+  }, [newEmployee.agencyId])
 
   const filtered = employees.filter((e) =>
     [e.name, e.email, e.login, e.agencyName].some((field) =>
@@ -140,7 +156,11 @@ export function EmployeesList() {
       login: employee.login,
       newPassword: "",
       roleIds: [],
+      departmentId: employee.departmentId,  // додати
     })
+    departmentsService.getActiveByAgency(employee.agencyId)
+      .then(setEditDepartments)
+      .catch(err => showError(err))
     setIsEditDialogOpen(true)
   }
 
@@ -155,6 +175,7 @@ export function EmployeesList() {
         login: editForm.login || undefined,
         newPassword: editForm.newPassword || undefined,
         roleIds: editForm.roleIds?.length ? editForm.roleIds : undefined,
+        departmentId: editForm.departmentId || undefined,  // додати
       }
       const updated = await usersService.update(editingEmployee.id, payload)
       setEmployees((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
@@ -281,6 +302,22 @@ export function EmployeesList() {
                 </SelectContent>
               </Select>
             </FormRow>
+            <FormRow label={t('admin.employees.fields.department')}>
+              <Select
+                value={String(editForm.departmentId || "")}
+                onValueChange={v => setEditForm({ ...editForm, departmentId: Number(v) })}
+                disabled={editDepartments.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t('admin.employees.fields.selectDepartment')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {editDepartments.map(d => (
+                    <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormRow>
             <FormRow label={t('admin.employees.fields.role')}>
               <Select
                 value={String(newEmployee.roleIds[0] ?? "")}
@@ -324,7 +361,11 @@ export function EmployeesList() {
               <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
             </FormRow>
             <FormRow label={t('admin.employees.fields.agency')}>
-              <Select value={String(editForm.agencyId || "")} onValueChange={(v) => setEditForm({ ...editForm, agencyId: Number(v) })}>
+              <Select value={String(editForm.agencyId || "")} onValueChange={v => setNewEmployee({
+                ...newEmployee,
+                agencyId: Number(v),
+                departmentId: 0
+              })}>
                 <SelectTrigger>
                   <SelectValue placeholder={t('admin.employees.fields.selectAgency')} />
                 </SelectTrigger>
@@ -408,6 +449,7 @@ export function EmployeesList() {
                 <TableHead>{t('admin.employees.tableHeaders.email')}</TableHead>
                 <TableHead>{t('admin.employees.tableHeaders.login')}</TableHead>
                 <TableHead>{t('admin.employees.tableHeaders.agency')}</TableHead>
+                <TableHead>{t('admin.employees.tableHeaders.department')}</TableHead>
                 <TableHead>{t('admin.employees.tableHeaders.status')}</TableHead>
                 <TableHead className="text-right">{t('admin.employees.tableHeaders.actions')}</TableHead>
               </TableRow>
@@ -420,6 +462,7 @@ export function EmployeesList() {
                     <TableCell>{employee.email}</TableCell>
                     <TableCell>{employee.login}</TableCell>
                     <TableCell>{employee.agencyName ?? '-'}</TableCell>
+                    <TableCell>{employee.departmentName || '-'}</TableCell>
                     <TableCell>
                       <Badge variant={employee.isActive ? "default" : "secondary"}>
                         {employee.isActive ? t('admin.employees.status.active') : t('admin.employees.status.inactive')}

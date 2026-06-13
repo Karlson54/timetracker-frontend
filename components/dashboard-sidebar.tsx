@@ -183,6 +183,7 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                   <ul className="mt-1 ml-4 space-y-1 border-l border-border pl-3">
                     {[
                       { href: '/admin/dictionaries/agencies', label: t('admin.nav.dict.agencies') },
+                      { href: '/admin/dictionaries/departments', label: t('admin.nav.dict.departments') },
                       { href: '/admin/dictionaries/markets', label: t('admin.nav.dict.markets') },
                       { href: '/admin/dictionaries/clients', label: t('admin.nav.dict.clients') },
                       { href: '/admin/dictionaries/media', label: t('admin.nav.dict.media') },

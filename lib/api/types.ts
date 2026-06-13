@@ -41,6 +41,8 @@ export interface UserListItem {
   name: string
   agencyId: number
   agencyName: string
+  departmentId: number
+  departmentName: string
   isActive: boolean
   roles: string[]
 }
@@ -52,6 +54,7 @@ export interface CreateUserRequest {
   password: string
   confirmPassword: string
   agencyId: number
+  departmentId: number
   roleIds: number[]
 }
 
@@ -59,6 +62,7 @@ export interface UpdateUserRequest {
   email: string
   name: string
   agencyId: number
+  departmentId?: number
   login?: string
   newPassword?: string
   roleIds?: number[]
