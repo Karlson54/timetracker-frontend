@@ -126,7 +126,7 @@ export function EmployeesList() {
   ).length
 
   const handleAdd = async () => {
-    if (!newEmployee.name || !newEmployee.email || !newEmployee.login || !newEmployee.password || !newEmployee.agencyId || newEmployee.roleIds.length === 0) return
+    if (!newEmployee.name || !newEmployee.email || !newEmployee.login || !newEmployee.password || !newEmployee.agencyId || !newEmployee.departmentId || newEmployee.roleIds.length === 0) return
 
     if (newEmployee.password !== newEmployee.confirmPassword) {
       setPasswordError(t('admin.employees.errors.passwordMismatch'))
@@ -156,7 +156,7 @@ export function EmployeesList() {
       login: employee.login,
       newPassword: "",
       roleIds: [],
-      departmentId: employee.departmentId,  // додати
+      departmentId: employee.departmentId,
     })
     departmentsService.getActiveByAgency(employee.agencyId)
       .then(setEditDepartments)
@@ -166,6 +166,11 @@ export function EmployeesList() {
 
   const handleEdit = async () => {
     if (!editingEmployee) return
+
+    if (!editForm.departmentId) {
+      showError(null, t('admin.employees.errors.departmentRequired'))
+      return
+    }
     try {
       setSubmitting(true)
       const payload: UpdateUserRequest = {
@@ -175,7 +180,7 @@ export function EmployeesList() {
         login: editForm.login || undefined,
         newPassword: editForm.newPassword || undefined,
         roleIds: editForm.roleIds?.length ? editForm.roleIds : undefined,
-        departmentId: editForm.departmentId || undefined,  // додати
+        departmentId: editForm.departmentId || undefined,
       }
       const updated = await usersService.update(editingEmployee.id, payload)
       setEmployees((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
@@ -291,7 +296,11 @@ export function EmployeesList() {
               </div>
             </FormRow>
             <FormRow label={t('admin.employees.fields.agency')}>
-              <Select value={String(newEmployee.agencyId || "")} onValueChange={(v) => setNewEmployee({ ...newEmployee, agencyId: Number(v) })}>
+              <Select value={String(newEmployee.agencyId || "")} onValueChange={v => setNewEmployee({
+                ...newEmployee,
+                agencyId: Number(v),
+                departmentId: 0
+              })}>
                 <SelectTrigger>
                   <SelectValue placeholder={t('admin.employees.fields.selectAgency')} />
                 </SelectTrigger>
@@ -304,15 +313,19 @@ export function EmployeesList() {
             </FormRow>
             <FormRow label={t('admin.employees.fields.department')}>
               <Select
-                value={String(editForm.departmentId || "")}
-                onValueChange={v => setEditForm({ ...editForm, departmentId: Number(v) })}
-                disabled={editDepartments.length === 0}
+                value={String(newEmployee.departmentId || "")}
+                onValueChange={v => setNewEmployee({ ...newEmployee, departmentId: Number(v) })}
+                disabled={!newEmployee.agencyId || departments.length === 0}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={t('admin.employees.fields.selectDepartment')} />
+                  <SelectValue placeholder={
+                    !newEmployee.agencyId
+                      ? t('admin.employees.fields.selectAgencyFirst')
+                      : t('admin.employees.fields.selectDepartment')
+                  } />
                 </SelectTrigger>
                 <SelectContent>
-                  {editDepartments.map(d => (
+                  {departments.map(d => (
                     <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -361,17 +374,38 @@ export function EmployeesList() {
               <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
             </FormRow>
             <FormRow label={t('admin.employees.fields.agency')}>
-              <Select value={String(editForm.agencyId || "")} onValueChange={v => setNewEmployee({
-                ...newEmployee,
-                agencyId: Number(v),
-                departmentId: 0
-              })}>
+              <Select value={String(editForm.agencyId || "")} onValueChange={async v => {
+                const agencyId = Number(v)
+                setEditForm({ ...editForm, agencyId, departmentId: 0 })
+                try {
+                  const deps = await departmentsService.getActiveByAgency(agencyId)
+                  setEditDepartments(deps)
+                } catch (err) {
+                  showError(err)
+                }
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder={t('admin.employees.fields.selectAgency')} />
                 </SelectTrigger>
                 <SelectContent>
                   {agencies.map((a) => (
                     <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormRow>
+            <FormRow label={t('admin.employees.fields.department')}>
+              <Select
+                value={String(editForm.departmentId || "")}
+                onValueChange={v => setEditForm({ ...editForm, departmentId: Number(v) })}
+                disabled={editDepartments.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t('admin.employees.fields.selectDepartment')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {editDepartments.map(d => (
+                    <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
