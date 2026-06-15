@@ -24,8 +24,9 @@ export function EntriesTable({ entries, loading, emptyText }: EntriesTableProps)
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
             <TableHead>Agency</TableHead>
+            <TableHead>Department</TableHead>
+            <TableHead>Name</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Market</TableHead>
             <TableHead>Contracting Agency / Unit</TableHead>
@@ -40,15 +41,16 @@ export function EntriesTable({ entries, loading, emptyText }: EntriesTableProps)
         <TableBody>
           {entries.length === 0 && !loading ? (
             <TableRow>
-              <TableCell colSpan={11} className="text-center text-muted-foreground">
+              <TableCell colSpan={12} className="text-center text-muted-foreground">
                 {emptyText ?? t('common.noData')}
               </TableCell>
             </TableRow>
           ) : (
             entries.map((entry) => (
               <TableRow key={entry.id}>
-                <TableCell className="whitespace-nowrap">{entry.userName || "—"}</TableCell>
                 <TableCell className="whitespace-nowrap">{entry.agencyName || "—"}</TableCell>
+                <TableCell className="whitespace-nowrap">{entry.departmentName || "—"}</TableCell>
+                <TableCell className="whitespace-nowrap">{entry.userName || "—"}</TableCell>
                 <TableCell className="whitespace-nowrap">
                   {new Date(entry.entryDate).toLocaleDateString('uk-UA', {
                     day: '2-digit', month: '2-digit', year: 'numeric',

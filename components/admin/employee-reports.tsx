@@ -68,6 +68,7 @@ export function EmployeeReports() {
   const [isDownloading, setIsDownloading] = useState(false)
   const [selectedColumns, setSelectedColumns] = useState({
     company: true,
+    department: true,
     fullName: true,
     date: true,
     month: true,
@@ -177,6 +178,7 @@ export function EmployeeReports() {
         .map(([key]) => {
           const keyMap: Record<string, string> = {
             company: 'agency',
+            department: 'department',
             fullName: 'fullname',
             date: 'date',
             month: 'month',
@@ -234,6 +236,7 @@ export function EmployeeReports() {
 
   const columnLabels: Record<keyof typeof selectedColumns, string> = {
     company: 'Agency',
+    department: 'Department',
     fullName: 'Name',
     date: 'Date',
     month: 'Month',
@@ -435,6 +438,7 @@ export function EmployeeReports() {
                   <thead>
                     <tr className="border-b bg-muted/50">
                       {selectedColumns.company && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Agency</th>}
+                      {selectedColumns.department && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Department</th>}
                       {selectedColumns.fullName && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Name</th>}
                       {selectedColumns.date && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Date</th>}
                       {selectedColumns.month && <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Month</th>}
@@ -467,6 +471,7 @@ export function EmployeeReports() {
                       return (
                         <tr className="border-b">
                           {selectedColumns.company && <td className="px-3 py-2 whitespace-nowrap">{preview.agencyName || '—'}</td>}
+                          {selectedColumns.department && <td className="px-3 py-2 whitespace-nowrap">{preview.departmentName || '—'}</td>}
                           {selectedColumns.fullName && <td className="px-3 py-2 whitespace-nowrap">{preview.userName || '—'}</td>}
                           {selectedColumns.date && (
                             <td className="px-3 py-2 whitespace-nowrap">

@@ -105,6 +105,8 @@ export interface TimeEntryListItem {
   contractingAgencyId: number | null
   contractingAgencyName: string | null
   comments: string | null
+  departmentId: number | null
+  departmentName: string | null
 }
 
 export interface CreateTimeEntryRequest {
