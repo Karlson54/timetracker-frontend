@@ -1,7 +1,6 @@
 "use client"
 
 import httpClient from '@/lib/api/httpClient'
-import usersService from "@/lib/api/services/usersService"
 import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -21,8 +20,6 @@ import { StatsCards } from '@/components/reports/StatsCards'
 import { Pagination } from '@/components/reports/Pagination'
 import { EntriesTable } from '@/components/reports/EntriesTable'
 import { toLocalDateString, msToHours } from '@/lib/utils'
-import { agenciesService } from '@/lib/api/services/dictionaryService'
-import departmentsService, { Department } from '@/lib/api/services/departmentsService'
 import { MultiSelect, MultiSelectOption } from '@/components/ui/multi-select'
 
 const PAGE_SIZE = 50
@@ -33,14 +30,6 @@ interface ClientSummary {
   percentage: number
 }
 
-interface FullUser {
-  id: number
-  name: string
-  agencyId: number
-  departmentId: number
-}
-
-// Комбинация фильтров для одного запроса к API
 interface QueryCombo {
   userId?: number
   agencyId?: number
@@ -53,22 +42,21 @@ export function EmployeeReports() {
   const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   const today = new Date()
 
-  // --- Состояния фильтров ---
+  // --- Фильтры ---
   const [selectedAgencyIds, setSelectedAgencyIds] = useState<number[]>([])
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<number[]>([])
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<number[]>([])
-
-  // --- Исходные данные ---
-  const [allAgencies, setAllAgencies] = useState<MultiSelectOption[]>([])
-  const [allDepartments, setAllDepartments] = useState<Department[]>([])
-  const [allUsers, setAllUsers] = useState<FullUser[]>([])
-  const [loading, setLoading] = useState(true)
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: firstDayOfMonth,
     to: today,
   })
 
+  // --- Все записи за период (для построения фильтров) ---
+  const [allEntriesForFilter, setAllEntriesForFilter] = useState<TimeEntryListItem[]>([])
+  const [loadingFilter, setLoadingFilter] = useState(false)
+
+  // --- Записи для отображения ---
   const [entries, setEntries] = useState<TimeEntryListItem[]>([])
   const [loadingSummary, setLoadingSummary] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -95,89 +83,103 @@ export function EmployeeReports() {
     hours: 'Hours', comments: 'Comments',
   }
 
-  // --- Загружаем все данные один раз ---
+  // --- Загружаем ВСЕ записи за период для построения списков фильтров ---
   useEffect(() => {
-    async function loadAll() {
+    if (!dateRange?.from || !dateRange?.to) return
+
+    async function fetchEntriesForFilter() {
       try {
-        setLoading(true)
-        const [agencies, users] = await Promise.all([
-          agenciesService.getActive(),
-          usersService.getAll(),
-        ])
-        setAllAgencies(agencies.map((a: any) => ({ id: a.id, name: a.name })))
-        setAllUsers(users.map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          agencyId: u.agencyId,
-          departmentId: u.departmentId,
-        })))
+        setLoadingFilter(true)
+        const res = await httpClient.get<any>('/api/timeentries', {
+          params: {
+            pageSize: 10000,
+            pageNumber: 1,
+            fromDate: toLocalDateString(dateRange!.from!),
+            toDate: toLocalDateString(dateRange!.to!),
+          },
+        })
+        setAllEntriesForFilter(res.data?.entries ?? [])
       } catch (err) {
-        console.error("Error loading filter data:", err)
+        console.error("Error fetching entries for filter:", err)
       } finally {
-        setLoading(false)
+        setLoadingFilter(false)
       }
     }
-    loadAll()
-  }, [])
 
-  // --- Загружаем отделы всех агенций один раз ---
-  useEffect(() => {
-    if (allAgencies.length === 0) return
-    async function loadDepartments() {
-      try {
-        const results = await Promise.all(
-          allAgencies.map((a) => departmentsService.getActiveByAgency(a.id))
-        )
-        setAllDepartments(results.flat())
-      } catch (err) {
-        console.error("Error loading departments:", err)
+    fetchEntriesForFilter()
+  }, [dateRange])
+
+  // --- Агенции из записей ---
+  const allAgencies = useMemo<MultiSelectOption[]>(() => {
+    const seen = new Set<number>()
+    const result: MultiSelectOption[] = []
+    for (const entry of allEntriesForFilter) {
+      if (entry.agencyId != null && !seen.has(entry.agencyId)) {
+        seen.add(entry.agencyId)
+        result.push({ id: entry.agencyId, name: entry.agencyName ?? String(entry.agencyId) })
       }
     }
-    loadDepartments()
-  }, [allAgencies])
+    return result.sort((a, b) => a.name.localeCompare(b.name))
+  }, [allEntriesForFilter])
 
-  // --- Доступные отделы зависят от выбранных агенций ---
+  // --- Отделы из записей, фильтруются по выбранным агенциям ---
   const availableDepartments = useMemo<MultiSelectOption[]>(() => {
-    if (selectedAgencyIds.length === 0) {
-      return allDepartments.map((d) => ({ id: d.id, name: d.name }))
+    let filtered = allEntriesForFilter
+    if (selectedAgencyIds.length > 0) {
+      filtered = filtered.filter((e) =>
+        e.agencyId != null && selectedAgencyIds.includes(e.agencyId)
+      )
     }
-    return allDepartments
-      .filter((d) => selectedAgencyIds.includes(d.agencyId))
-      .map((d) => ({ id: d.id, name: d.name }))
-  }, [allDepartments, selectedAgencyIds])
+    const seen = new Set<number>()
+    const result: MultiSelectOption[] = []
+    for (const entry of filtered) {
+      if (entry.departmentId != null && !seen.has(entry.departmentId)) {
+        seen.add(entry.departmentId)
+        result.push({
+          id: entry.departmentId,
+          name: entry.departmentName ?? String(entry.departmentId),
+        })
+      }
+    }
+    return result.sort((a, b) => a.name.localeCompare(b.name))
+  }, [allEntriesForFilter, selectedAgencyIds])
 
-  // --- Сбрасываем отделы которые вышли из доступных ---
+  // --- Сотрудники из записей, фильтруются по агенциям и отделам ---
+  const availableEmployees = useMemo<MultiSelectOption[]>(() => {
+    let filtered = allEntriesForFilter
+    if (selectedAgencyIds.length > 0) {
+      filtered = filtered.filter((e) =>
+        e.agencyId != null && selectedAgencyIds.includes(e.agencyId)
+      )
+    }
+    if (selectedDepartmentIds.length > 0) {
+      filtered = filtered.filter((e) =>
+        e.departmentId != null && selectedDepartmentIds.includes(e.departmentId)
+      )
+    }
+    const seen = new Set<number>()
+    const result: MultiSelectOption[] = []
+    for (const entry of filtered) {
+      if (!seen.has(entry.userId)) {
+        seen.add(entry.userId)
+        result.push({ id: entry.userId, name: entry.userName })
+      }
+    }
+    return result.sort((a, b) => a.name.localeCompare(b.name))
+  }, [allEntriesForFilter, selectedAgencyIds, selectedDepartmentIds])
+
+  // --- Сбрасываем невалидные выборы при смене доступных опций ---
   useEffect(() => {
     const validIds = availableDepartments.map((d) => d.id)
     setSelectedDepartmentIds((prev) => prev.filter((id) => validIds.includes(id)))
   }, [availableDepartments])
 
-  // --- Доступные сотрудники зависят от агенций и отделов ---
-  const availableEmployees = useMemo<MultiSelectOption[]>(() => {
-    let filtered = allUsers
-    if (selectedAgencyIds.length > 0) {
-      filtered = filtered.filter((u) => selectedAgencyIds.includes(u.agencyId))
-    }
-    if (selectedDepartmentIds.length > 0) {
-      filtered = filtered.filter((u) => selectedDepartmentIds.includes(u.departmentId))
-    }
-    return filtered.map((u) => ({ id: u.id, name: u.name }))
-  }, [allUsers, selectedAgencyIds, selectedDepartmentIds])
-
-  // --- Сбрасываем сотрудников которые вышли из доступных ---
   useEffect(() => {
     const validIds = availableEmployees.map((e) => e.id)
     setSelectedEmployeeIds((prev) => prev.filter((id) => validIds.includes(id)))
   }, [availableEmployees])
 
-  // --- Ключевая функция: формируем комбинации для API запросов ---
-  //
-  // Приоритеты (от конкретного к общему):
-  // 1. Выбраны конкретные сотрудники → запросы по userId (игнорируем agency/dept)
-  // 2. Выбраны агенции И отделы → запросы по каждой комбинации (agencyId + departmentId)
-  // 3. Выбраны только отделы → запросы по каждому departmentId
-  // 4. Выбраны только агенции → запросы по каждому agencyId
-  // 5. Ничего не выбрано → один запрос без фильтров
+  // --- Комбинации для API запросов ---
   const queryCombosMemo = useMemo<QueryCombo[]>(() => {
     if (selectedEmployeeIds.length > 0) {
       return selectedEmployeeIds.map((uid) => ({ userId: uid }))
@@ -186,17 +188,8 @@ export function EmployeeReports() {
       const combos: QueryCombo[] = []
       for (const agencyId of selectedAgencyIds) {
         for (const departmentId of selectedDepartmentIds) {
-          // Только валидные комбинации — отдел должен принадлежать агенции
-          const dept = allDepartments.find((d) => d.id === departmentId)
-          if (dept && dept.agencyId === agencyId) {
-            combos.push({ agencyId, departmentId })
-          }
+          combos.push({ agencyId, departmentId })
         }
-      }
-      // Если нет валидных комбинаций (отделы из разных агенций не пересекаются)
-      // fallback: запросы по отделам без agencyId
-      if (combos.length === 0) {
-        return selectedDepartmentIds.map((departmentId) => ({ departmentId }))
       }
       return combos
     }
@@ -206,27 +199,25 @@ export function EmployeeReports() {
     if (selectedAgencyIds.length > 0) {
       return selectedAgencyIds.map((agencyId) => ({ agencyId }))
     }
-    return [{}] // пустой объект = запрос без фильтров
-  }, [selectedEmployeeIds, selectedAgencyIds, selectedDepartmentIds, allDepartments])
+    return [{}]
+  }, [selectedEmployeeIds, selectedAgencyIds, selectedDepartmentIds])
 
-  // --- Сброс страницы при смене фильтров ---
+  // --- Сброс страницы ---
   useEffect(() => {
     setCurrentPage(1)
   }, [dateRange, queryCombosMemo])
 
-  // --- Общая функция выполнения запросов по комбо ---
+  // --- Универсальная функция запросов ---
   const fetchByCombo = async (
     combos: QueryCombo[],
     fromDate: string,
     toDate: string,
-    pageSize = 10000,
-    pageNumber = 1,
   ): Promise<TimeEntryListItem[]> => {
     const isSingleNoFilter = combos.length === 1 && Object.keys(combos[0]).length === 0
 
     if (isSingleNoFilter) {
       const res = await httpClient.get<any>('/api/timeentries', {
-        params: { pageSize, pageNumber, fromDate, toDate },
+        params: { pageSize: 10000, pageNumber: 1, fromDate, toDate },
       })
       return res.data?.entries ?? []
     }
@@ -247,7 +238,6 @@ export function EmployeeReports() {
       )
     )
 
-    // Объединяем и дедублируем по id (одна запись может попасть в несколько комбо)
     const seen = new Set<number>()
     const merged: TimeEntryListItem[] = []
     for (const batch of results) {
@@ -270,12 +260,10 @@ export function EmployeeReports() {
         setLoadingSummary(true)
         const fromDate = toLocalDateString(dateRange!.from!)
         const toDate = toLocalDateString(dateRange!.to!)
-
         const isSingleNoFilter =
           queryCombosMemo.length === 1 && Object.keys(queryCombosMemo[0]).length === 0
 
         if (isSingleNoFilter) {
-          // Используем серверную пагинацию
           const res = await httpClient.get<any>('/api/timeentries', {
             params: { pageSize: PAGE_SIZE, pageNumber: currentPage, fromDate, toDate },
           })
@@ -284,7 +272,6 @@ export function EmployeeReports() {
           setTotalCount(data?.totalCount ?? 0)
           setTotalPages(data?.totalPages ?? 1)
         } else {
-          // Загружаем все и пагинируем на клиенте
           const merged = await fetchByCombo(queryCombosMemo, fromDate, toDate)
           merged.sort((a, b) =>
             new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()
@@ -413,7 +400,6 @@ export function EmployeeReports() {
         </Button>
       </div>
 
-      {/* Фильтры */}
       <Card>
         <CardHeader>
           <CardTitle>{t('admin.reports.filters.title')}</CardTitle>
@@ -427,39 +413,36 @@ export function EmployeeReports() {
                 options={allAgencies}
                 selectedIds={selectedAgencyIds}
                 onChange={setSelectedAgencyIds}
-                disabled={loading}
+                disabled={loadingFilter}
                 placeholder="Всі агенції"
                 selectAllText="Вибрати всі"
                 clearText="Очистити"
               />
             </div>
-
             <div>
               <label className="text-sm font-medium mb-2 block">Відділ</label>
               <MultiSelect
                 options={availableDepartments}
                 selectedIds={selectedDepartmentIds}
                 onChange={setSelectedDepartmentIds}
-                disabled={loading}
+                disabled={loadingFilter}
                 placeholder="Всі відділи"
                 selectAllText="Вибрати всі"
                 clearText="Очистити"
               />
             </div>
-
             <div>
               <label className="text-sm font-medium mb-2 block">Співробітники</label>
               <MultiSelect
                 options={availableEmployees}
                 selectedIds={selectedEmployeeIds}
                 onChange={setSelectedEmployeeIds}
-                disabled={loading}
+                disabled={loadingFilter}
                 placeholder="Всі співробітники"
                 selectAllText="Вибрати всіх"
                 clearText="Очистити"
               />
             </div>
-
             <div>
               <label className="text-sm font-medium mb-2 block">
                 {t('admin.reports.filters.period')}
@@ -588,7 +571,6 @@ export function EmployeeReports() {
             <DialogTitle>{t('admin.reports.downloadDialog.title')}</DialogTitle>
             <DialogDescription>{t('admin.reports.downloadDialog.description')}</DialogDescription>
           </DialogHeader>
-
           <div className="flex-1 overflow-y-auto space-y-4 py-2">
             <div className="flex flex-wrap gap-x-6 gap-y-3">
               {(Object.keys(selectedColumns) as Array<keyof typeof selectedColumns>).map((key) => (
@@ -606,7 +588,6 @@ export function EmployeeReports() {
                 </div>
               ))}
             </div>
-
             <div>
               <h3 className="text-sm font-medium mb-2">
                 {t('admin.reports.downloadDialog.tablePreview')}
@@ -688,7 +669,6 @@ export function EmployeeReports() {
               </div>
             </div>
           </div>
-
           <DialogFooter className="pt-2">
             <Button variant="outline" onClick={() => setShowDownloadDialog(false)}>
               {t('admin.reports.downloadDialog.cancel')}
