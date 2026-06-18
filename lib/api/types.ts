@@ -90,6 +90,7 @@ export interface TimeEntryListItem {
   id: number
   userId: number
   userName: string
+  agencyId: number | null
   agencyName: string | null
   entryDate: string
   hoursMilliseconds: number

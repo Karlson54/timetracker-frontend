@@ -181,25 +181,33 @@ export function EmployeeReports() {
 
   // --- Комбинации для API запросов ---
   const queryCombosMemo = useMemo<QueryCombo[]>(() => {
-    if (selectedEmployeeIds.length > 0) {
-      return selectedEmployeeIds.map((uid) => ({ userId: uid }))
+    const hasEmployees = selectedEmployeeIds.length > 0
+    const hasAgencies = selectedAgencyIds.length > 0
+    const hasDepts = selectedDepartmentIds.length > 0
+
+    // Нет ни одного фильтра — возвращаем пустой комбо (все записи)
+    if (!hasEmployees && !hasAgencies && !hasDepts) {
+      return [{}]
     }
-    if (selectedAgencyIds.length > 0 && selectedDepartmentIds.length > 0) {
-      const combos: QueryCombo[] = []
-      for (const agencyId of selectedAgencyIds) {
-        for (const departmentId of selectedDepartmentIds) {
-          combos.push({ agencyId, departmentId })
+
+    // Картезианский продукт всех выбранных измерений
+    const userDim: (number | undefined)[] = hasEmployees ? selectedEmployeeIds : [undefined]
+    const agencyDim: (number | undefined)[] = hasAgencies ? selectedAgencyIds : [undefined]
+    const deptDim: (number | undefined)[] = hasDepts ? selectedDepartmentIds : [undefined]
+
+    const combos: QueryCombo[] = []
+    for (const uid of userDim) {
+      for (const agencyId of agencyDim) {
+        for (const deptId of deptDim) {
+          const combo: QueryCombo = {}
+          if (uid !== undefined) combo.userId = uid
+          if (agencyId !== undefined) combo.agencyId = agencyId
+          if (deptId !== undefined) combo.departmentId = deptId
+          combos.push(combo)
         }
       }
-      return combos
     }
-    if (selectedDepartmentIds.length > 0) {
-      return selectedDepartmentIds.map((departmentId) => ({ departmentId }))
-    }
-    if (selectedAgencyIds.length > 0) {
-      return selectedAgencyIds.map((agencyId) => ({ agencyId }))
-    }
-    return [{}]
+    return combos
   }, [selectedEmployeeIds, selectedAgencyIds, selectedDepartmentIds])
 
   // --- Сброс страницы ---
