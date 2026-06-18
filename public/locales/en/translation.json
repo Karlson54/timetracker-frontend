@@ -2,7 +2,7 @@
   "admin": {
     "reports": {
       "title": "Employee Reports",
-      "exportAllToExcel": "Export All Records to Excel",
+      "exportAllToExcel": "Export to Excel",
       "loadingReports": "Loading reports...",
       "pagination": {
         "showing": "Showing {{from}}-{{to}} of {{total}} records"

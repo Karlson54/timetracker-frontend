@@ -2,22 +2,17 @@
 
 import httpClient from '@/lib/api/httpClient'
 import usersService from "@/lib/api/services/usersService"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { FileSpreadsheet } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription,
+  DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
 import { useTranslation } from "react-i18next"
 import type { DateRange } from "react-day-picker"
@@ -26,6 +21,9 @@ import { StatsCards } from '@/components/reports/StatsCards'
 import { Pagination } from '@/components/reports/Pagination'
 import { EntriesTable } from '@/components/reports/EntriesTable'
 import { toLocalDateString, msToHours } from '@/lib/utils'
+import { agenciesService } from '@/lib/api/services/dictionaryService'
+import departmentsService, { Department } from '@/lib/api/services/departmentsService'
+import { MultiSelect, MultiSelectOption } from '@/components/ui/multi-select'
 
 const PAGE_SIZE = 50
 
@@ -35,9 +33,18 @@ interface ClientSummary {
   percentage: number
 }
 
-interface Employee {
+interface FullUser {
   id: number
   name: string
+  agencyId: number
+  departmentId: number
+}
+
+// Комбинация фильтров для одного запроса к API
+interface QueryCombo {
+  userId?: number
+  agencyId?: number
+  departmentId?: number
 }
 
 export function EmployeeReports() {
@@ -46,14 +53,21 @@ export function EmployeeReports() {
   const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   const today = new Date()
 
-  const [selectedEmployee, setSelectedEmployee] = useState("all")
+  // --- Состояния фильтров ---
+  const [selectedAgencyIds, setSelectedAgencyIds] = useState<number[]>([])
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<number[]>([])
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<number[]>([])
+
+  // --- Исходные данные ---
+  const [allAgencies, setAllAgencies] = useState<MultiSelectOption[]>([])
+  const [allDepartments, setAllDepartments] = useState<Department[]>([])
+  const [allUsers, setAllUsers] = useState<FullUser[]>([])
+  const [loading, setLoading] = useState(true)
+
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: firstDayOfMonth,
     to: today,
   })
-
-  const [employees, setEmployees] = useState<Employee[]>([])
-  const [loadingUsers, setLoadingUsers] = useState(true)
 
   const [entries, setEntries] = useState<TimeEntryListItem[]>([])
   const [loadingSummary, setLoadingSummary] = useState(false)
@@ -67,91 +81,251 @@ export function EmployeeReports() {
   const [showDownloadDialog, setShowDownloadDialog] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
   const [selectedColumns, setSelectedColumns] = useState({
-    company: true,
-    department: true,
-    fullName: true,
-    date: true,
-    month: true,
-    year: true,
-    market: true,
-    contractingAgency: true,
-    client: true,
-    projectBrand: true,
-    media: true,
-    jobType: true,
-    hours: true,
-    comments: true,
+    company: true, department: true, fullName: true, date: true,
+    month: true, year: true, market: true, contractingAgency: true,
+    client: true, projectBrand: true, media: true, jobType: true,
+    hours: true, comments: true,
   })
 
+  const columnLabels: Record<keyof typeof selectedColumns, string> = {
+    company: 'Agency', department: 'Department', fullName: 'Name',
+    date: 'Date', month: 'Month', year: 'Year', market: 'Market',
+    contractingAgency: 'Contracting Agency / Unit', client: 'Client',
+    projectBrand: 'Project / brand', media: 'Media', jobType: 'Job type',
+    hours: 'Hours', comments: 'Comments',
+  }
+
+  // --- Загружаем все данные один раз ---
   useEffect(() => {
-    async function fetchUsers() {
+    async function loadAll() {
       try {
-        const users = await usersService.getAll()
-        setEmployees(users.map((u: any) => ({ id: u.id, name: u.name })))
+        setLoading(true)
+        const [agencies, users] = await Promise.all([
+          agenciesService.getActive(),
+          usersService.getAll(),
+        ])
+        setAllAgencies(agencies.map((a: any) => ({ id: a.id, name: a.name })))
+        setAllUsers(users.map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          agencyId: u.agencyId,
+          departmentId: u.departmentId,
+        })))
       } catch (err) {
-        console.error("Error fetching users:", err)
+        console.error("Error loading filter data:", err)
       } finally {
-        setLoadingUsers(false)
+        setLoading(false)
       }
     }
-    fetchUsers()
+    loadAll()
   }, [])
 
+  // --- Загружаем отделы всех агенций один раз ---
+  useEffect(() => {
+    if (allAgencies.length === 0) return
+    async function loadDepartments() {
+      try {
+        const results = await Promise.all(
+          allAgencies.map((a) => departmentsService.getActiveByAgency(a.id))
+        )
+        setAllDepartments(results.flat())
+      } catch (err) {
+        console.error("Error loading departments:", err)
+      }
+    }
+    loadDepartments()
+  }, [allAgencies])
+
+  // --- Доступные отделы зависят от выбранных агенций ---
+  const availableDepartments = useMemo<MultiSelectOption[]>(() => {
+    if (selectedAgencyIds.length === 0) {
+      return allDepartments.map((d) => ({ id: d.id, name: d.name }))
+    }
+    return allDepartments
+      .filter((d) => selectedAgencyIds.includes(d.agencyId))
+      .map((d) => ({ id: d.id, name: d.name }))
+  }, [allDepartments, selectedAgencyIds])
+
+  // --- Сбрасываем отделы которые вышли из доступных ---
+  useEffect(() => {
+    const validIds = availableDepartments.map((d) => d.id)
+    setSelectedDepartmentIds((prev) => prev.filter((id) => validIds.includes(id)))
+  }, [availableDepartments])
+
+  // --- Доступные сотрудники зависят от агенций и отделов ---
+  const availableEmployees = useMemo<MultiSelectOption[]>(() => {
+    let filtered = allUsers
+    if (selectedAgencyIds.length > 0) {
+      filtered = filtered.filter((u) => selectedAgencyIds.includes(u.agencyId))
+    }
+    if (selectedDepartmentIds.length > 0) {
+      filtered = filtered.filter((u) => selectedDepartmentIds.includes(u.departmentId))
+    }
+    return filtered.map((u) => ({ id: u.id, name: u.name }))
+  }, [allUsers, selectedAgencyIds, selectedDepartmentIds])
+
+  // --- Сбрасываем сотрудников которые вышли из доступных ---
+  useEffect(() => {
+    const validIds = availableEmployees.map((e) => e.id)
+    setSelectedEmployeeIds((prev) => prev.filter((id) => validIds.includes(id)))
+  }, [availableEmployees])
+
+  // --- Ключевая функция: формируем комбинации для API запросов ---
+  //
+  // Приоритеты (от конкретного к общему):
+  // 1. Выбраны конкретные сотрудники → запросы по userId (игнорируем agency/dept)
+  // 2. Выбраны агенции И отделы → запросы по каждой комбинации (agencyId + departmentId)
+  // 3. Выбраны только отделы → запросы по каждому departmentId
+  // 4. Выбраны только агенции → запросы по каждому agencyId
+  // 5. Ничего не выбрано → один запрос без фильтров
+  const queryCombosMemo = useMemo<QueryCombo[]>(() => {
+    if (selectedEmployeeIds.length > 0) {
+      return selectedEmployeeIds.map((uid) => ({ userId: uid }))
+    }
+    if (selectedAgencyIds.length > 0 && selectedDepartmentIds.length > 0) {
+      const combos: QueryCombo[] = []
+      for (const agencyId of selectedAgencyIds) {
+        for (const departmentId of selectedDepartmentIds) {
+          // Только валидные комбинации — отдел должен принадлежать агенции
+          const dept = allDepartments.find((d) => d.id === departmentId)
+          if (dept && dept.agencyId === agencyId) {
+            combos.push({ agencyId, departmentId })
+          }
+        }
+      }
+      // Если нет валидных комбинаций (отделы из разных агенций не пересекаются)
+      // fallback: запросы по отделам без agencyId
+      if (combos.length === 0) {
+        return selectedDepartmentIds.map((departmentId) => ({ departmentId }))
+      }
+      return combos
+    }
+    if (selectedDepartmentIds.length > 0) {
+      return selectedDepartmentIds.map((departmentId) => ({ departmentId }))
+    }
+    if (selectedAgencyIds.length > 0) {
+      return selectedAgencyIds.map((agencyId) => ({ agencyId }))
+    }
+    return [{}] // пустой объект = запрос без фильтров
+  }, [selectedEmployeeIds, selectedAgencyIds, selectedDepartmentIds, allDepartments])
+
+  // --- Сброс страницы при смене фильтров ---
   useEffect(() => {
     setCurrentPage(1)
-  }, [dateRange, selectedEmployee])
+  }, [dateRange, queryCombosMemo])
 
+  // --- Общая функция выполнения запросов по комбо ---
+  const fetchByCombo = async (
+    combos: QueryCombo[],
+    fromDate: string,
+    toDate: string,
+    pageSize = 10000,
+    pageNumber = 1,
+  ): Promise<TimeEntryListItem[]> => {
+    const isSingleNoFilter = combos.length === 1 && Object.keys(combos[0]).length === 0
+
+    if (isSingleNoFilter) {
+      const res = await httpClient.get<any>('/api/timeentries', {
+        params: { pageSize, pageNumber, fromDate, toDate },
+      })
+      return res.data?.entries ?? []
+    }
+
+    const results = await Promise.all(
+      combos.map((combo) =>
+        httpClient.get<any>('/api/timeentries', {
+          params: {
+            pageSize: 10000,
+            pageNumber: 1,
+            fromDate,
+            toDate,
+            ...(combo.userId && { userId: combo.userId }),
+            ...(combo.agencyId && { agencyId: combo.agencyId }),
+            ...(combo.departmentId && { departmentId: combo.departmentId }),
+          },
+        }).then((r) => r.data?.entries ?? [])
+      )
+    )
+
+    // Объединяем и дедублируем по id (одна запись может попасть в несколько комбо)
+    const seen = new Set<number>()
+    const merged: TimeEntryListItem[] = []
+    for (const batch of results) {
+      for (const entry of batch) {
+        if (!seen.has(entry.id)) {
+          seen.add(entry.id)
+          merged.push(entry)
+        }
+      }
+    }
+    return merged
+  }
+
+  // --- Загрузка записей с пагинацией ---
   useEffect(() => {
     if (!dateRange?.from || !dateRange?.to) return
+
     async function fetchSummary() {
       try {
         setLoadingSummary(true)
-        const params: any = {
-          pageSize: PAGE_SIZE,
-          pageNumber: currentPage,
-          fromDate: toLocalDateString(dateRange!.from!),
-          toDate: toLocalDateString(dateRange!.to!),
+        const fromDate = toLocalDateString(dateRange!.from!)
+        const toDate = toLocalDateString(dateRange!.to!)
+
+        const isSingleNoFilter =
+          queryCombosMemo.length === 1 && Object.keys(queryCombosMemo[0]).length === 0
+
+        if (isSingleNoFilter) {
+          // Используем серверную пагинацию
+          const res = await httpClient.get<any>('/api/timeentries', {
+            params: { pageSize: PAGE_SIZE, pageNumber: currentPage, fromDate, toDate },
+          })
+          const data = res.data
+          setEntries(data?.entries ?? [])
+          setTotalCount(data?.totalCount ?? 0)
+          setTotalPages(data?.totalPages ?? 1)
+        } else {
+          // Загружаем все и пагинируем на клиенте
+          const merged = await fetchByCombo(queryCombosMemo, fromDate, toDate)
+          merged.sort((a, b) =>
+            new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()
+          )
+          const start = (currentPage - 1) * PAGE_SIZE
+          setEntries(merged.slice(start, start + PAGE_SIZE))
+          setTotalCount(merged.length)
+          setTotalPages(Math.ceil(merged.length / PAGE_SIZE) || 1)
         }
-        if (selectedEmployee !== "all") params.userId = Number(selectedEmployee)
-        const res = await httpClient.get<any>('/api/timeentries', { params })
-        const data = res.data
-        setEntries(data?.entries ?? data ?? [])
-        setTotalCount(data?.totalCount ?? 0)
-        setTotalPages(data?.totalPages ?? 1)
       } catch (err) {
         console.error("Error fetching summary:", err)
       } finally {
         setLoadingSummary(false)
       }
     }
-    fetchSummary()
-  }, [dateRange, selectedEmployee, currentPage])
 
+    fetchSummary()
+  }, [dateRange, queryCombosMemo, currentPage])
+
+  // --- Загрузка всех записей для детального отчёта ---
   useEffect(() => {
     if (!dateRange?.from || !dateRange?.to) return
+
     async function fetchAllEntries() {
       try {
         setLoadingDetailed(true)
-        const params: any = {
-          pageSize: 10000,
-          pageNumber: 1,
-          fromDate: toLocalDateString(dateRange!.from!),
-          toDate: toLocalDateString(dateRange!.to!),
-        }
-        if (selectedEmployee !== "all") params.userId = Number(selectedEmployee)
-        const res = await httpClient.get<any>('/api/timeentries', { params })
-        const data = res.data
-        setAllEntries(data?.entries ?? data ?? [])
+        const fromDate = toLocalDateString(dateRange!.from!)
+        const toDate = toLocalDateString(dateRange!.to!)
+        const merged = await fetchByCombo(queryCombosMemo, fromDate, toDate)
+        setAllEntries(merged)
       } catch (err) {
         console.error("Error fetching detailed:", err)
       } finally {
         setLoadingDetailed(false)
       }
     }
-    fetchAllEntries()
-  }, [dateRange, selectedEmployee])
 
-  const clientSummary: ClientSummary[] = (() => {
+    fetchAllEntries()
+  }, [dateRange, queryCombosMemo])
+
+  const clientSummary: ClientSummary[] = useMemo(() => {
     const totalMs = allEntries.reduce((sum, e) => sum + e.hoursMilliseconds, 0)
     const map: Record<string, number> = {}
     allEntries.forEach((e) => {
@@ -165,66 +339,61 @@ export function EmployeeReports() {
         percentage: totalMs > 0 ? Math.round((ms / totalMs) * 100) : 0,
       }))
       .sort((a, b) => b.totalHours - a.totalHours)
-  })()
+  }, [allEntries])
 
-  const totalHoursAll = msToHours(allEntries.reduce((sum, e) => sum + e.hoursMilliseconds, 0))
+  const totalHoursAll = useMemo(
+    () => msToHours(allEntries.reduce((sum, e) => sum + e.hoursMilliseconds, 0)),
+    [allEntries]
+  )
+
+  const downloadBlob = (data: BlobPart, filename: string) => {
+    const blob = new Blob([data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const handleDownloadWithColumns = async () => {
     if (!dateRange?.from || !dateRange?.to) return
     setIsDownloading(true)
     try {
       const columnsParam = Object.entries(selectedColumns)
-        .filter(([, enabled]) => enabled)
-        .map(([key]) => {
-          const keyMap: Record<string, string> = {
-            company: 'agency',
-            department: 'department',
-            fullName: 'fullname',
-            date: 'date',
-            month: 'month',
-            year: 'year',
-            market: 'market',
-            contractingAgency: 'contractingagency',
-            client: 'client',
-            projectBrand: 'projectbrand',
-            media: 'media',
-            jobType: 'jobtype',
-            hours: 'hours',
-            comments: 'comments',
-          }
-          return keyMap[key] ?? key
-        })
+        .filter(([, v]) => v)
+        .map(([key]) => ({
+          company: 'agency', department: 'department', fullName: 'fullname',
+          date: 'date', month: 'month', year: 'year', market: 'market',
+          contractingAgency: 'contractingagency', client: 'client',
+          projectBrand: 'projectbrand', media: 'media', jobType: 'jobtype',
+          hours: 'hours', comments: 'comments',
+        }[key] ?? key))
         .join(',')
 
       const fromStr = toLocalDateString(dateRange.from)
       const toStr = toLocalDateString(dateRange.to)
 
-      const url = selectedEmployee === "all"
-        ? `/api/reports/export/flat`
-        : `/api/reports/user/${selectedEmployee}/export/flat`
+      const isSingleUser =
+        selectedEmployeeIds.length === 1 &&
+        selectedAgencyIds.length === 0 &&
+        selectedDepartmentIds.length === 0
 
-      const empName = selectedEmployee === "all"
-        ? "AllReports"
-        : employees.find(e => String(e.id) === selectedEmployee)?.name.replace(/\s+/g, '_') ?? `user_${selectedEmployee}`
-
-      const response = await httpClient.get(url, {
-        params: {
-          fromDate: fromStr,
-          toDate: toStr,
-          columns: columnsParam,
-        },
-        responseType: 'blob',
-      })
-
-      const blob = new Blob([response.data], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      })
-      const blobUrl = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = blobUrl
-      a.download = `${empName}_${fromStr}_${toStr}.xlsx`
-      a.click()
-      URL.revokeObjectURL(blobUrl)
+      if (isSingleUser) {
+        const res = await httpClient.get(
+          `/api/reports/user/${selectedEmployeeIds[0]}/export/flat`,
+          { params: { fromDate: fromStr, toDate: toStr, columns: columnsParam }, responseType: 'blob' }
+        )
+        downloadBlob(res.data, `Report_${fromStr}_${toStr}.xlsx`)
+      } else {
+        const res = await httpClient.get(
+          `/api/reports/export/flat`,
+          { params: { fromDate: fromStr, toDate: toStr, columns: columnsParam }, responseType: 'blob' }
+        )
+        downloadBlob(res.data, `AllReports_${fromStr}_${toStr}.xlsx`)
+      }
       setShowDownloadDialog(false)
     } catch (error) {
       console.error("Download error:", error)
@@ -232,23 +401,6 @@ export function EmployeeReports() {
     } finally {
       setIsDownloading(false)
     }
-  }
-
-  const columnLabels: Record<keyof typeof selectedColumns, string> = {
-    company: 'Agency',
-    department: 'Department',
-    fullName: 'Name',
-    date: 'Date',
-    month: 'Month',
-    year: 'Year',
-    market: 'Market',
-    contractingAgency: 'Contracting Agency / Unit',
-    client: 'Client',
-    projectBrand: 'Project / brand',
-    media: 'Media',
-    jobType: 'Job type',
-    hours: 'Hours',
-    comments: 'Comments',
   }
 
   return (
@@ -261,30 +413,57 @@ export function EmployeeReports() {
         </Button>
       </div>
 
-      {/* Фільтри */}
+      {/* Фильтры */}
       <Card>
         <CardHeader>
           <CardTitle>{t('admin.reports.filters.title')}</CardTitle>
           <CardDescription>{t('admin.reports.filters.description')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">{t('admin.reports.filters.employee')}</label>
-              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('admin.reports.filters.selectEmployee')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('admin.reports.filters.allEmployees')}</SelectItem>
-                  {employees.map((e) => (
-                    <SelectItem key={e.id} value={String(e.id)}>{e.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium mb-2 block">Агенція</label>
+              <MultiSelect
+                options={allAgencies}
+                selectedIds={selectedAgencyIds}
+                onChange={setSelectedAgencyIds}
+                disabled={loading}
+                placeholder="Всі агенції"
+                selectAllText="Вибрати всі"
+                clearText="Очистити"
+              />
             </div>
-            <div className="col-span-1 md:col-span-2">
-              <label className="text-sm font-medium mb-2 block">{t('admin.reports.filters.period')}</label>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Відділ</label>
+              <MultiSelect
+                options={availableDepartments}
+                selectedIds={selectedDepartmentIds}
+                onChange={setSelectedDepartmentIds}
+                disabled={loading}
+                placeholder="Всі відділи"
+                selectAllText="Вибрати всі"
+                clearText="Очистити"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Співробітники</label>
+              <MultiSelect
+                options={availableEmployees}
+                selectedIds={selectedEmployeeIds}
+                onChange={setSelectedEmployeeIds}
+                disabled={loading}
+                placeholder="Всі співробітники"
+                selectAllText="Вибрати всіх"
+                clearText="Очистити"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                {t('admin.reports.filters.period')}
+              </label>
               <DatePickerWithRange date={dateRange} setDate={setDateRange} />
             </div>
           </div>
@@ -293,7 +472,6 @@ export function EmployeeReports() {
 
       <StatsCards allEntries={allEntries} totalCount={totalCount} />
 
-      {/* Табы */}
       <Tabs defaultValue="summary">
         <TabsList>
           <TabsTrigger value="summary">{t('admin.reports.tabs.summary')}</TabsTrigger>
@@ -403,7 +581,7 @@ export function EmployeeReports() {
         </TabsContent>
       </Tabs>
 
-      {/* Діалог експорту */}
+      {/* Export Dialog */}
       <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
         <DialogContent className="max-w-[90vw] w-full max-h-[90vh] flex flex-col">
           <DialogHeader>
@@ -412,7 +590,6 @@ export function EmployeeReports() {
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto space-y-4 py-2">
-            {/* Чекбоксы — горизонтально с переносом */}
             <div className="flex flex-wrap gap-x-6 gap-y-3">
               {(Object.keys(selectedColumns) as Array<keyof typeof selectedColumns>).map((key) => (
                 <div key={key} className="flex items-center space-x-2">
@@ -430,9 +607,10 @@ export function EmployeeReports() {
               ))}
             </div>
 
-            {/* Превью таблицы */}
             <div>
-              <h3 className="text-sm font-medium mb-2">{t('admin.reports.downloadDialog.tablePreview')}</h3>
+              <h3 className="text-sm font-medium mb-2">
+                {t('admin.reports.downloadDialog.tablePreview')}
+              </h3>
               <div className="border rounded-md overflow-auto max-h-[300px]">
                 <table className="w-full text-sm">
                   <thead>
@@ -482,12 +660,12 @@ export function EmployeeReports() {
                           )}
                           {selectedColumns.month && (
                             <td className="px-3 py-2 whitespace-nowrap">
-                              {preview.entryDate ? new Date(preview.entryDate).toLocaleString('en-US', { month: 'long' }) : '—'}
+                              {new Date(preview.entryDate).toLocaleString('en-US', { month: 'long' })}
                             </td>
                           )}
                           {selectedColumns.year && (
                             <td className="px-3 py-2 whitespace-nowrap">
-                              {preview.entryDate ? new Date(preview.entryDate).getFullYear() : '—'}
+                              {new Date(preview.entryDate).getFullYear()}
                             </td>
                           )}
                           {selectedColumns.market && <td className="px-3 py-2 whitespace-nowrap">{preview.marketName || '—'}</td>}
@@ -497,7 +675,9 @@ export function EmployeeReports() {
                           {selectedColumns.media && <td className="px-3 py-2 whitespace-nowrap">{preview.mediaName || '—'}</td>}
                           {selectedColumns.jobType && <td className="px-3 py-2 whitespace-nowrap">{preview.jobTypeName || '—'}</td>}
                           {selectedColumns.hours && (
-                            <td className="px-3 py-2 whitespace-nowrap">{msToHours(preview.hoursMilliseconds).toFixed(1)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              {msToHours(preview.hoursMilliseconds).toFixed(1)}
+                            </td>
                           )}
                           {selectedColumns.comments && <td className="px-3 py-2 whitespace-nowrap">{preview.comments || '—'}</td>}
                         </tr>
