@@ -14,7 +14,7 @@ import profileService from '@/lib/api/services/profileService'
 
 export function ProfilePage() {
   const { t } = useTranslation()
-  const { user } = useAuthContext()
+  const { user, isAdmin } = useAuthContext()
   const { error, showError, clearError } = useErrorToast()
 
   const [loading, setLoading] = useState(true)
@@ -139,8 +139,10 @@ export function ProfilePage() {
               <Input
                 id="name"
                 value={profileForm.name}
-                onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                required
+                onChange={(e) => isAdmin && setProfileForm({ ...profileForm, name: e.target.value })}
+                readOnly={!isAdmin}
+                disabled={!isAdmin}
+                className={!isAdmin ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-60' : ''}
               />
             </div>
             <div className="space-y-2">
@@ -149,8 +151,10 @@ export function ProfilePage() {
                 id="email"
                 type="email"
                 value={profileForm.email}
-                onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                required
+                onChange={(e) => isAdmin && setProfileForm({ ...profileForm, email: e.target.value })}
+                readOnly={!isAdmin}
+                disabled={!isAdmin}
+                className={!isAdmin ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-60' : ''}
               />
             </div>
             <div className="space-y-2">
@@ -161,6 +165,8 @@ export function ProfilePage() {
                 onChange={(e) => setProfileForm({ ...profileForm, login: e.target.value })}
               />
             </div>
+            {/* Показываем кнопку сохранения только если хоть что-то доступно для редактирования */}
+            {/* Для обычного юзера — только логин редактируемый */}
             <div className="flex items-center gap-3 pt-2">
               <Button type="submit" disabled={profileSubmitting}>
                 {profileSubmitting ? t('common.saving') : t('common.save')}
