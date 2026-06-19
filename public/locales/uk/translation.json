@@ -17,7 +17,15 @@
         "employee": "Співробітник",
         "selectEmployee": "Оберіть співробітника",
         "allEmployees": "Всі співробітники",
-        "period": "Період"
+        "period": "Період",
+        "agencyLabel": "Агенція",
+        "departmentLabel": "Відділ",
+        "employeesLabel": "Співробітники",
+        "allAgencies": "Всі агенції",
+        "allDepartments": "Всі відділи",
+        "selectAll": "Вибрати всіх",
+        "clear": "Очистити",
+        "search": "Пошук..."
       },
       "summary": {
         "summaryTitle": "Зведення записів",

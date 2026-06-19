@@ -427,39 +427,42 @@ export function EmployeeReports() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Агенція</label>
+              <label className="text-sm font-medium mb-2 block">{t('admin.reports.filters.agencyLabel')}</label>
               <MultiSelect
                 options={allAgencies}
                 selectedIds={selectedAgencyIds}
                 onChange={setSelectedAgencyIds}
                 disabled={loadingFilter}
-                placeholder="Всі агенції"
-                selectAllText="Вибрати всі"
-                clearText="Очистити"
+                placeholder={t('admin.reports.filters.allAgencies')}
+                searchPlaceholder={t('admin.reports.filters.search')}
+                selectAllText={t('admin.reports.filters.selectAll')}
+                clearText={t('admin.reports.filters.clear')}
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Відділ</label>
+              <label className="text-sm font-medium mb-2 block">{t('admin.reports.filters.departmentLabel')}</label>
               <MultiSelect
                 options={availableDepartments}
                 selectedIds={selectedDepartmentIds}
                 onChange={setSelectedDepartmentIds}
                 disabled={loadingFilter}
-                placeholder="Всі відділи"
-                selectAllText="Вибрати всі"
-                clearText="Очистити"
+                placeholder={t('admin.reports.filters.allDepartments')}
+                searchPlaceholder={t('admin.reports.filters.search')}
+                selectAllText={t('admin.reports.filters.selectAll')}
+                clearText={t('admin.reports.filters.clear')}
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Співробітники</label>
+              <label className="text-sm font-medium mb-2 block">{t('admin.reports.filters.employeesLabel')}</label>
               <MultiSelect
                 options={availableEmployees}
                 selectedIds={selectedEmployeeIds}
                 onChange={setSelectedEmployeeIds}
                 disabled={loadingFilter}
-                placeholder="Всі співробітники"
-                selectAllText="Вибрати всіх"
-                clearText="Очистити"
+                placeholder={t('admin.reports.filters.allEmployees')}
+                searchPlaceholder={t('admin.reports.filters.search')}
+                selectAllText={t('admin.reports.filters.selectAll')}
+                clearText={t('admin.reports.filters.clear')}
               />
             </div>
             <div>

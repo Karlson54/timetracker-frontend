@@ -16,8 +16,16 @@
         "description": "Select parameters to display reports",
         "employee": "Employee",
         "selectEmployee": "Select an employee",
+        "period": "Period",
+        "agencyLabel": "Agency",
+        "departmentLabel": "Department",
+        "employeesLabel": "Employees",
+        "allAgencies": "All agencies",
+        "allDepartments": "All departments",
         "allEmployees": "All employees",
-        "period": "Period"
+        "selectAll": "Select all",
+        "clear": "Clear",
+        "search": "Search..."
       },
       "summary": {
         "summaryTitle": "Summary of records",
