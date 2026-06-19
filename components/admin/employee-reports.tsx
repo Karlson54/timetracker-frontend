@@ -90,10 +90,8 @@ export function EmployeeReports() {
     async function fetchEntriesForFilter() {
       try {
         setLoadingFilter(true)
-        const res = await httpClient.get<any>('/api/timeentries', {
+        const res = await httpClient.get<any>('/api/timeentries/all', {
           params: {
-            pageSize: 10000,
-            pageNumber: 1,
             fromDate: toLocalDateString(dateRange!.from!),
             toDate: toLocalDateString(dateRange!.to!),
           },
@@ -224,18 +222,16 @@ export function EmployeeReports() {
     const isSingleNoFilter = combos.length === 1 && Object.keys(combos[0]).length === 0
 
     if (isSingleNoFilter) {
-      const res = await httpClient.get<any>('/api/timeentries', {
-        params: { pageSize: 10000, pageNumber: 1, fromDate, toDate },
+      const res = await httpClient.get<any>('/api/timeentries/all', {
+        params: { fromDate, toDate },
       })
       return res.data?.entries ?? []
     }
 
     const results = await Promise.all(
       combos.map((combo) =>
-        httpClient.get<any>('/api/timeentries', {
+        httpClient.get<any>('/api/timeentries/all', {
           params: {
-            pageSize: 10000,
-            pageNumber: 1,
             fromDate,
             toDate,
             ...(combo.userId && { userId: combo.userId }),
@@ -371,24 +367,39 @@ export function EmployeeReports() {
       const fromStr = toLocalDateString(dateRange.from)
       const toStr = toLocalDateString(dateRange.to)
 
-      const isSingleUser =
-        selectedEmployeeIds.length === 1 &&
-        selectedAgencyIds.length === 0 &&
-        selectedDepartmentIds.length === 0
-
-      if (isSingleUser) {
-        const res = await httpClient.get(
-          `/api/reports/user/${selectedEmployeeIds[0]}/export/flat`,
-          { params: { fromDate: fromStr, toDate: toStr, columns: columnsParam }, responseType: 'blob' }
-        )
-        downloadBlob(res.data, `Report_${fromStr}_${toStr}.xlsx`)
-      } else {
-        const res = await httpClient.get(
-          `/api/reports/export/flat`,
-          { params: { fromDate: fromStr, toDate: toStr, columns: columnsParam }, responseType: 'blob' }
-        )
-        downloadBlob(res.data, `AllReports_${fromStr}_${toStr}.xlsx`)
+      // Строим параметры фильтров из queryCombosMemo
+      const params: Record<string, any> = {
+        fromDate: fromStr,
+        toDate: toStr,
+        columns: columnsParam,
       }
+
+      // Если выбраны конкретные сотрудники — передаём userIds
+      if (selectedEmployeeIds.length > 0) {
+        params.userIds = selectedEmployeeIds.join(',')
+      } else {
+        // Если выбрана одна агенция — передаём agencyId
+        if (selectedAgencyIds.length === 1) {
+          params.agencyId = selectedAgencyIds[0]
+        }
+        // Если выбран один отдел — передаём departmentId
+        if (selectedDepartmentIds.length === 1) {
+          params.departmentId = selectedDepartmentIds[0]
+        }
+        // Если выбрано несколько агенций/отделов — передаём userIds из allEntries
+        // (они уже отфильтрованы правильно)
+        if (selectedAgencyIds.length > 1 || selectedDepartmentIds.length > 1) {
+          const uniqueUserIds = [...new Set(allEntries.map((e) => e.userId))]
+          params.userIds = uniqueUserIds.join(',')
+        }
+      }
+
+      const res = await httpClient.get('/api/reports/export/flat', {
+        params,
+        responseType: 'blob',
+      })
+
+      downloadBlob(res.data, `AllReports_${fromStr}_${toStr}.xlsx`)
       setShowDownloadDialog(false)
     } catch (error) {
       console.error("Download error:", error)
