@@ -121,8 +121,8 @@ export function EmployeesList() {
     )
   )
 
-  const activeAdminCount = employees.filter(
-    (e) => e.isActive && e.roles?.includes('Admin')
+  const activeSuperAdminCount = employees.filter(
+    (e) => e.isActive && e.roles?.includes('SuperAdmin')
   ).length
 
   const handleAdd = async () => {
@@ -508,19 +508,19 @@ export function EmployeesList() {
                           <Pencil className="h-4 w-4" />
                         </Button>
                         {(() => {
-                          const isLastAdmin =
+                          const isLastSuperAdmin =
                             employee.isActive &&
-                            employee.roles?.includes('Admin') &&
-                            activeAdminCount <= 1
+                            employee.roles?.includes('SuperAdmin') &&
+                            activeSuperAdminCount <= 1
 
                           return (
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => !isLastAdmin && handleToggleActive(employee)}
-                              disabled={isLastAdmin}
+                              onClick={() => !isLastSuperAdmin && handleToggleActive(employee)}
+                              disabled={isLastSuperAdmin}
                               title={
-                                isLastAdmin
+                                isLastSuperAdmin
                                   ? t('admin.employees.errors.lastAdmin')
                                   : employee.isActive
                                     ? t('common.deactivate')

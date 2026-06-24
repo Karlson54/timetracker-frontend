@@ -15,6 +15,7 @@ import { LanguageSwitcher } from '@/components/language-switcher'
 import { useTranslation } from 'react-i18next'
 import { getAgencyLogo } from '@/lib/utils/getAgencyLogo'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { ShieldCheck } from 'lucide-react'
 
 interface DashboardSidebarProps {
   isAdmin?: boolean
@@ -81,26 +82,43 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                   <BarChart3 className="h-4 w-4" />{t('admin.nav.dashboard')}
                 </Link>
               </li>
-              <li>
-                <Link href="/admin/employees" className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
-                  pathname === '/admin/employees'
-                    ? 'bg-accent text-accent-foreground font-medium'
-                    : 'text-foreground hover:bg-accent/50'
-                )}>
-                  <Users className="h-4 w-4" />{t('admin.nav.employees')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/dictionaries/clients" className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
-                  pathname === '/admin/companies'
-                    ? 'bg-accent text-accent-foreground font-medium'
-                    : 'text-foreground hover:bg-accent/50'
-                )}>
-                  <Building className="h-4 w-4" />{t('admin.nav.companies')}
-                </Link>
-              </li>
+              {user?.roles?.includes('SuperAdmin') && (
+                <li>
+                  <Link href="/admin/employees" className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                    pathname === '/admin/employees'
+                      ? 'bg-accent text-accent-foreground font-medium'
+                      : 'text-foreground hover:bg-accent/50'
+                  )}>
+                    <Users className="h-4 w-4" />{t('admin.nav.employees')}
+                  </Link>
+                </li>
+              )}
+              {user?.roles?.includes('SuperAdmin') && (
+                <li>
+                  <Link href="/admin/permissions" className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                    pathname === '/admin/permissions'
+                      ? 'bg-accent text-accent-foreground font-medium'
+                      : 'text-foreground hover:bg-accent/50'
+                  )}>
+                    <ShieldCheck className="h-4 w-4" />
+                    Права доступу
+                  </Link>
+                </li>
+              )}
+              {user?.roles?.includes('SuperAdmin') && (
+                <li>
+                  <Link href="/admin/dictionaries/clients" className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                    pathname === '/admin/companies'
+                      ? 'bg-accent text-accent-foreground font-medium'
+                      : 'text-foreground hover:bg-accent/50'
+                  )}>
+                    <Building className="h-4 w-4" />{t('admin.nav.companies')}
+                  </Link>
+                </li>
+              )}
               <li>
                 <button
                   onClick={() => setIsReportsOpen(!isReportsOpen)}
@@ -161,52 +179,54 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                 </Link>
               </li>
 
-              <li>
-                <button
-                  onClick={() => setIsDictionariesOpen(!isDictionariesOpen)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
-                    isDictionaryActive
-                      ? 'bg-accent text-accent-foreground font-medium'
-                      : 'text-foreground hover:bg-accent/50'
-                  )}
-                >
-                  <BookOpen className="h-4 w-4" />
-                  <span className="flex-1 text-left">{t('admin.nav.dictionaries')}</span>
-                  {isDictionariesOpen
-                    ? <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                    : <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                  }
-                </button>
+              {user?.roles?.includes('SuperAdmin') && (
+                <li>
+                  <button
+                    onClick={() => setIsDictionariesOpen(!isDictionariesOpen)}
+                    className={cn(
+                      'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                      isDictionaryActive
+                        ? 'bg-accent text-accent-foreground font-medium'
+                        : 'text-foreground hover:bg-accent/50'
+                    )}
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    <span className="flex-1 text-left">{t('admin.nav.dictionaries')}</span>
+                    {isDictionariesOpen
+                      ? <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                      : <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                    }
+                  </button>
 
-                {isDictionariesOpen && (
-                  <ul className="mt-1 ml-4 space-y-1 border-l border-border pl-3">
-                    {[
-                      { href: '/admin/dictionaries/agencies', label: t('admin.nav.dict.agencies') },
-                      { href: '/admin/dictionaries/departments', label: t('admin.nav.dict.departments') },
-                      { href: '/admin/dictionaries/markets', label: t('admin.nav.dict.markets') },
-                      { href: '/admin/dictionaries/clients', label: t('admin.nav.dict.clients') },
-                      { href: '/admin/dictionaries/media', label: t('admin.nav.dict.media') },
-                      { href: '/admin/dictionaries/job-types', label: t('admin.nav.dict.jobTypes') },
-                      { href: '/admin/dictionaries/contracting-agencies', label: t('admin.nav.dict.contractingAgencies') },
-                    ].map(({ href, label }) => (
-                      <li key={href}>
-                        <Link
-                          href={href}
-                          className={cn(
-                            'flex items-center px-2 py-1.5 rounded-md text-sm transition-colors',
-                            pathname === href
-                              ? 'bg-accent text-accent-foreground font-medium'
-                              : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
-                          )}
-                        >
-                          {label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
+                  {isDictionariesOpen && (
+                    <ul className="mt-1 ml-4 space-y-1 border-l border-border pl-3">
+                      {[
+                        { href: '/admin/dictionaries/agencies', label: t('admin.nav.dict.agencies') },
+                        { href: '/admin/dictionaries/departments', label: t('admin.nav.dict.departments') },
+                        { href: '/admin/dictionaries/markets', label: t('admin.nav.dict.markets') },
+                        { href: '/admin/dictionaries/clients', label: t('admin.nav.dict.clients') },
+                        { href: '/admin/dictionaries/media', label: t('admin.nav.dict.media') },
+                        { href: '/admin/dictionaries/job-types', label: t('admin.nav.dict.jobTypes') },
+                        { href: '/admin/dictionaries/contracting-agencies', label: t('admin.nav.dict.contractingAgencies') },
+                      ].map(({ href, label }) => (
+                        <li key={href}>
+                          <Link
+                            href={href}
+                            className={cn(
+                              'flex items-center px-2 py-1.5 rounded-md text-sm transition-colors',
+                              pathname === href
+                                ? 'bg-accent text-accent-foreground font-medium'
+                                : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                            )}
+                          >
+                            {label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              )}
             </ul>
           ) : (
             <ul className="space-y-1">

@@ -1,7 +1,7 @@
 "use client"
 
 import httpClient from '@/lib/api/httpClient'
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -21,6 +21,7 @@ import { Pagination } from '@/components/reports/Pagination'
 import { EntriesTable } from '@/components/reports/EntriesTable'
 import { toLocalDateString, msToHours } from '@/lib/utils'
 import { MultiSelect, MultiSelectOption } from '@/components/ui/multi-select'
+import { useAdminScope } from '@/hooks/use-admin-scope'
 
 const PAGE_SIZE = 50
 
@@ -41,6 +42,14 @@ export function EmployeeReports() {
 
   const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   const today = new Date()
+
+  const adminScope = useAdminScope()
+
+  // Добавить после объявления adminScope:
+  const adminScopeRef = useRef(adminScope)
+  useEffect(() => {
+    adminScopeRef.current = adminScope
+  }, [adminScope])
 
   // --- Фильтры ---
   const [selectedAgencyIds, setSelectedAgencyIds] = useState<number[]>([])
@@ -83,6 +92,16 @@ export function EmployeeReports() {
     hours: 'Hours', comments: 'Comments',
   }
 
+  // Пересчитываем фильтры когда загрузились permissions для Admin
+  useEffect(() => {
+    if (!adminScope.loading && adminScope.isRestricted) {
+      // Сбрасываем выбранные фильтры которые могут быть недоступны
+      setSelectedAgencyIds([])
+      setSelectedDepartmentIds([])
+      setSelectedEmployeeIds([])
+    }
+  }, [adminScope.loading, adminScope.isRestricted])
+
   // --- Загружаем ВСЕ записи за период для построения списков фильтров ---
   useEffect(() => {
     if (!dateRange?.from || !dateRange?.to) return
@@ -113,18 +132,21 @@ export function EmployeeReports() {
     const result: MultiSelectOption[] = []
     for (const entry of allEntriesForFilter) {
       if (entry.agencyId != null && !seen.has(entry.agencyId)) {
+        if (adminScope.isRestricted && !adminScope.allowedAgencyIds.includes(entry.agencyId)) {
+          continue
+        }
         seen.add(entry.agencyId)
         result.push({ id: entry.agencyId, name: entry.agencyName ?? String(entry.agencyId) })
       }
     }
     return result.sort((a, b) => a.name.localeCompare(b.name))
-  }, [allEntriesForFilter])
+  }, [allEntriesForFilter, adminScope.permissions, adminScope.isRestricted])
 
   // --- Отделы из записей, фильтруются по выбранным агенциям ---
   const availableDepartments = useMemo<MultiSelectOption[]>(() => {
     let filtered = allEntriesForFilter
     if (selectedAgencyIds.length > 0) {
-      filtered = filtered.filter((e) =>
+      filtered = filtered.filter(e =>
         e.agencyId != null && selectedAgencyIds.includes(e.agencyId)
       )
     }
@@ -132,6 +154,9 @@ export function EmployeeReports() {
     const result: MultiSelectOption[] = []
     for (const entry of filtered) {
       if (entry.departmentId != null && !seen.has(entry.departmentId)) {
+        if (adminScope.isRestricted && !adminScope.allowedDepartmentIds.includes(entry.departmentId)) {
+          continue
+        }
         seen.add(entry.departmentId)
         result.push({
           id: entry.departmentId,
@@ -140,7 +165,7 @@ export function EmployeeReports() {
       }
     }
     return result.sort((a, b) => a.name.localeCompare(b.name))
-  }, [allEntriesForFilter, selectedAgencyIds])
+  }, [allEntriesForFilter, selectedAgencyIds, adminScope.permissions, adminScope.isRestricted])
 
   // --- Сотрудники из записей, фильтруются по агенциям и отделам ---
   const availableEmployees = useMemo<MultiSelectOption[]>(() => {

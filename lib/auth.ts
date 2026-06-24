@@ -6,8 +6,8 @@ import { useAuthContext } from '@/lib/AuthContext'
 import authService from '@/lib/api/services/authService'
 import { clearAuth } from '@/lib/api/tokenStorage'
 
-function useBaseProtection(requireAdmin = false) {
-  const { isAuthenticated, isAdmin, isLoading, logout } = useAuthContext()
+function useBaseProtection(requireSuperAdmin = false) {
+  const { isAuthenticated, isAdmin, isSuperAdmin, isLoading, logout } = useAuthContext()
   const router = useRouter()
 
   useEffect(() => {
@@ -16,7 +16,12 @@ function useBaseProtection(requireAdmin = false) {
       router.push('/login')
       return
     }
-    if (requireAdmin && !isAdmin) {
+    if (requireSuperAdmin && !isSuperAdmin) {
+      router.push('/dashboard')
+      return
+    }
+    // Обычная защита — нужна хотя бы роль Admin или SuperAdmin
+    if (!requireSuperAdmin && !isAdmin) {
       router.push('/dashboard')
       return
     }
@@ -24,9 +29,24 @@ function useBaseProtection(requireAdmin = false) {
       clearAuth()
       logout()
     })
-  }, [isAuthenticated, isAdmin, isLoading, router])
+  }, [isAuthenticated, isAdmin, isSuperAdmin, isLoading, router])
 
-  return requireAdmin ? isAdmin : isAuthenticated
+  return requireSuperAdmin ? isSuperAdmin : isAdmin
+}
+
+export function useSuperAdminProtection() {
+  // Пускает только SuperAdmin
+  const { isAuthenticated, isSuperAdmin, isLoading, logout } = useAuthContext()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (isLoading) return
+    if (!isAuthenticated) { router.push('/login'); return }
+    if (!isSuperAdmin) { router.push('/dashboard'); return }
+    authService.validate().catch(() => { clearAuth(); logout() })
+  }, [isAuthenticated, isSuperAdmin, isLoading, router])
+
+  return isSuperAdmin
 }
 
 export function useAuthProtection() {
@@ -34,5 +54,16 @@ export function useAuthProtection() {
 }
 
 export function useAdminProtection() {
-  return useBaseProtection(true)
+  // Пускает и Admin и SuperAdmin
+  const { isAuthenticated, isAdmin, isLoading, logout } = useAuthContext()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (isLoading) return
+    if (!isAuthenticated) { router.push('/login'); return }
+    if (!isAdmin) { router.push('/dashboard'); return }
+    authService.validate().catch(() => { clearAuth(); logout() })
+  }, [isAuthenticated, isAdmin, isLoading, router])
+
+  return isAdmin
 }

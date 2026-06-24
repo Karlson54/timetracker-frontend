@@ -13,6 +13,7 @@ interface AuthContextType {
   login: (data: AuthResponse) => void
   logout: () => void
   isAdmin: boolean
+  isSuperAdmin: boolean
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -21,6 +22,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
+  const isAdmin = (user?.roles?.includes('Admin') || user?.roles?.includes('SuperAdmin')) ?? false
+  const isSuperAdmin = user?.roles?.includes('SuperAdmin') ?? false
+
 
   useEffect(() => {
     const initAuth = async () => {
@@ -66,8 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/login')
   }, [router])
 
-  const isAdmin = user?.roles?.includes('Admin') ?? false
-
   return (
     <AuthContext.Provider value={{
       user,
@@ -76,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       logout,
       isAdmin,
+      isSuperAdmin,
     }}>
       {children}
     </AuthContext.Provider>
