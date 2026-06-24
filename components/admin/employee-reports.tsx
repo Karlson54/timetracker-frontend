@@ -45,7 +45,6 @@ export function EmployeeReports() {
 
   const adminScope = useAdminScope()
 
-  // Добавить после объявления adminScope:
   const adminScopeRef = useRef(adminScope)
   useEffect(() => {
     adminScopeRef.current = adminScope
@@ -92,16 +91,6 @@ export function EmployeeReports() {
     hours: 'Hours', comments: 'Comments',
   }
 
-  // Пересчитываем фильтры когда загрузились permissions для Admin
-  useEffect(() => {
-    if (!adminScope.loading && adminScope.isRestricted) {
-      // Сбрасываем выбранные фильтры которые могут быть недоступны
-      setSelectedAgencyIds([])
-      setSelectedDepartmentIds([])
-      setSelectedEmployeeIds([])
-    }
-  }, [adminScope.loading, adminScope.isRestricted])
-
   // --- Загружаем ВСЕ записи за период для построения списков фильтров ---
   useEffect(() => {
     if (!dateRange?.from || !dateRange?.to) return
@@ -132,7 +121,8 @@ export function EmployeeReports() {
     const result: MultiSelectOption[] = []
     for (const entry of allEntriesForFilter) {
       if (entry.agencyId != null && !seen.has(entry.agencyId)) {
-        if (adminScope.isRestricted && !adminScope.allowedAgencyIds.includes(entry.agencyId)) {
+        if (adminScopeRef.current.isRestricted &&
+          !adminScopeRef.current.allowedAgencyIds.includes(entry.agencyId)) {
           continue
         }
         seen.add(entry.agencyId)
@@ -140,7 +130,7 @@ export function EmployeeReports() {
       }
     }
     return result.sort((a, b) => a.name.localeCompare(b.name))
-  }, [allEntriesForFilter, adminScope.permissions, adminScope.isRestricted])
+  }, [allEntriesForFilter])
 
   // --- Отделы из записей, фильтруются по выбранным агенциям ---
   const availableDepartments = useMemo<MultiSelectOption[]>(() => {
@@ -154,7 +144,8 @@ export function EmployeeReports() {
     const result: MultiSelectOption[] = []
     for (const entry of filtered) {
       if (entry.departmentId != null && !seen.has(entry.departmentId)) {
-        if (adminScope.isRestricted && !adminScope.allowedDepartmentIds.includes(entry.departmentId)) {
+        if (adminScopeRef.current.isRestricted &&
+          !adminScopeRef.current.allowedDepartmentIds.includes(entry.departmentId)) {
           continue
         }
         seen.add(entry.departmentId)
@@ -165,7 +156,7 @@ export function EmployeeReports() {
       }
     }
     return result.sort((a, b) => a.name.localeCompare(b.name))
-  }, [allEntriesForFilter, selectedAgencyIds, adminScope.permissions, adminScope.isRestricted])
+  }, [allEntriesForFilter, selectedAgencyIds])
 
   // --- Сотрудники из записей, фильтруются по агенциям и отделам ---
   const availableEmployees = useMemo<MultiSelectOption[]>(() => {

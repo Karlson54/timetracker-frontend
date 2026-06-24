@@ -1,3 +1,4 @@
+// hooks/use-admin-scope.ts
 import { useState, useEffect, useMemo } from 'react'
 import { useAuthContext } from '@/lib/AuthContext'
 import adminPermissionsService, { AdminPermissionItem } from '@/lib/api/services/adminPermissionsService'
@@ -17,7 +18,6 @@ export function useAdminScope(): AdminScope {
 
     const [permissions, setPermissions] = useState<AdminPermissionItem[]>([])
     const [loading, setLoading] = useState(false)
-    // Флаг чтобы не загружать повторно
     const [fetched, setFetched] = useState(false)
 
     useEffect(() => {
@@ -41,7 +41,6 @@ export function useAdminScope(): AdminScope {
         }
 
         fetchMyPermissions()
-
         return () => { cancelled = true }
     }, [isSuperAdmin, isAdmin, fetched])
 
