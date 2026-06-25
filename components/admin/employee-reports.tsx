@@ -94,16 +94,29 @@ export function EmployeeReports() {
   // --- Загружаем ВСЕ записи за период для построения списков фильтров ---
   useEffect(() => {
     if (!dateRange?.from || !dateRange?.to) return
+    // Ждём пока scope загрузится
+    if (adminScope.loading) return
 
     async function fetchEntriesForFilter() {
       try {
         setLoadingFilter(true)
-        const res = await httpClient.get<any>('/api/timeentries/all', {
-          params: {
-            fromDate: toLocalDateString(dateRange!.from!),
-            toDate: toLocalDateString(dateRange!.to!),
-          },
-        })
+        const scope = adminScope  // берём напрямую, не через ref
+
+        const params: Record<string, any> = {
+          fromDate: toLocalDateString(dateRange!.from!),
+          toDate: toLocalDateString(dateRange!.to!),
+        }
+
+        if (scope.isRestricted && scope.allowedAgencyIds.length > 0) {
+          if (scope.allowedAgencyIds.length === 1) {
+            params.agencyId = scope.allowedAgencyIds[0]
+          }
+          if (scope.allowedDepartmentIds.length === 1) {
+            params.departmentId = scope.allowedDepartmentIds[0]
+          }
+        }
+
+        const res = await httpClient.get<any>('/api/timeentries/all', { params })
         setAllEntriesForFilter(res.data?.entries ?? [])
       } catch (err) {
         console.error("Error fetching entries for filter:", err)
@@ -113,7 +126,7 @@ export function EmployeeReports() {
     }
 
     fetchEntriesForFilter()
-  }, [dateRange])
+  }, [dateRange, adminScope.loading, adminScope.isRestricted])
 
   // --- Агенции из записей ---
   const allAgencies = useMemo<MultiSelectOption[]>(() => {
@@ -235,12 +248,23 @@ export function EmployeeReports() {
     fromDate: string,
     toDate: string,
   ): Promise<TimeEntryListItem[]> => {
+    const scope = adminScopeRef.current
     const isSingleNoFilter = combos.length === 1 && Object.keys(combos[0]).length === 0
 
     if (isSingleNoFilter) {
-      const res = await httpClient.get<any>('/api/timeentries/all', {
-        params: { fromDate, toDate },
-      })
+      const params: Record<string, any> = { fromDate, toDate }
+
+      // Применяем scope для Admin с ограниченным доступом
+      if (scope.isRestricted && scope.allowedAgencyIds.length > 0) {
+        if (scope.allowedAgencyIds.length === 1) {
+          params.agencyId = scope.allowedAgencyIds[0]
+        }
+        if (scope.allowedDepartmentIds.length === 1) {
+          params.departmentId = scope.allowedDepartmentIds[0]
+        }
+      }
+
+      const res = await httpClient.get<any>('/api/timeentries/all', { params })
       return res.data?.entries ?? []
     }
 
@@ -274,19 +298,36 @@ export function EmployeeReports() {
   // --- Загрузка записей с пагинацией ---
   useEffect(() => {
     if (!dateRange?.from || !dateRange?.to) return
+    if (adminScope.loading) return
 
     async function fetchSummary() {
       try {
         setLoadingSummary(true)
         const fromDate = toLocalDateString(dateRange!.from!)
         const toDate = toLocalDateString(dateRange!.to!)
+        const scope = adminScope
         const isSingleNoFilter =
           queryCombosMemo.length === 1 && Object.keys(queryCombosMemo[0]).length === 0
 
         if (isSingleNoFilter) {
-          const res = await httpClient.get<any>('/api/timeentries', {
-            params: { pageSize: PAGE_SIZE, pageNumber: currentPage, fromDate, toDate },
-          })
+          const params: Record<string, any> = {
+            pageSize: PAGE_SIZE,
+            pageNumber: currentPage,
+            fromDate,
+            toDate,
+          }
+
+          // Применяем scope
+          if (scope.isRestricted && scope.allowedAgencyIds.length > 0) {
+            if (scope.allowedAgencyIds.length === 1) {
+              params.agencyId = scope.allowedAgencyIds[0]
+            }
+            if (scope.allowedDepartmentIds.length === 1) {
+              params.departmentId = scope.allowedDepartmentIds[0]
+            }
+          }
+
+          const res = await httpClient.get<any>('/api/timeentries', { params })
           const data = res.data
           setEntries(data?.entries ?? [])
           setTotalCount(data?.totalCount ?? 0)
@@ -309,7 +350,7 @@ export function EmployeeReports() {
     }
 
     fetchSummary()
-  }, [dateRange, queryCombosMemo, currentPage])
+  }, [dateRange, queryCombosMemo, currentPage, adminScope.loading, adminScope.isRestricted])
 
   // --- Загрузка всех записей для детального отчёта ---
   useEffect(() => {
@@ -330,7 +371,7 @@ export function EmployeeReports() {
     }
 
     fetchAllEntries()
-  }, [dateRange, queryCombosMemo])
+  }, [dateRange, queryCombosMemo, currentPage, adminScope.loading, adminScope.isRestricted])
 
   const clientSummary: ClientSummary[] = useMemo(() => {
     const totalMs = allEntries.reduce((sum, e) => sum + e.hoursMilliseconds, 0)
