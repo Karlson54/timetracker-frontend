@@ -66,7 +66,7 @@ export function ClientReports() {
   useEffect(() => {
     async function fetchClients() {
       try {
-        const data = await clientsService.getAll()
+        const data = await clientsService.getActive()
         setClients(data)
       } catch (err) {
         showError(err, "Помилка завантаження клієнтів")
