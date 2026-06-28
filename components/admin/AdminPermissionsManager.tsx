@@ -17,28 +17,23 @@ import adminPermissionsService, { AdminPermissionItem } from '@/lib/api/services
 import type { UserListItem, DictionaryItem } from '@/lib/api/types'
 
 export function AdminPermissionsManager() {
+    const { t } = useTranslation()
     const { error, showError, clearError } = useErrorToast()
 
-    // Списки для выбора
     const [admins, setAdmins] = useState<UserListItem[]>([])
     const [agencies, setAgencies] = useState<DictionaryItem[]>([])
-    const [departments, setDepartments] = useState<Department[]>([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
 
-    // Выбранный Admin
     const [selectedAdminId, setSelectedAdminId] = useState<string>('')
-
-    // Текущие разрешения выбранного Admin-а
     const [permissions, setPermissions] = useState<AdminPermissionItem[]>([])
     const [loadingPermissions, setLoadingPermissions] = useState(false)
 
-    // Форма добавления нового разрешения
     const [newAgencyId, setNewAgencyId] = useState<string>('')
     const [newDepartmentId, setNewDepartmentId] = useState<string>('')
     const [newDepartments, setNewDepartments] = useState<Department[]>([])
+    const [saveSuccess, setSaveSuccess] = useState(false)
 
-    // Загружаем всех Admin-ов и агенции
     useEffect(() => {
         async function fetchInitialData() {
             try {
@@ -47,14 +42,13 @@ export function AdminPermissionsManager() {
                     usersService.getAll(),
                     agenciesService.getActive(),
                 ])
-                // Фильтруем только пользователей с ролью Admin (не SuperAdmin)
                 const adminUsers = allUsers.filter(u =>
                     u.roles?.includes('Admin') && u.isActive
                 )
                 setAdmins(adminUsers)
                 setAgencies(allAgencies)
             } catch (err) {
-                showError(err, 'Помилка завантаження даних')
+                showError(err, t('adminPermissions.errors.loadFailed'))
             } finally {
                 setLoading(false)
             }
@@ -62,7 +56,6 @@ export function AdminPermissionsManager() {
         fetchInitialData()
     }, [])
 
-    // Загружаем разрешения когда выбран Admin
     useEffect(() => {
         if (!selectedAdminId) {
             setPermissions([])
@@ -74,7 +67,7 @@ export function AdminPermissionsManager() {
                 const data = await adminPermissionsService.getByUser(Number(selectedAdminId))
                 setPermissions(data.permissions)
             } catch (err) {
-                showError(err, 'Помилка завантаження дозволів')
+                showError(err, t('adminPermissions.errors.permissionsFailed'))
             } finally {
                 setLoadingPermissions(false)
             }
@@ -82,7 +75,6 @@ export function AdminPermissionsManager() {
         fetchPermissions()
     }, [selectedAdminId])
 
-    // Загружаем отделы при выборе агенции в форме
     useEffect(() => {
         if (!newAgencyId) {
             setNewDepartments([])
@@ -91,7 +83,7 @@ export function AdminPermissionsManager() {
         }
         departmentsService.getActiveByAgency(Number(newAgencyId))
             .then(setNewDepartments)
-            .catch(err => showError(err, 'Помилка завантаження відділів'))
+            .catch(err => showError(err, t('adminPermissions.errors.departmentsFailed')))
     }, [newAgencyId])
 
     const handleAddPermission = () => {
@@ -100,12 +92,11 @@ export function AdminPermissionsManager() {
         const agencyId = Number(newAgencyId)
         const departmentId = Number(newDepartmentId)
 
-        // Проверяем дубли
         const alreadyExists = permissions.some(
             p => p.agencyId === agencyId && p.departmentId === departmentId
         )
         if (alreadyExists) {
-            showError(null, 'Цей дозвіл вже додано')
+            showError(null, t('adminPermissions.addPermission.duplicate'))
             return
         }
 
@@ -120,7 +111,6 @@ export function AdminPermissionsManager() {
             departmentName: department.name,
         }])
 
-        // Сбрасываем форму
         setNewAgencyId('')
         setNewDepartmentId('')
         setNewDepartments([])
@@ -136,17 +126,17 @@ export function AdminPermissionsManager() {
         if (!selectedAdminId) return
         try {
             setSaving(true)
+            setSaveSuccess(false)
             await adminPermissionsService.setPermissions(Number(selectedAdminId), {
                 permissions: permissions.map(p => ({
                     agencyId: p.agencyId,
                     departmentId: p.departmentId,
                 })),
             })
-            // Показываем успех через временный state
-            showError(null, '')
-            alert('Дозволи збережено успішно') // заменим на toast в следующем шаге
+            setSaveSuccess(true)
+            setTimeout(() => setSaveSuccess(false), 3000)
         } catch (err) {
-            showError(err, 'Помилка збереження дозволів')
+            showError(err, t('adminPermissions.errors.saveFailed'))
         } finally {
             setSaving(false)
         }
@@ -154,13 +144,13 @@ export function AdminPermissionsManager() {
 
     const handleClearAll = async () => {
         if (!selectedAdminId) return
-        if (!confirm('Ви впевнені що хочете видалити всі дозволи цього адміністратора?')) return
+        if (!confirm(t('adminPermissions.currentPermissions.confirmClear'))) return
         try {
             setSaving(true)
             await adminPermissionsService.clearPermissions(Number(selectedAdminId))
             setPermissions([])
         } catch (err) {
-            showError(err, 'Помилка очищення дозволів')
+            showError(err, t('adminPermissions.errors.clearFailed'))
         } finally {
             setSaving(false)
         }
@@ -179,32 +169,30 @@ export function AdminPermissionsManager() {
         )
     }
 
+    const selectedAdmin = admins.find(a => String(a.id) === selectedAdminId)
+
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold tracking-tight">Права доступу адміністраторів</h1>
-                <p className="text-muted-foreground">
-                    Призначте адміністраторам доступ до звітів конкретних агенцій та відділів
-                </p>
+                <h1 className="text-2xl font-bold tracking-tight">{t('adminPermissions.title')}</h1>
+                <p className="text-muted-foreground">{t('adminPermissions.description')}</p>
             </div>
 
-            {/* Выбор Admin-а */}
+            {/* Вибір адміністратора */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Оберіть адміністратора</CardTitle>
-                    <CardDescription>
-                        Відображаються тільки активні користувачі з роллю Admin
-                    </CardDescription>
+                    <CardTitle>{t('adminPermissions.selectAdmin.title')}</CardTitle>
+                    <CardDescription>{t('adminPermissions.selectAdmin.description')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {admins.length === 0 ? (
                         <p className="text-sm text-muted-foreground py-4 text-center">
-                            Немає адміністраторів. Спочатку призначте роль Admin користувачу.
+                            {t('adminPermissions.selectAdmin.noAdmins')}
                         </p>
                     ) : (
                         <Select value={selectedAdminId} onValueChange={setSelectedAdminId}>
                             <SelectTrigger className="w-full md:w-80">
-                                <SelectValue placeholder="Оберіть адміністратора..." />
+                                <SelectValue placeholder={t('adminPermissions.selectAdmin.placeholder')} />
                             </SelectTrigger>
                             <SelectContent>
                                 {admins.map(admin => (
@@ -218,20 +206,22 @@ export function AdminPermissionsManager() {
                 </CardContent>
             </Card>
 
-            {/* Управление разрешениями */}
+            {/* Управління дозволами */}
             {selectedAdminId && (
                 <>
-                    {/* Текущие разрешения */}
+                    {/* Поточні дозволи */}
                     <Card>
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <div>
                                     <CardTitle className="flex items-center gap-2">
                                         <ShieldCheck className="h-5 w-5 text-primary" />
-                                        Поточні дозволи
+                                        {t('adminPermissions.currentPermissions.title')}
                                     </CardTitle>
                                     <CardDescription>
-                                        {admins.find(a => String(a.id) === selectedAdminId)?.name} має доступ до:
+                                        {t('adminPermissions.currentPermissions.description', {
+                                            name: selectedAdmin?.name ?? ''
+                                        })}
                                     </CardDescription>
                                 </div>
                                 {permissions.length > 0 && (
@@ -242,7 +232,7 @@ export function AdminPermissionsManager() {
                                         disabled={saving}
                                         className="text-destructive hover:text-destructive"
                                     >
-                                        Очистити всі
+                                        {t('adminPermissions.currentPermissions.clearAll')}
                                     </Button>
                                 )}
                             </div>
@@ -256,7 +246,7 @@ export function AdminPermissionsManager() {
                                 </div>
                             ) : permissions.length === 0 ? (
                                 <p className="text-sm text-muted-foreground py-4 text-center">
-                                    Немає дозволів. Адміністратор не має доступу до жодного звіту.
+                                    {t('adminPermissions.currentPermissions.noPermissions')}
                                 </p>
                             ) : (
                                 <div className="space-y-2">
@@ -285,11 +275,11 @@ export function AdminPermissionsManager() {
                         </CardContent>
                     </Card>
 
-                    {/* Форма добавления */}
+                    {/* Форма додавання */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Додати дозвіл</CardTitle>
-                            <CardDescription>Оберіть агенцію та відділ</CardDescription>
+                            <CardTitle>{t('adminPermissions.addPermission.title')}</CardTitle>
+                            <CardDescription>{t('adminPermissions.addPermission.description')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="flex flex-col sm:flex-row gap-3">
@@ -298,7 +288,7 @@ export function AdminPermissionsManager() {
                                     onValueChange={v => { setNewAgencyId(v); setNewDepartmentId('') }}
                                 >
                                     <SelectTrigger className="flex-1">
-                                        <SelectValue placeholder="Оберіть агенцію..." />
+                                        <SelectValue placeholder={t('adminPermissions.addPermission.selectAgency')} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {agencies.map(a => (
@@ -315,10 +305,10 @@ export function AdminPermissionsManager() {
                                     <SelectTrigger className="flex-1">
                                         <SelectValue placeholder={
                                             !newAgencyId
-                                                ? 'Спочатку оберіть агенцію'
+                                                ? t('adminPermissions.addPermission.selectAgencyFirst')
                                                 : newDepartments.length === 0
-                                                    ? 'Немає відділів'
-                                                    : 'Оберіть відділ...'
+                                                    ? t('adminPermissions.addPermission.noDepartments')
+                                                    : t('adminPermissions.addPermission.selectDepartment')
                                         } />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -334,16 +324,21 @@ export function AdminPermissionsManager() {
                                     className="gap-2 shrink-0"
                                 >
                                     <Plus className="h-4 w-4" />
-                                    Додати
+                                    {t('adminPermissions.addPermission.add')}
                                 </Button>
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* Кнопка сохранения */}
-                    <div className="flex justify-end">
+                    {/* Кнопка збереження */}
+                    <div className="flex justify-end items-center gap-3">
+                        {saveSuccess && (
+                            <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                                {t('adminPermissions.saveSuccess')}
+                            </p>
+                        )}
                         <Button onClick={handleSave} disabled={saving} size="lg">
-                            {saving ? 'Збереження...' : 'Зберегти дозволи'}
+                            {saving ? t('adminPermissions.saving') : t('adminPermissions.save')}
                         </Button>
                     </div>
                 </>

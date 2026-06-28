@@ -125,6 +125,7 @@
       "dashboard": "Дашборд",
       "employees": "Співробітники",
       "companies": "Компанії",
+      "manage_access": "Права доступу",
       "reports": "Звіти",
       "dictionaries": "Довідники",
       "reports_employees": "По співробітниках",
@@ -361,5 +362,78 @@
       "submit": "Змінити пароль",
       "savedSuccess": "Пароль змінено"
     }
+  },
+  "adminPermissions": {
+    "title": "Права доступу адміністраторів",
+    "description": "Призначте адміністраторам доступ до звітів конкретних агенцій та відділів",
+    "selectAdmin": {
+      "title": "Оберіть адміністратора",
+      "description": "Відображаються тільки активні користувачі з роллю Admin",
+      "placeholder": "Оберіть адміністратора...",
+      "noAdmins": "Немає адміністраторів. Спочатку призначте роль Admin користувачу."
+    },
+    "currentPermissions": {
+      "title": "Поточні дозволи",
+      "description": "{{name}} має доступ до:",
+      "clearAll": "Очистити всі",
+      "noPermissions": "Немає дозволів. Адміністратор не має доступу до жодного звіту.",
+      "confirmClear": "Ви впевнені що хочете видалити всі дозволи цього адміністратора?"
+    },
+    "addPermission": {
+      "title": "Додати дозвіл",
+      "description": "Оберіть агенцію та відділ",
+      "selectAgency": "Оберіть агенцію...",
+      "selectDepartment": "Оберіть відділ...",
+      "selectAgencyFirst": "Спочатку оберіть агенцію",
+      "noDepartments": "Немає відділів",
+      "duplicate": "Цей дозвіл вже додано",
+      "add": "Додати"
+    },
+    "save": "Зберегти дозволи",
+    "saving": "Збереження...",
+    "saveSuccess": "Дозволи збережено успішно",
+    "errors": {
+      "loadFailed": "Помилка завантаження даних",
+      "permissionsFailed": "Помилка завантаження дозволів",
+      "saveFailed": "Помилка збереження дозволів",
+      "clearFailed": "Помилка очищення дозволів",
+      "departmentsFailed": "Помилка завантаження відділів"
+    }
+  },
+  "clientReports": {
+    "title": "Звіти по клієнтах",
+    "filters": {
+      "title": "Фільтри",
+      "description": "Оберіть клієнта та період",
+      "clientLabel": "Клієнт",
+      "clientPlaceholder": "Оберіть клієнта",
+      "periodLabel": "Період",
+      "allClients": "All clients"
+    },
+    "stats": {
+      "totalHours": "Всього годин",
+      "entriesCount": "Кількість записів",
+      "employees": "Співробітників",
+      "projects": "Проєктів / брендів"
+    },
+    "distribution": {
+      "title": "Розподіл часу по співробітниках",
+      "description": "Скільки годин кожен співробітник витратив на клієнта {{clientName}}",
+      "tableHeaders": {
+        "employee": "Співробітник",
+        "agency": "Агентство",
+        "hours": "Годин",
+        "entries": "Записів",
+        "percent": "%"
+      },
+      "total": "Всього"
+    },
+    "selectClientHint": "Оберіть клієнта",
+    "selectClientDesc": "Виберіть клієнта у фільтрі вище щоб побачити звіт",
+    "loading": "Завантаження звіту...",
+    "noEntries": "Немає записів для клієнта {{clientName}} за обраний період",
+    "exportExcel": "Експорт в Excel",
+    "exporting": "Завантаження...",
+    "exportError": "Помилка експорту"
   }
 }

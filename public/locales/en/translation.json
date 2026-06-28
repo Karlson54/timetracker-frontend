@@ -125,6 +125,7 @@
       "dashboard": "Dashboard",
       "employees": "Employees",
       "companies": "Companies",
+      "manage_access": "Manage Access",
       "reports": "Reports",
       "dictionaries": "Dictionaries",
       "reports_employees": "By Employees",
@@ -361,5 +362,78 @@
       "submit": "Change Password",
       "savedSuccess": "Password changed"
     }
+  },
+  "adminPermissions": {
+    "title": "Administrator Access Rights",
+    "description": "Assign administrators access to reports of specific agencies and departments",
+    "selectAdmin": {
+      "title": "Select Administrator",
+      "description": "Only active users with the Admin role are displayed",
+      "placeholder": "Select administrator...",
+      "noAdmins": "No administrators. First assign the Admin role to a user."
+    },
+    "currentPermissions": {
+      "title": "Current Permissions",
+      "description": "{{name}} has access to:",
+      "clearAll": "Clear all",
+      "noPermissions": "No permissions. Administrator has no access to any report.",
+      "confirmClear": "Are you sure you want to delete all permissions for this administrator?"
+    },
+    "addPermission": {
+      "title": "Add Permission",
+      "description": "Select agency and department",
+      "selectAgency": "Select agency...",
+      "selectDepartment": "Select department...",
+      "selectAgencyFirst": "Select agency first",
+      "noDepartments": "No departments",
+      "duplicate": "This permission is already added",
+      "add": "Add"
+    },
+    "save": "Save Permissions",
+    "saving": "Saving...",
+    "saveSuccess": "Permissions saved successfully",
+    "errors": {
+      "loadFailed": "Failed to load data",
+      "permissionsFailed": "Failed to load permissions",
+      "saveFailed": "Failed to save permissions",
+      "clearFailed": "Failed to clear permissions",
+      "departmentsFailed": "Failed to load departments"
+    }
+  },
+  "clientReports": {
+    "title": "Client Reports",
+    "filters": {
+      "title": "Filters",
+      "description": "Select client and period",
+      "clientLabel": "Client",
+      "clientPlaceholder": "Select client",
+      "periodLabel": "Period",
+      "allClients": "All clients"
+    },
+    "stats": {
+      "totalHours": "Total Hours",
+      "entriesCount": "Number of Records",
+      "employees": "Employees",
+      "projects": "Projects / Brands"
+    },
+    "distribution": {
+      "title": "Time Distribution by Employees",
+      "description": "How many hours each employee spent on client {{clientName}}",
+      "tableHeaders": {
+        "employee": "Employee",
+        "agency": "Agency",
+        "hours": "Hours",
+        "entries": "Records",
+        "percent": "%"
+      },
+      "total": "Total"
+    },
+    "selectClientHint": "Select a client",
+    "selectClientDesc": "Select a client in the filter above to see the report",
+    "loading": "Loading report...",
+    "noEntries": "No records for client {{clientName}} in the selected period",
+    "exportExcel": "Export to Excel",
+    "exporting": "Downloading...",
+    "exportError": "Export error"
   }
 }

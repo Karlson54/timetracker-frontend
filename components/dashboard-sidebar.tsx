@@ -102,8 +102,7 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                       ? 'bg-accent text-accent-foreground font-medium'
                       : 'text-foreground hover:bg-accent/50'
                   )}>
-                    <ShieldCheck className="h-4 w-4" />
-                    Права доступу
+                    <Users className="h-4 w-4" />{t('admin.nav.manage_access')}
                   </Link>
                 </li>
               )}

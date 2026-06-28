@@ -62,14 +62,13 @@ export function ClientReports() {
   const [loadingReport, setLoadingReport] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
 
-  // Загрузка клиентов из справочника
   useEffect(() => {
     async function fetchClients() {
       try {
         const data = await clientsService.getActive()
         setClients(data)
       } catch (err) {
-        showError(err, "Помилка завантаження клієнтів")
+        showError(err, t('clientReports.exportError'))
       } finally {
         setLoadingClients(false)
       }
@@ -77,7 +76,6 @@ export function ClientReports() {
     fetchClients()
   }, [])
 
-  // Загрузка отчёта при смене фильтров
   useEffect(() => {
     if (!selectedClientId || !dateRange?.from || !dateRange?.to) {
       setReport(null)
@@ -98,7 +96,7 @@ export function ClientReports() {
         )
         setReport(res.data)
       } catch (err) {
-        showError(err, "Помилка завантаження звіту")
+        showError(err, t('clientReports.exportError'))
         setReport(null)
       } finally {
         setLoadingReport(false)
@@ -134,7 +132,7 @@ export function ClientReports() {
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {
-      showError(err, "Помилка експорту")
+      showError(err, t('clientReports.exportError'))
     } finally {
       setIsDownloading(false)
     }
@@ -146,7 +144,7 @@ export function ClientReports() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Звіти по клієнтах</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('clientReports.title')}</h1>
         </div>
         <Button
           onClick={handleExport}
@@ -154,27 +152,27 @@ export function ClientReports() {
           className="gap-2"
         >
           <FileSpreadsheet className="h-4 w-4" />
-          {isDownloading ? "Завантаження..." : "Експорт в Excel"}
+          {isDownloading ? t('clientReports.exporting') : t('clientReports.exportExcel')}
         </Button>
       </div>
 
       {/* Фільтри */}
       <Card>
         <CardHeader>
-          <CardTitle>Фільтри</CardTitle>
-          <CardDescription>Оберіть клієнта та період</CardDescription>
+          <CardTitle>{t('clientReports.filters.title')}</CardTitle>
+          <CardDescription>{t('clientReports.filters.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Клієнт</label>
+              <label className="text-sm font-medium mb-2 block">{t('clientReports.filters.clientLabel')}</label>
               <Select
                 value={selectedClientId}
                 onValueChange={setSelectedClientId}
                 disabled={loadingClients}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Оберіть клієнта" />
+                  <SelectValue placeholder={t('clientReports.filters.clientPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (
@@ -186,7 +184,7 @@ export function ClientReports() {
               </Select>
             </div>
             <div className="col-span-1 md:col-span-2">
-              <label className="text-sm font-medium mb-2 block">Період</label>
+              <label className="text-sm font-medium mb-2 block">{t('clientReports.filters.periodLabel')}</label>
               <DatePickerWithRange date={dateRange} setDate={setDateRange} />
             </div>
           </div>
@@ -197,10 +195,8 @@ export function ClientReports() {
       {!selectedClientId && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <p className="text-lg font-medium text-muted-foreground mb-2">Оберіть клієнта</p>
-            <p className="text-sm text-muted-foreground">
-              Виберіть клієнта у фільтрі вище щоб побачити звіт
-            </p>
+            <p className="text-lg font-medium text-muted-foreground mb-2">{t('clientReports.selectClientHint')}</p>
+            <p className="text-sm text-muted-foreground">{t('clientReports.selectClientDesc')}</p>
           </CardContent>
         </Card>
       )}
@@ -209,7 +205,7 @@ export function ClientReports() {
       {selectedClientId && loadingReport && (
         <Card>
           <CardContent className="flex items-center justify-center py-16">
-            <p className="text-muted-foreground">Завантаження звіту...</p>
+            <p className="text-muted-foreground">{t('clientReports.loading')}</p>
           </CardContent>
         </Card>
       )}
@@ -221,17 +217,17 @@ export function ClientReports() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Всього годин</CardDescription>
+                <CardDescription>{t('clientReports.stats.totalHours')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {totalHoursAll.toFixed(1)} год
+                  {totalHoursAll.toFixed(1)} {t('calendar.totalPeriodHours')}
                 </div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Кількість записів</CardDescription>
+                <CardDescription>{t('clientReports.stats.entriesCount')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{report.totalEntries}</div>
@@ -239,7 +235,7 @@ export function ClientReports() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Співробітників</CardDescription>
+                <CardDescription>{t('clientReports.stats.employees')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{report.uniqueUsers}</div>
@@ -247,7 +243,7 @@ export function ClientReports() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Проєктів / брендів</CardDescription>
+                <CardDescription>{t('clientReports.stats.projects')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{report.uniqueProjects}</div>
@@ -259,9 +255,9 @@ export function ClientReports() {
           {report.userContributions.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Розподіл часу по співробітниках</CardTitle>
+                <CardTitle>{t('clientReports.distribution.title')}</CardTitle>
                 <CardDescription>
-                  Скільки годин кожен співробітник витратив на клієнта {report.clientName}
+                  {t('clientReports.distribution.description', { clientName: report.clientName })}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -271,7 +267,7 @@ export function ClientReports() {
                       <div className="flex justify-between text-sm mb-1">
                         <span className="font-medium">{user.userName}</span>
                         <span className="text-gray-500">
-                          {msToHours(user.totalHoursMs).toFixed(1)}г ({Math.round(user.contributionPercentage)}%)
+                          {msToHours(user.totalHoursMs).toFixed(1)}{t('calendar.totalPeriodHours')} ({Math.round(user.contributionPercentage)}%)
                         </span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
@@ -288,11 +284,11 @@ export function ClientReports() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Співробітник</TableHead>
-                      <TableHead>Агентство</TableHead>
-                      <TableHead className="text-right">Годин</TableHead>
-                      <TableHead className="text-right">Записів</TableHead>
-                      <TableHead className="text-right">%</TableHead>
+                      <TableHead>{t('clientReports.distribution.tableHeaders.employee')}</TableHead>
+                      <TableHead>{t('clientReports.distribution.tableHeaders.agency')}</TableHead>
+                      <TableHead className="text-right">{t('clientReports.distribution.tableHeaders.hours')}</TableHead>
+                      <TableHead className="text-right">{t('clientReports.distribution.tableHeaders.entries')}</TableHead>
+                      <TableHead className="text-right">{t('clientReports.distribution.tableHeaders.percent')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -312,7 +308,7 @@ export function ClientReports() {
                       </TableRow>
                     ))}
                     <TableRow className="border-t-2 border-border">
-                      <TableCell className="font-semibold" colSpan={2}>Всього</TableCell>
+                      <TableCell className="font-semibold" colSpan={2}>{t('clientReports.distribution.total')}</TableCell>
                       <TableCell className="text-right font-semibold">
                         {totalHoursAll.toFixed(1)}
                       </TableCell>
@@ -332,7 +328,7 @@ export function ClientReports() {
             <Card>
               <CardContent className="flex items-center justify-center py-12">
                 <p className="text-muted-foreground">
-                  Немає записів для клієнта {report.clientName} за обраний період
+                  {t('clientReports.noEntries', { clientName: report.clientName })}
                 </p>
               </CardContent>
             </Card>
