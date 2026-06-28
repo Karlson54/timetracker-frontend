@@ -424,32 +424,21 @@ export function EmployeeReports() {
       const fromStr = toLocalDateString(dateRange.from)
       const toStr = toLocalDateString(dateRange.to)
 
-      // Строим параметры фильтров из queryCombosMemo
       const params: Record<string, any> = {
         fromDate: fromStr,
         toDate: toStr,
         columns: columnsParam,
       }
 
-      // Если выбраны конкретные сотрудники — передаём userIds
-      if (selectedEmployeeIds.length > 0) {
+      // Передаём все активные фильтры напрямую
+      if (selectedAgencyIds.length > 0)
+        params.agencyIds = selectedAgencyIds.join(',')
+
+      if (selectedDepartmentIds.length > 0)
+        params.departmentIds = selectedDepartmentIds.join(',')
+
+      if (selectedEmployeeIds.length > 0)
         params.userIds = selectedEmployeeIds.join(',')
-      } else {
-        // Если выбрана одна агенция — передаём agencyId
-        if (selectedAgencyIds.length === 1) {
-          params.agencyId = selectedAgencyIds[0]
-        }
-        // Если выбран один отдел — передаём departmentId
-        if (selectedDepartmentIds.length === 1) {
-          params.departmentId = selectedDepartmentIds[0]
-        }
-        // Если выбрано несколько агенций/отделов — передаём userIds из allEntries
-        // (они уже отфильтрованы правильно)
-        if (selectedAgencyIds.length > 1 || selectedDepartmentIds.length > 1) {
-          const uniqueUserIds = [...new Set(allEntries.map((e) => e.userId))]
-          params.userIds = uniqueUserIds.join(',')
-        }
-      }
 
       const res = await httpClient.get('/api/reports/export/flat', {
         params,
