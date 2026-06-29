@@ -27,7 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Pencil, Plus, Search, UserCheck, UserX } from "lucide-react"
+import { Pencil, Plus, Search, UserCheck, UserX, ChevronLeft, ChevronRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import usersService from "@/lib/api/services/usersService"
 import { agenciesService } from "@/lib/api/services/dictionaryService"
@@ -37,7 +37,8 @@ import { ErrorToast } from '@/components/ui/error-toast'
 import { useErrorToast } from '@/hooks/use-error-toast'
 import departmentsService, { Department } from '@/lib/api/services/departmentsService'
 
-// --- Хелпер для строк формы ---
+const PAGE_SIZE = 15
+
 function FormRow({ label, children }: { label: string, children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-4 items-center gap-4">
@@ -67,6 +68,7 @@ export function EmployeesList() {
   const [loading, setLoading] = useState(true)
   const { error, showError, clearError } = useErrorToast()
   const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -115,11 +117,19 @@ export function EmployeesList() {
       .catch(err => showError(err))
   }, [newEmployee.agencyId])
 
+  // Сброс страницы при поиске
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm])
+
   const filtered = employees.filter((e) =>
     [e.name, e.email, e.login, e.agencyName].some((field) =>
       field?.toLowerCase().includes(searchTerm.toLowerCase())
     )
   )
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   const activeSuperAdminCount = employees.filter(
     (e) => e.isActive && e.roles?.includes('SuperAdmin')
@@ -489,8 +499,8 @@ export function EmployeesList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length > 0 ? (
-                filtered.map((employee) => (
+              {paginated.length > 0 ? (
+                paginated.map((employee) => (
                   <TableRow key={employee.id}>
                     <TableCell className="font-medium">{employee.name}</TableCell>
                     <TableCell>{employee.email}</TableCell>
@@ -540,13 +550,76 @@ export function EmployeesList() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                     {t('admin.employees.list.empty')}
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
+
+          {/* Пагінація */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+              <p className="text-sm text-muted-foreground">
+                {t('admin.reports.pagination.showing', {
+                  from: (currentPage - 1) * PAGE_SIZE + 1,
+                  to: Math.min(currentPage * PAGE_SIZE, filtered.length),
+                  total: filtered.length,
+                })}
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Номера сторінок */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page =>
+                    page === 1 ||
+                    page === totalPages ||
+                    Math.abs(page - currentPage) <= 1
+                  )
+                  .reduce<(number | '...')[]>((acc, page, idx, arr) => {
+                    if (idx > 0 && typeof arr[idx - 1] === 'number' && (page as number) - (arr[idx - 1] as number) > 1) {
+                      acc.push('...')
+                    }
+                    acc.push(page)
+                    return acc
+                  }, [])
+                  .map((item, idx) =>
+                    item === '...' ? (
+                      <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground text-sm">…</span>
+                    ) : (
+                      <Button
+                        key={item}
+                        variant={currentPage === item ? "default" : "outline"}
+                        size="sm"
+                        className="w-8 h-8 p-0"
+                        onClick={() => setCurrentPage(item as number)}
+                      >
+                        {item}
+                      </Button>
+                    )
+                  )
+                }
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
       <ErrorToast message={error} onClose={clearError} />
