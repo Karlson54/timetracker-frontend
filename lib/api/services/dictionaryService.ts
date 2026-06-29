@@ -34,6 +34,28 @@ function createDictionaryService(endpoint: string) {
     async deactivate(id: number): Promise<void> {
       await httpClient.patch(`/api/${endpoint}/${id}/deactivate`)
     },
+
+    async getPaged(
+      pageNumber: number,
+      pageSize: number,
+      searchTerm?: string,
+      isActive?: boolean
+    ): Promise<{ data: DictionaryItem[]; totalCount: number; totalPages: number }> {
+      const response = await httpClient.get(`/api/${endpoint}/paged`, {
+        params: {
+          pageNumber,
+          pageSize,
+          searchTerm: searchTerm || undefined,
+          isActive,
+        },
+      })
+      const res = response.data
+      return {
+        data: res.data,
+        totalCount: res.totalCount,
+        totalPages: res.totalPages,
+      }
+    },
   }
 }
 

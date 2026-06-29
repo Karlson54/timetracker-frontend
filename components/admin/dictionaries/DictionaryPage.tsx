@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -29,8 +29,15 @@ import { Pencil, Plus, Search, Trash, UserCheck, UserX } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import type { DictionaryItem, CreateDictionaryItemRequest } from "@/lib/api/types"
 
+const PAGE_SIZE = 15
+
 interface DictionaryService {
   getAll: () => Promise<DictionaryItem[]>
+  getPaged?: (
+    pageNumber: number,
+    pageSize: number,
+    searchTerm?: string
+  ) => Promise<{ data: DictionaryItem[]; totalCount: number; totalPages: number }>
   create: (data: CreateDictionaryItemRequest) => Promise<DictionaryItem>
   update: (id: number, data: CreateDictionaryItemRequest) => Promise<DictionaryItem>
   delete: (id: number) => Promise<void>
@@ -53,6 +60,11 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
   const [searchTerm, setSearchTerm] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
+  // Пагінація
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
@@ -62,36 +74,53 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
   const [editName, setEditName] = useState("")
   const [deleteId, setDeleteId] = useState<number | null>(null)
 
-  // --- Завантаження ---
+  // Скидаємо сторінку при зміні пошуку
   useEffect(() => {
-    async function fetchItems() {
-      try {
-        setLoading(true)
-        setError(null)
-        const data = await service.getAll()
-        setItems(data)
-      } catch (err: any) {
-        setError(err?.response?.data?.message ?? t('common.errors.loadFailed'))
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchItems()
-  }, [])
+    setCurrentPage(1)
+  }, [searchTerm])
 
-  const filtered = items.filter((item) =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const fetchItems = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      if (service.getPaged) {
+        const result = await service.getPaged(currentPage, PAGE_SIZE, searchTerm || undefined)
+        setItems(result.data)
+        setTotalCount(result.totalCount)
+        setTotalPages(result.totalPages)
+      } else {
+        // fallback: getAll + client-side filter
+        const data = await service.getAll()
+        const filtered = searchTerm
+          ? data.filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))
+          : data
+        setItems(filtered)
+        setTotalCount(filtered.length)
+        setTotalPages(Math.ceil(filtered.length / PAGE_SIZE) || 1)
+      }
+    } catch (err: any) {
+      setError(err?.response?.data?.message ?? t('common.errors.loadFailed'))
+    } finally {
+      setLoading(false)
+    }
+  }, [currentPage, searchTerm, service])
+
+  useEffect(() => {
+    fetchItems()
+  }, [fetchItems])
 
   // --- Додати ---
   const handleAdd = async () => {
     if (!newName.trim()) return
     try {
       setSubmitting(true)
-      const created = await service.create({ name: newName.trim() })
-      setItems((prev) => [...prev, created])
+      await service.create({ name: newName.trim() })
       setNewName("")
       setIsAddOpen(false)
+      // після додавання — на першу сторінку
+      setCurrentPage(1)
+      await fetchItems()
     } catch (err: any) {
       alert(err?.response?.data?.message ?? t('common.errors.saveFailed'))
     } finally {
@@ -111,7 +140,7 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
     try {
       setSubmitting(true)
       const updated = await service.update(editingItem.id, { name: editName.trim() })
-      setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)))
+      setItems(prev => prev.map(i => i.id === updated.id ? updated : i))
       setIsEditOpen(false)
     } catch (err: any) {
       alert(err?.response?.data?.message ?? t('common.errors.saveFailed'))
@@ -131,8 +160,8 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
     try {
       setSubmitting(true)
       await service.delete(deleteId)
-      setItems((prev) => prev.filter((i) => i.id !== deleteId))
       setIsDeleteOpen(false)
+      await fetchItems()
     } catch (err: any) {
       alert(err?.response?.data?.message ?? t('common.errors.deleteFailed'))
     } finally {
@@ -151,26 +180,12 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
         if (!service.activate) return
         await service.activate(item.id)
       }
-      setItems((prev) =>
-        prev.map((i) => (i.id === item.id ? { ...i, isActive: !i.isActive } : i))
+      setItems(prev =>
+        prev.map(i => i.id === item.id ? { ...i, isActive: !i.isActive } : i)
       )
     } catch (err: any) {
       alert(err?.response?.data?.message ?? t('common.errors.saveFailed'))
     }
-  }
-
-  // --- Loading / Error ---
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader><Skeleton className="h-6 w-48" /></CardHeader>
-        <CardContent className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
-          ))}
-        </CardContent>
-      </Card>
-    )
   }
 
   if (error) {
@@ -280,8 +295,14 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length > 0 ? (
-                filtered.map((item) => (
+              {loading ? (
+                Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell colSpan={3}><Skeleton className="h-8 w-full" /></TableCell>
+                  </TableRow>
+                ))
+              ) : items.length > 0 ? (
+                items.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell>
@@ -323,6 +344,38 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
               )}
             </TableBody>
           </Table>
+
+          {/* Пагінація */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-muted-foreground">
+                {t('admin.reports.pagination.showing', {
+                  from: (currentPage - 1) * PAGE_SIZE + 1,
+                  to: Math.min(currentPage * PAGE_SIZE, totalCount),
+                  total: totalCount,
+                })}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1 || loading}
+                >
+                  ←
+                </Button>
+                <span className="text-sm">{currentPage} / {totalPages}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || loading}
+                >
+                  →
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </>
