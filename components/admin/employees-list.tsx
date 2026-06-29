@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -27,7 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Pencil, Plus, Search, UserCheck, UserX, ChevronLeft, ChevronRight } from "lucide-react"
+import { Pencil, Plus, Search, UserCheck, UserX } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import usersService from "@/lib/api/services/usersService"
 import { agenciesService } from "@/lib/api/services/dictionaryService"
@@ -68,7 +68,11 @@ export function EmployeesList() {
   const [loading, setLoading] = useState(true)
   const { error, showError, clearError } = useErrorToast()
   const [searchTerm, setSearchTerm] = useState("")
+
+  // Пагінація
   const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -85,55 +89,70 @@ export function EmployeesList() {
   const [departments, setDepartments] = useState<Department[]>([])
   const [editDepartments, setEditDepartments] = useState<Department[]>([])
 
+  // Скидаємо сторінку при зміні пошуку
   useEffect(() => {
-    async function fetchData() {
+    setCurrentPage(1)
+  }, [searchTerm])
+
+  // Завантаження співробітників з пагінацією
+  useEffect(() => {
+    async function fetchEmployees() {
       try {
         setLoading(true)
-        const [users, activeAgencies, activeRoles] = await Promise.all([
-          usersService.getAll(),
-          agenciesService.getActive(),
-          rolesService.getActive(),
-        ])
-        setEmployees(users)
-        setAgencies(activeAgencies)
-        setRoles(activeRoles)
+        const result = await usersService.getPaged(currentPage, PAGE_SIZE, searchTerm || undefined)
+        setEmployees(result.data)
+        setTotalCount(result.totalCount)
+        setTotalPages(result.totalPages)
       } catch (err: any) {
         showError(err, t('common.errors.saveFailed'))
       } finally {
         setLoading(false)
       }
     }
-    fetchData()
-  }, [])
+    fetchEmployees()
+  }, [currentPage, searchTerm])
 
+  // Завантаження довідників один раз
   useEffect(() => {
-    const agencyId = newEmployee.agencyId
-    if (!agencyId) {
-      setDepartments([])
-      return
+    async function fetchDicts() {
+      try {
+        const [activeAgencies, activeRoles] = await Promise.all([
+          agenciesService.getActive(),
+          rolesService.getActive(),
+        ])
+        setAgencies(activeAgencies)
+        setRoles(activeRoles)
+      } catch (err: any) {
+        showError(err, t('common.errors.saveFailed'))
+      }
     }
-    departmentsService.getActiveByAgency(agencyId)
-      .then(setDepartments)
-      .catch(err => showError(err))
-  }, [newEmployee.agencyId])
-
-  // Сброс страницы при поиске
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm])
-
-  const filtered = employees.filter((e) =>
-    [e.name, e.email, e.login, e.agencyName].some((field) =>
-      field?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  )
-
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    fetchDicts()
+  }, [])
 
   const activeSuperAdminCount = employees.filter(
     (e) => e.isActive && e.roles?.includes('SuperAdmin')
   ).length
+
+  const refreshCurrentPage = useCallback(async () => {
+    try {
+      const result = await usersService.getPaged(currentPage, PAGE_SIZE, searchTerm || undefined)
+      setEmployees(result.data)
+      setTotalCount(result.totalCount)
+      setTotalPages(result.totalPages)
+    } catch (err: any) {
+      showError(err, t('common.errors.saveFailed'))
+    }
+  }, [currentPage, searchTerm])
+
+  useEffect(() => {
+    if (!newEmployee.agencyId) {
+      setDepartments([])
+      return
+    }
+    departmentsService.getActiveByAgency(newEmployee.agencyId)
+      .then(setDepartments)
+      .catch(err => showError(err))
+  }, [newEmployee.agencyId])
 
   const handleAdd = async () => {
     if (!newEmployee.name || !newEmployee.email || !newEmployee.login || !newEmployee.password || !newEmployee.agencyId || !newEmployee.departmentId || newEmployee.roleIds.length === 0) return
@@ -146,10 +165,10 @@ export function EmployeesList() {
     setPasswordError("")
     try {
       setSubmitting(true)
-      const created = await usersService.create(newEmployee)
-      setEmployees((prev) => [...prev, created])
+      await usersService.create(newEmployee)
       setNewEmployee(EMPTY_CREATE)
       setIsAddDialogOpen(false)
+      await refreshCurrentPage()
     } catch (err: any) {
       showError(err)
     } finally {
@@ -227,8 +246,8 @@ export function EmployeesList() {
     try {
       setSubmitting(true)
       await usersService.deactivate(employeeToDelete)
-      setEmployees((prev) => prev.filter((e) => e.id !== employeeToDelete))
       setIsDeleteDialogOpen(false)
+      await refreshCurrentPage()
     } catch (err: any) {
       showError(err)
     } finally {
@@ -237,7 +256,7 @@ export function EmployeesList() {
     }
   }
 
-  if (loading) {
+  if (loading && employees.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -465,7 +484,7 @@ export function EmployeesList() {
           <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
             <div>
               <CardTitle>{t('admin.employees.list.title')}</CardTitle>
-              <CardDescription>{t('admin.employees.list.description', { count: employees.length })}</CardDescription>
+              <CardDescription>{t('admin.employees.list.description', { count: totalCount })}</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <div className="relative w-full md:w-64">
@@ -499,8 +518,14 @@ export function EmployeesList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginated.length > 0 ? (
-                paginated.map((employee) => (
+              {loading ? (
+                Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell colSpan={7}><Skeleton className="h-8 w-full" /></TableCell>
+                  </TableRow>
+                ))
+              ) : employees.length > 0 ? (
+                employees.map((employee) => (
                   <TableRow key={employee.id}>
                     <TableCell className="font-medium">{employee.name}</TableCell>
                     <TableCell>{employee.email}</TableCell>
@@ -558,64 +583,33 @@ export function EmployeesList() {
             </TableBody>
           </Table>
 
-          {/* Пагінація */}
+          {/* Пагінація у стилі звітів */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-              <p className="text-sm text-muted-foreground">
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-gray-500">
                 {t('admin.reports.pagination.showing', {
                   from: (currentPage - 1) * PAGE_SIZE + 1,
-                  to: Math.min(currentPage * PAGE_SIZE, filtered.length),
-                  total: filtered.length,
+                  to: Math.min(currentPage * PAGE_SIZE, totalCount),
+                  total: totalCount,
                 })}
               </p>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
+                  disabled={currentPage === 1 || loading}
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  ←
                 </Button>
-
-                {/* Номера сторінок */}
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter(page =>
-                    page === 1 ||
-                    page === totalPages ||
-                    Math.abs(page - currentPage) <= 1
-                  )
-                  .reduce<(number | '...')[]>((acc, page, idx, arr) => {
-                    if (idx > 0 && typeof arr[idx - 1] === 'number' && (page as number) - (arr[idx - 1] as number) > 1) {
-                      acc.push('...')
-                    }
-                    acc.push(page)
-                    return acc
-                  }, [])
-                  .map((item, idx) =>
-                    item === '...' ? (
-                      <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground text-sm">…</span>
-                    ) : (
-                      <Button
-                        key={item}
-                        variant={currentPage === item ? "default" : "outline"}
-                        size="sm"
-                        className="w-8 h-8 p-0"
-                        onClick={() => setCurrentPage(item as number)}
-                      >
-                        {item}
-                      </Button>
-                    )
-                  )
-                }
-
+                <span className="text-sm">{currentPage} / {totalPages}</span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
+                  disabled={currentPage === totalPages || loading}
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  →
                 </Button>
               </div>
             </div>

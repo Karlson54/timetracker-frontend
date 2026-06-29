@@ -7,6 +7,21 @@ const usersService = {
     return response.data
   },
 
+  async getPaged(
+    pageNumber: number,
+    pageSize: number,
+    searchTerm?: string
+  ): Promise<{ data: UserListItem[]; totalCount: number; totalPages: number }> {
+    const response = await httpClient.get('/api/users/paged', {
+      params: {
+        pageNumber,
+        pageSize,
+        searchTerm: searchTerm || undefined,
+      },
+    })
+    return response.data
+  },
+
   async getActive(): Promise<UserListItem[]> {
     const response = await httpClient.get<UserListItem[]>('/api/users/active')
     return response.data
