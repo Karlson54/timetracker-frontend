@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
-  BarChart3, Clock, Users, FileText, Menu, X, Building,
+  BarChart3, Clock, Users, FileText, Menu, X,
   FileSpreadsheet, LogOut, Calendar, BookOpen, ChevronDown, ChevronRight
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,6 @@ import { LanguageSwitcher } from '@/components/language-switcher'
 import { useTranslation } from 'react-i18next'
 import { getAgencyLogo } from '@/lib/utils/getAgencyLogo'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { ShieldCheck } from 'lucide-react'
 
 interface DashboardSidebarProps {
   isAdmin?: boolean
@@ -84,18 +83,6 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
               </li>
               {user?.roles?.includes('SuperAdmin') && (
                 <li>
-                  <Link href="/admin/employees" className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
-                    pathname === '/admin/employees'
-                      ? 'bg-accent text-accent-foreground font-medium'
-                      : 'text-foreground hover:bg-accent/50'
-                  )}>
-                    <Users className="h-4 w-4" />{t('admin.nav.employees')}
-                  </Link>
-                </li>
-              )}
-              {user?.roles?.includes('SuperAdmin') && (
-                <li>
                   <Link href="/admin/permissions" className={cn(
                     'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
                     pathname === '/admin/permissions'
@@ -103,18 +90,6 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                       : 'text-foreground hover:bg-accent/50'
                   )}>
                     <Users className="h-4 w-4" />{t('admin.nav.manage_access')}
-                  </Link>
-                </li>
-              )}
-              {user?.roles?.includes('SuperAdmin') && (
-                <li>
-                  <Link href="/admin/dictionaries/clients" className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
-                    pathname === '/admin/companies'
-                      ? 'bg-accent text-accent-foreground font-medium'
-                      : 'text-foreground hover:bg-accent/50'
-                  )}>
-                    <Building className="h-4 w-4" />{t('admin.nav.companies')}
                   </Link>
                 </li>
               )}
@@ -200,6 +175,7 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                   {isDictionariesOpen && (
                     <ul className="mt-1 ml-4 space-y-1 border-l border-border pl-3">
                       {[
+                        { href: '/admin/dictionaries/employees', label: t('admin.nav.employees') },
                         { href: '/admin/dictionaries/agencies', label: t('admin.nav.dict.agencies') },
                         { href: '/admin/dictionaries/departments', label: t('admin.nav.dict.departments') },
                         { href: '/admin/dictionaries/markets', label: t('admin.nav.dict.markets') },
