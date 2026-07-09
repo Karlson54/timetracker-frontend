@@ -28,6 +28,8 @@ import {
 import { Pencil, Plus, Search, Trash, UserCheck, UserX } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import type { DictionaryItem, CreateDictionaryItemRequest } from "@/lib/api/types"
+import { ErrorToast } from "@/components/ui/error-toast"
+import { useErrorToast } from "@/hooks/use-error-toast"
 
 const PAGE_SIZE = 15
 
@@ -53,10 +55,11 @@ interface DictionaryPageProps {
 
 export function DictionaryPage({ title, description, service }: DictionaryPageProps) {
   const { t } = useTranslation()
+  const { error, showError, clearError } = useErrorToast()
 
   const [items, setItems] = useState<DictionaryItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
@@ -82,7 +85,7 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
   const fetchItems = useCallback(async () => {
     try {
       setLoading(true)
-      setError(null)
+      setLoadError(null)
 
       if (service.getPaged) {
         const result = await service.getPaged(currentPage, PAGE_SIZE, searchTerm || undefined)
@@ -100,7 +103,7 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
         setTotalPages(Math.ceil(filtered.length / PAGE_SIZE) || 1)
       }
     } catch (err: any) {
-      setError(err?.response?.data?.message ?? t('common.errors.loadFailed'))
+      setLoadError(err?.response?.data?.message ?? t('common.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -122,7 +125,7 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
       setCurrentPage(1)
       await fetchItems()
     } catch (err: any) {
-      alert(err?.response?.data?.message ?? t('common.errors.saveFailed'))
+      showError(err, t('common.errors.saveFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -143,7 +146,7 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
       setItems(prev => prev.map(i => i.id === updated.id ? updated : i))
       setIsEditOpen(false)
     } catch (err: any) {
-      alert(err?.response?.data?.message ?? t('common.errors.saveFailed'))
+      showError(err, t('common.errors.saveFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -163,7 +166,7 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
       setIsDeleteOpen(false)
       await fetchItems()
     } catch (err: any) {
-      alert(err?.response?.data?.message ?? t('common.errors.deleteFailed'))
+      showError(err, t('common.errors.deleteFailed'))
     } finally {
       setSubmitting(false)
       setDeleteId(null)
@@ -184,14 +187,14 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
         prev.map(i => i.id === item.id ? { ...i, isActive: !i.isActive } : i)
       )
     } catch (err: any) {
-      alert(err?.response?.data?.message ?? t('common.errors.saveFailed'))
+      showError(err, t('common.errors.saveFailed'))
     }
   }
 
-  if (error) {
+  if (loadError) {
     return (
       <Card>
-        <CardContent className="pt-6 text-center text-destructive">{error}</CardContent>
+        <CardContent className="pt-6 text-center text-destructive">{loadError}</CardContent>
       </Card>
     )
   }
@@ -378,6 +381,8 @@ export function DictionaryPage({ title, description, service }: DictionaryPagePr
           )}
         </CardContent>
       </Card>
+
+      <ErrorToast message={error} onClose={clearError} />
     </>
   )
 }
