@@ -386,6 +386,7 @@ export function EmployeeReports() {
         totalHours: msToHours(ms),
         percentage: totalMs > 0 ? Math.round((ms / totalMs) * 100) : 0,
       }))
+      .filter((c) => c.percentage >= 1)
       .sort((a, b) => b.totalHours - a.totalHours)
   }, [allEntries])
 

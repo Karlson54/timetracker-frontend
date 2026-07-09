@@ -177,6 +177,13 @@ export function EmployeesList() {
   }
 
   const openEdit = (employee: UserListItem) => {
+    console.log('employee.roles:', employee.roles)
+    console.log('roles state:', roles)
+
+    const currentRoleName = employee.roles?.[0]
+    const currentRole = roles.find((r) => r.name === currentRoleName)
+    console.log('matched role:', currentRole)
+
     setEditingEmployee(employee)
     setEditForm({
       email: employee.email,
@@ -184,7 +191,7 @@ export function EmployeesList() {
       agencyId: employee.agencyId,
       login: employee.login,
       newPassword: "",
-      roleIds: [],
+      roleIds: currentRole ? [currentRole.id] : [],
       departmentId: employee.departmentId,
     })
     departmentsService.getActiveByAgency(employee.agencyId)
@@ -211,9 +218,9 @@ export function EmployeesList() {
         roleIds: editForm.roleIds?.length ? editForm.roleIds : undefined,
         departmentId: editForm.departmentId || undefined,
       }
-      const updated = await usersService.update(editingEmployee.id, payload)
-      setEmployees((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
+      await usersService.update(editingEmployee.id, payload)
       setIsEditDialogOpen(false)
+      await refreshCurrentPage()
     } catch (err: any) {
       showError(err)
     } finally {
@@ -510,7 +517,7 @@ export function EmployeesList() {
               <TableRow>
                 <TableHead>{t('admin.employees.tableHeaders.employee')}</TableHead>
                 <TableHead>{t('admin.employees.tableHeaders.email')}</TableHead>
-                <TableHead>{t('admin.employees.tableHeaders.login')}</TableHead>
+                <TableHead>{t('admin.employees.tableHeaders.role')}</TableHead>
                 <TableHead>{t('admin.employees.tableHeaders.agency')}</TableHead>
                 <TableHead>{t('admin.employees.tableHeaders.department')}</TableHead>
                 <TableHead>{t('admin.employees.tableHeaders.status')}</TableHead>
@@ -529,7 +536,7 @@ export function EmployeesList() {
                   <TableRow key={employee.id}>
                     <TableCell className="font-medium">{employee.name}</TableCell>
                     <TableCell>{employee.email}</TableCell>
-                    <TableCell>{employee.login}</TableCell>
+                    <TableCell>{employee.roles?.[0] ?? '-'}</TableCell>
                     <TableCell>{employee.agencyName ?? '-'}</TableCell>
                     <TableCell>{employee.departmentName || '-'}</TableCell>
                     <TableCell>

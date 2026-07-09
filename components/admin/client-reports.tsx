@@ -106,6 +106,10 @@ export function ClientReports() {
     fetchReport()
   }, [selectedClientId, dateRange])
 
+  const visibleContributions = report?.userContributions.filter(
+    (u) => Math.round(u.contributionPercentage) >= 1
+  ) ?? []
+
   const handleExport = async () => {
     if (!selectedClientId || !dateRange?.from || !dateRange?.to) return
     setIsDownloading(true)
@@ -262,7 +266,7 @@ export function ClientReports() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 mb-6">
-                  {report.userContributions.map((user) => (
+                  {visibleContributions.map((user) => (
                     <div key={user.userId}>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="font-medium">{user.userName}</span>
@@ -292,7 +296,7 @@ export function ClientReports() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {report.userContributions.map((user) => (
+                    {visibleContributions.map((user) => (
                       <TableRow key={user.userId}>
                         <TableCell className="font-medium">{user.userName}</TableCell>
                         <TableCell className="text-gray-500">{user.agencyName}</TableCell>

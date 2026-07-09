@@ -109,6 +109,7 @@
       "tableHeaders": {
         "employee": "Employee",
         "email": "Email",
+        "role": "Role",
         "agency": "Agency",
         "login": "Login",
         "status": "Status",

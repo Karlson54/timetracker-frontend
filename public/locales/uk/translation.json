@@ -109,6 +109,7 @@
       "tableHeaders": {
         "employee": "Співробітник",
         "email": "Email",
+        "role": "Роль",
         "agency": "Агенція",
         "login": "Логін",
         "status": "Статус",
