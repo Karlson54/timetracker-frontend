@@ -5,10 +5,12 @@ export const dynamic = 'force-dynamic'
 import { LoginForm } from '@/components/login-form'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
+import { useTheme } from 'next-themes'
 
 export default function LoginPage() {
   const { t } = useTranslation()
   const [mounted, setMounted] = useState(false)
+  const { resolvedTheme } = useTheme()
 
   useEffect(() => {
     setMounted(true)
@@ -21,7 +23,7 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8 p-8 bg-card rounded-lg shadow border border-border">
         <div className="flex flex-col items-center">
           <img
-            src="/images/logos/groupm.png"
+            src={resolvedTheme === 'dark' ? '/images/logos/dark/groupm.png' : '/images/logos/light/groupm.png'}
             alt="GroupM"
             className="h-12 object-contain mb-4"
           />

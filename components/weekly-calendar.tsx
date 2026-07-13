@@ -15,6 +15,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { DayEntryForm } from "@/components/day-entry-form"
 import { useTranslation } from "react-i18next"
 import timeEntriesService from "@/lib/api/services/timeEntriesService"
@@ -46,7 +57,6 @@ export function WeeklyCalendar() {
   const [submitting, setSubmitting] = useState(false)
 
   // Стан для копіювання
-  const [copyingId, setCopyingId] = useState<number | null>(null)
   const [copyDate, setCopyDate] = useState<Date | null>(null)
   const [showCopyDialog, setShowCopyDialog] = useState(false)
   const [copyMonth, setCopyMonth] = useState(new Date())
@@ -58,6 +68,9 @@ export function WeeklyCalendar() {
     return d
   })
 
+  const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+
   // --- Вибір тижня з календаря ---
   const handlePickWeek = (date: Date) => {
     const day = date.getDay()
@@ -68,6 +81,7 @@ export function WeeklyCalendar() {
     setSelectedDate(null)
     setShowEntryForm(false)
     setShowWeekPicker(false)
+    setSelectedIds([])
   }
 
   // --- Календар для вибору тижня ---
@@ -124,6 +138,7 @@ export function WeeklyCalendar() {
     setCurrentWeekStart(d)
     setSelectedDate(null)
     setShowEntryForm(false)
+    setSelectedIds([])
   }
 
   const goToNextWeek = () => {
@@ -132,6 +147,7 @@ export function WeeklyCalendar() {
     setCurrentWeekStart(d)
     setSelectedDate(null)
     setShowEntryForm(false)
+    setSelectedIds([])
   }
 
   // --- Хелпери дат ---
@@ -157,6 +173,19 @@ export function WeeklyCalendar() {
   const totalHours = filteredEntries.reduce((sum, e) => sum + msToHours(e.hoursMilliseconds), 0)
   const avgHours = filteredEntries.length > 0 ? totalHours / filteredEntries.length : 0
 
+  const toggleSelectEntry = (id: number) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    )
+  }
+
+  const isAllSelected =
+    filteredEntries.length > 0 && selectedIds.length === filteredEntries.length
+
+  const toggleSelectAll = () => {
+    setSelectedIds(isAllSelected ? [] : filteredEntries.map((e) => e.id))
+  }
+
   // --- Додати новий запис ---
   const handleAddNewEntry = () => {
     setEditingEntry(null)
@@ -167,6 +196,12 @@ export function WeeklyCalendar() {
   const handleEdit = (entry: TimeEntryListItem) => {
     setEditingEntry(entry)
     setShowEntryForm(true)
+  }
+
+  const handleHeaderEdit = () => {
+    if (selectedIds.length !== 1) return
+    const entry = filteredEntries.find((e) => e.id === selectedIds[0])
+    if (entry) handleEdit(entry)
   }
 
   // --- Зберегти (create / update) ---
@@ -206,50 +241,44 @@ export function WeeklyCalendar() {
   }
 
   // --- Видалити ---
-  const handleDelete = async (id: number) => {
-    if (!confirm(t('calendar.deleteConfirm') || "Delete this entry?")) return
+  const executeBulkDelete = async () => {
+    if (selectedIds.length === 0) return
     try {
-      await timeEntriesService.delete(id)
-      setEntries((prev) => prev.filter((e) => e.id !== id))
+      setSubmitting(true)
+      await timeEntriesService.deleteBulk(selectedIds)
+      setEntries((prev) => prev.filter((e) => !selectedIds.includes(e.id)))
+      setSelectedIds([])
     } catch (err: any) {
-      showError(err, t('common.errors.saveFailed'))
+      showError(err, t('common.errors.deleteFailed'))
+    } finally {
+      setSubmitting(false)
+      setShowBulkDeleteConfirm(false)
     }
   }
 
   // --- Копіювати ---
-  const handleCopyReport = (id: number) => {
-    setCopyingId(id)
+  const handleHeaderCopy = () => {
+    if (selectedIds.length === 0) return
     setCopyDate(null)
     setCopyMonth(new Date())
     setShowCopyDialog(true)
   }
 
   const executeCopy = async () => {
-    if (!copyingId || !copyDate) return
-    const source = entries.find((e) => e.id === copyingId)
-    if (!source) return
-
+    if (selectedIds.length === 0 || !copyDate) return
     try {
       setSubmitting(true)
-      const created = await timeEntriesService.create({
-        userId: user?.userId ?? 0,
-        entryDate: toLocalDateString(copyDate),
-        hoursMilliseconds: source.hoursMilliseconds,
-        clientId: source.clientId,
-        projectBrand: source.projectBrandName ?? "",
-        marketId: source.marketId,
-        mediaId: source.mediaId,
-        jobTypeId: source.jobTypeId,
-        contractingAgencyId: source.contractingAgencyId,
-        comments: source.comments,
-      })
-      setEntries((prev) => [...prev, created])
+      const created = await timeEntriesService.copySelected(
+        selectedIds,
+        toLocalDateString(copyDate)
+      )
+      setEntries((prev) => [...prev, ...created])
+      setSelectedIds([])
     } catch (err: any) {
       showError(err, t('common.errors.saveFailed'))
     } finally {
       setSubmitting(false)
       setShowCopyDialog(false)
-      setCopyingId(null)
       setCopyDate(null)
     }
   }
@@ -443,6 +472,7 @@ export function WeeklyCalendar() {
                       setSelectedDate(day)
                       setShowEntryForm(false)
                       setEditingEntry(null)
+                      setSelectedIds([])
                     }}
                   >
                     <span className="text-xs font-medium">{t(`calendar.weekdayShort.${weekdayKeyMap[index]}`)}</span>
@@ -534,18 +564,57 @@ export function WeeklyCalendar() {
           {filteredEntries.length > 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle>{t('calendar.summaryInfo')}</CardTitle>
-                <CardDescription>
-                  {t('calendar.reportsForDate', {
-                    date: selectedDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }),
-                  })}
-                </CardDescription>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <CardTitle>{t('calendar.summaryInfo')}</CardTitle>
+                    <CardDescription>
+                      {t('calendar.reportsForDate', {
+                        date: selectedDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }),
+                      })}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleHeaderEdit}
+                      disabled={selectedIds.length !== 1}
+                      title={t('calendar.edit')}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowBulkDeleteConfirm(true)}
+                      disabled={selectedIds.length === 0}
+                      title={t('calendar.delete')}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleHeaderCopy}
+                      disabled={selectedIds.length === 0}
+                      title={t('calendar.copy')}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-10">
+                          <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={toggleSelectAll}
+                          />
+                        </TableHead>
                         <TableHead>{t('calendar.market')}</TableHead>
                         <TableHead>{t('calendar.agency')}</TableHead>
                         <TableHead>{t('calendar.client')}</TableHead>
@@ -554,12 +623,17 @@ export function WeeklyCalendar() {
                         <TableHead>{t('calendar.jobType')}</TableHead>
                         <TableHead>{t('calendar.comments')}</TableHead>
                         <TableHead>{t('calendar.hours')}</TableHead>
-                        <TableHead>{t('calendar.actions')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredEntries.map((entry) => (
                         <TableRow key={entry.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedIds.includes(entry.id)}
+                              onCheckedChange={() => toggleSelectEntry(entry.id)}
+                            />
+                          </TableCell>
                           <TableCell>{entry.marketName || "—"}</TableCell>
                           <TableCell>{entry.contractingAgencyName || "—"}</TableCell>
                           <TableCell>{entry.clientName || "—"}</TableCell>
@@ -570,19 +644,6 @@ export function WeeklyCalendar() {
                             {entry.comments ?? "—"}
                           </TableCell>
                           <TableCell>{msToHours(entry.hoursMilliseconds).toFixed(1)}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => handleEdit(entry)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDelete(entry.id)}>
-                                <Trash className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleCopyReport(entry.id)}>
-                                <Copy className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -610,6 +671,25 @@ export function WeeklyCalendar() {
           )}
         </>
       )}
+
+      <AlertDialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('calendar.deleteConfirm')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedIds.length === 1
+                ? t('calendar.deleteConfirmSingle')
+                : t('calendar.deleteConfirmMultiple', { count: selectedIds.length })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('calendar.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={executeBulkDelete} disabled={submitting}>
+              {t('calendar.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Діалог копіювання */}
       <Dialog open={showCopyDialog} onOpenChange={setShowCopyDialog}>

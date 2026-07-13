@@ -40,6 +40,18 @@ const timeEntriesService = {
   async delete(id: number): Promise<void> {
     await httpClient.delete(`/api/timeentries/${id}`)
   },
+
+  async deleteBulk(ids: number[]): Promise<void> {
+    await httpClient.delete('/api/timeentries/bulk', { data: ids })
+  },
+
+  async copySelected(entryIds: number[], targetDate: string): Promise<TimeEntryListItem[]> {
+    const response = await httpClient.post<TimeEntryListItem[]>('/api/timeentries/copy-selected', {
+      entryIds,
+      targetDate,
+    })
+    return response.data
+  },
 }
 
 export default timeEntriesService

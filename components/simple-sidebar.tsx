@@ -12,6 +12,8 @@ import { LanguageSwitcher } from './language-switcher'
 import { useTranslation } from 'react-i18next'
 import { getAgencyLogo } from '@/lib/utils/getAgencyLogo'
 import { ThemeToggle } from './theme-toggle'
+import { useTheme } from 'next-themes'
+
 
 export function SimpleSidebar() {
   const isMobile = useMobile()
@@ -19,6 +21,7 @@ export function SimpleSidebar() {
   const pathname = usePathname()
   const { user, logout, isAdmin } = useAuthContext()
   const { t } = useTranslation()
+  const { resolvedTheme } = useTheme()
 
   const formattedName = user?.name ? formatEmployeeName(user.name) : null
 
@@ -37,7 +40,7 @@ export function SimpleSidebar() {
         <div className="p-4 border-b">
           <div className="h-8">
             <img
-              src={getAgencyLogo(user?.agencyId ?? 0)}
+              src={getAgencyLogo(user?.agencyId ?? 0, resolvedTheme === 'dark' ? 'dark' : 'light')}
               alt={user?.agencyName ?? 'Agency'}
               className="h-full object-contain"
             />

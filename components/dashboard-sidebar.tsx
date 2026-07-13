@@ -15,12 +15,14 @@ import { LanguageSwitcher } from '@/components/language-switcher'
 import { useTranslation } from 'react-i18next'
 import { getAgencyLogo } from '@/lib/utils/getAgencyLogo'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { useTheme } from 'next-themes'
 
 interface DashboardSidebarProps {
   isAdmin?: boolean
 }
 
 export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
+  const { resolvedTheme } = useTheme()
   const isMobile = useMobile()
   const [isOpen, setIsOpen] = useState(!isMobile)
   const pathname = usePathname()
@@ -53,7 +55,7 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
         <div className="p-4 border-b">
           <div className="h-8">
             <img
-              src={getAgencyLogo(user?.agencyId ?? 0)}
+              src={getAgencyLogo(user?.agencyId ?? 0, resolvedTheme === 'dark' ? 'dark' : 'light')}
               alt={user?.agencyName ?? 'Agency'}
               className="h-full object-contain"
             />

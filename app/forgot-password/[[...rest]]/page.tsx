@@ -8,10 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
+import { useTheme } from 'next-themes'
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslation()
   const [mounted, setMounted] = useState(false)
+  const { resolvedTheme } = useTheme()
 
   useEffect(() => {
     setMounted(true)
@@ -24,7 +26,11 @@ export default function ForgotPasswordPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <div className="h-12 w-auto">
-            <img src="/images/logos/groupm.png" alt="GroupM" className="h-full" />
+            <img
+              src={resolvedTheme === 'dark' ? '/images/logos/dark/groupm.png' : '/images/logos/light/groupm.png'}
+              alt="GroupM"
+              className="h-full"
+            />
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-foreground">
