@@ -233,6 +233,7 @@ export function WeeklyCalendar() {
 
       setShowEntryForm(false)
       setEditingEntry(null)
+      setSelectedIds([])
     } catch (err: any) {
       showError(err, t('common.errors.saveFailed'))
     } finally {
