@@ -263,21 +263,6 @@ export function EmployeesList() {
     }
   }
 
-  if (loading && employees.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
-          ))}
-        </CardContent>
-      </Card>
-    )
-  }
-
   return (
     <>
       {/* Діалог видалення */}
