@@ -18,6 +18,9 @@ import {
 } from "@/lib/api/services/dictionaryService"
 import type { DictionaryItem } from "@/lib/api/types"
 
+const VACATION_MINUTES = "480"
+const VACATION_COMMENT = "Vacation"
+
 interface DictionaryComboProps {
   id: string
   items: DictionaryItem[]
@@ -170,6 +173,20 @@ export function DayEntryForm({
   const [mediaInput, setMediaInput] = useState("")
   const [jobTypeInput, setJobTypeInput] = useState("")
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+
+  const isVacationSelected = jobTypes.some(
+    (jt) => String(jt.id) === formData.jobType && jt.name.trim().toLowerCase() === "vacation"
+  )
+
+  useEffect(() => {
+    if (isVacationSelected) {
+      setFormData((prev) => ({
+        ...prev,
+        comments: VACATION_COMMENT,
+        hours: VACATION_MINUTES,
+      }))
+    }
+  }, [isVacationSelected])
 
   useEffect(() => {
     if (!isEditMode || loadingDicts) return
@@ -354,24 +371,26 @@ export function DayEntryForm({
             {fields.comments && renderField("comments", t('calendar.comments'),
               <Textarea
                 id="comments"
-                className="text-sm"
+                className={cn("text-sm", isVacationSelected && "bg-muted text-muted-foreground cursor-not-allowed opacity-60")}
                 rows={2}
                 placeholder={t('calendar.commentsPlaceholder')}
                 value={formData.comments}
-                onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
+                onChange={(e) => !isVacationSelected && setFormData(prev => ({ ...prev, comments: e.target.value }))}
+                disabled={isVacationSelected}
               />
             )}
             {fields.hours && renderField("hours", t('calendar.spentTime'),
               <>
                 <Input
                   id="hours"
-                  className="h-8 text-sm"
+                  className={cn("h-8 text-sm", isVacationSelected && "bg-muted text-muted-foreground cursor-not-allowed opacity-60")}
                   type="number"
                   min="1"
                   step="1"
                   placeholder="60"
                   value={formData.hours}
-                  onChange={(e) => setFormData(prev => ({ ...prev, hours: e.target.value }))}
+                  onChange={(e) => !isVacationSelected && setFormData(prev => ({ ...prev, hours: e.target.value }))}
+                  disabled={isVacationSelected}
                   required
                 />
                 <p className="text-xs text-muted-foreground mt-1">{t('calendar.minutesHint')}</p>
