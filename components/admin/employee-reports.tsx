@@ -522,7 +522,12 @@ export function EmployeeReports() {
         </CardContent>
       </Card>
 
-      <StatsCards allEntries={allEntries} totalCount={totalCount} />
+      <StatsCards
+        allEntries={allEntries}
+        totalCount={totalCount}
+        dateRange={dateRange}
+        showNorm={selectedEmployeeIds.length === 1}
+      />
 
       <Tabs defaultValue="summary">
         <TabsList>

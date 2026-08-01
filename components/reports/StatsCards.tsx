@@ -4,18 +4,40 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useTranslation } from 'react-i18next'
 import type { TimeEntryListItem } from '@/lib/api/types'
 import { msToHours } from '@/lib/utils'
+import type { DateRange } from 'react-day-picker'
 
 interface StatsCardsProps {
   allEntries: TimeEntryListItem[]
   totalCount: number
+  dateRange?: DateRange
+  showNorm?: boolean
 }
 
-export function StatsCards({ allEntries, totalCount }: StatsCardsProps) {
+function calculateNormHours(dateRange?: DateRange): number {
+  if (!dateRange?.from || !dateRange?.to) return 0
+
+  let workDays = 0
+  const current = new Date(dateRange.from)
+  current.setHours(0, 0, 0, 0)
+  const end = new Date(dateRange.to)
+  end.setHours(0, 0, 0, 0)
+
+  while (current <= end) {
+    const day = current.getDay()
+    if (day !== 0 && day !== 6) workDays++
+    current.setDate(current.getDate() + 1)
+  }
+
+  return workDays * 8
+}
+
+export function StatsCards({ allEntries, totalCount, dateRange, showNorm }: StatsCardsProps) {
   const { t } = useTranslation()
 
   const totalMs = allEntries.reduce((sum, e) => sum + e.hoursMilliseconds, 0)
   const totalHours = msToHours(totalMs)
   const avgHoursPerEntry = allEntries.length > 0 ? totalHours / allEntries.length : 0
+  const normHours = showNorm ? calculateNormHours(dateRange) : 0
 
   const avgHoursPerDay = (() => {
     const uniqueDays = new Set(
@@ -38,7 +60,9 @@ export function StatsCards({ allEntries, totalCount }: StatsCardsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {totalHours.toFixed(1)} {t('calendar.totalPeriodHours')}
+            {normHours > 0
+              ? `${totalHours.toFixed(1)} / ${normHours.toFixed(1)} ${t('calendar.totalPeriodHours')}`
+              : `${totalHours.toFixed(1)} ${t('calendar.totalPeriodHours')}`}
           </div>
         </CardContent>
       </Card>
