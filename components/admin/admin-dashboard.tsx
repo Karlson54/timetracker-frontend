@@ -19,12 +19,20 @@ interface InactiveUser {
   lastEntryDate: string | null
 }
 
+interface MissedDaysUser {
+  userId: number
+  userName: string
+  missedDates: string[]
+}
+
 export function AdminDashboard() {
   const { t } = useTranslation()
   const [topClients, setTopClients] = useState<TopClient[]>([])
   const [inactiveUsers, setInactiveUsers] = useState<InactiveUser[]>([])
+  const [missedDaysUsers, setMissedDaysUsers] = useState<MissedDaysUser[]>([])
   const [loadingClients, setLoadingClients] = useState(true)
   const [loadingUsers, setLoadingUsers] = useState(true)
+  const [loadingMissedDays, setLoadingMissedDays] = useState(true)
 
   useEffect(() => {
     const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
@@ -47,6 +55,12 @@ export function AdminDashboard() {
       .then((res) => setInactiveUsers(res.data))
       .catch((err) => console.error('inactive users error:', err))
       .finally(() => setLoadingUsers(false))
+
+    httpClient
+      .get('/api/reports/missed-days-this-month')
+      .then((res) => setMissedDaysUsers(res.data))
+      .catch((err) => console.error('missed days error:', err))
+      .finally(() => setLoadingMissedDays(false))
   }, [])
 
   return (
@@ -56,7 +70,7 @@ export function AdminDashboard() {
         <p className="text-muted-foreground">{t('admin.dashboard.description')}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Топ 5 клієнтів */}
         <Card>
           <CardHeader>
@@ -68,12 +82,12 @@ export function AdminDashboard() {
             ) : topClients.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t('admin.dashboard.noClientsData')}</p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
                 {topClients.map((client) => (
                   <div key={client.clientId}>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium">{client.clientName}</span>
-                      <span className="text-muted-foreground">
+                      <span className="font-medium truncate pr-2">{client.clientName}</span>
+                      <span className="text-muted-foreground shrink-0">
                         {client.totalHours} ({client.percentage}%)
                       </span>
                     </div>
@@ -101,14 +115,50 @@ export function AdminDashboard() {
             ) : inactiveUsers.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t('admin.dashboard.allUsersActive')}</p>
             ) : (
-              <div className="space-y-2">
+              <div className="max-h-80 overflow-y-auto pr-1">
                 {inactiveUsers.map((user) => (
-                  <div key={user.userId} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                    <span className="text-sm font-medium text-foreground">{user.userName}</span>
-                    <span className="text-xs text-muted-foreground">
+                  <div
+                    key={user.userId}
+                    className="flex items-center justify-between py-2 border-b border-border last:border-0 h-12"
+                  >
+                    <span className="text-sm font-medium text-foreground truncate pr-2">{user.userName}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">
                       {user.lastEntryDate
                         ? `${t('admin.dashboard.lastEntry')}: ${new Date(user.lastEntryDate).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
                         : t('admin.dashboard.neverEntered')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Пропущені робочі дні цього місяця */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('admin.dashboard.missedDays')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingMissedDays ? (
+              <p className="text-sm text-muted-foreground">{t('admin.dashboard.loading')}</p>
+            ) : missedDaysUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('admin.dashboard.noMissedDaysData')}</p>
+            ) : (
+              <div className="max-h-80 overflow-y-auto pr-1">
+                {missedDaysUsers.map((user) => (
+                  <div
+                    key={user.userId}
+                    className="py-2 border-b border-border last:border-0 h-12 flex flex-col justify-center"
+                  >
+                    <span className="text-sm font-medium text-foreground truncate">{user.userName}</span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {user.missedDates
+                        .map((d) => {
+                          const date = new Date(d)
+                          return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`
+                        })
+                        .join('; ')}
                     </span>
                   </div>
                 ))}
