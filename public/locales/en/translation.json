@@ -62,7 +62,7 @@
       "lastEntry": "Last entry",
       "neverEntered": "Never added entries",
       "loading": "Loading dashboard stats...",
-      "missedDays": "Missed working days (this month)",
+      "missedDays": "Missed working days in the last 2 months",
       "noMissedDaysData": "No missed days",
       "missedDaysLabel": "Days"
     },
