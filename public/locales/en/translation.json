@@ -64,7 +64,8 @@
       "loading": "Loading dashboard stats...",
       "missedDays": "Missed working days in the last 2 months",
       "noMissedDaysData": "No missed days",
-      "missedDaysLabel": "Days"
+      "missedDaysLabel": "Days",
+      "selectMonth": "Select month"
     },
     "employees": {
       "title": "Employees",
@@ -211,6 +212,20 @@
       "4": "Thu",
       "5": "Fri",
       "6": "Sat"
+    },
+    "monthNames": {
+      "0": "January",
+      "1": "February",
+      "2": "March",
+      "3": "April",
+      "4": "May",
+      "5": "June",
+      "6": "July",
+      "7": "August",
+      "8": "September",
+      "9": "October",
+      "10": "November",
+      "11": "December"
     },
     "selectDatesToCopyHint": "Select dates to copy the entry",
     "cancel": "Cancel",

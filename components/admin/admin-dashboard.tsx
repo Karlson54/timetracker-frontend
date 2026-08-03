@@ -1,7 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import httpClient from "@/lib/api/httpClient"
 import { toLocalDateString } from '@/lib/utils'
@@ -25,8 +28,11 @@ interface MissedDaysUser {
   missedDates: string[]
 }
 
+const MONTH_INDEXES = Array.from({ length: 12 }, (_, i) => i)
+
 export function AdminDashboard() {
   const { t } = useTranslation()
+
   const [topClients, setTopClients] = useState<TopClient[]>([])
   const [inactiveUsers, setInactiveUsers] = useState<InactiveUser[]>([])
   const [missedDaysUsers, setMissedDaysUsers] = useState<MissedDaysUser[]>([])
@@ -34,22 +40,45 @@ export function AdminDashboard() {
   const [loadingUsers, setLoadingUsers] = useState(true)
   const [loadingMissedDays, setLoadingMissedDays] = useState(true)
 
-  useEffect(() => {
-    const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-    const today = new Date()
+  const today = new Date()
+  const [selectedMonth, setSelectedMonth] = useState<Date>(
+    new Date(today.getFullYear(), today.getMonth(), 1)
+  )
+  const [pickerYear, setPickerYear] = useState<number>(today.getFullYear())
+  const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false)
 
+  const getMonthShortLabel = (monthIndex: number) => {
+    const full = t(`calendar.monthNames.${monthIndex}`)
+    return full.slice(0, 3)
+  }
+
+  const monthLabel = useMemo(() => {
+    const shortName = getMonthShortLabel(selectedMonth.getMonth())
+    return `${shortName} ${selectedMonth.getFullYear()}`
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMonth, t])
+
+  // Топ 5 клієнтів — залежить від обраного місяця
+  useEffect(() => {
+    const from = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1)
+    const to = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0)
+
+    setLoadingClients(true)
     httpClient
       .get('/api/reports/clients/top', {
         params: {
-          fromDate: toLocalDateString(firstDayOfMonth),
-          toDate: toLocalDateString(today),
+          fromDate: toLocalDateString(from),
+          toDate: toLocalDateString(to),
           top: 5,
         },
       })
       .then((res) => setTopClients(res.data))
       .catch((err) => console.error('top clients error:', err))
       .finally(() => setLoadingClients(false))
+  }, [selectedMonth])
 
+  // Інші картки — незалежні від обраного місяця (як і раніше)
+  useEffect(() => {
     httpClient
       .get('/api/reports/inactive-users')
       .then((res) => setInactiveUsers(res.data))
@@ -63,6 +92,16 @@ export function AdminDashboard() {
       .finally(() => setLoadingMissedDays(false))
   }, [])
 
+  const handleSelectMonth = (monthIndex: number) => {
+    setSelectedMonth(new Date(pickerYear, monthIndex, 1))
+    setIsMonthPickerOpen(false)
+  }
+
+  const handleOpenChange = (open: boolean) => {
+    if (open) setPickerYear(selectedMonth.getFullYear())
+    setIsMonthPickerOpen(open)
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -73,8 +112,64 @@ export function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Топ 5 клієнтів */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t('admin.dashboard.topClients')}</CardTitle>
+          <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-base">{t('admin.dashboard.topClients')}</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">{monthLabel}</p>
+            </div>
+
+            <Popover open={isMonthPickerOpen} onOpenChange={handleOpenChange}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  title={t('admin.dashboard.selectMonth')}
+                >
+                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-64 p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setPickerYear((y) => y - 1)}
+                  >
+                    <ChevronLeft className="h-3 w-3" />
+                  </Button>
+                  <span className="text-sm font-medium text-foreground">{pickerYear}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setPickerYear((y) => y + 1)}
+                  >
+                    <ChevronRight className="h-3 w-3" />
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {MONTH_INDEXES.map((m) => {
+                    const isSelected =
+                      selectedMonth.getFullYear() === pickerYear &&
+                      selectedMonth.getMonth() === m
+
+                    return (
+                      <Button
+                        key={m}
+                        variant={isSelected ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handleSelectMonth(m)}
+                      >
+                        {getMonthShortLabel(m)}
+                      </Button>
+                    )
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
           </CardHeader>
           <CardContent>
             {loadingClients ? (
