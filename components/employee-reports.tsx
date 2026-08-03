@@ -247,7 +247,7 @@ export function EmployeeReports() {
         allEntries={allEntries}
         totalCount={totalCount}
         dateRange={dateRange}
-        showNorm={true}
+        showNorm={false}
       />
 
       <Tabs defaultValue="summary">
