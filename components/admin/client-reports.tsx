@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SearchableSelect } from "@/components/ui/searchable-select"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { FileSpreadsheet } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -170,22 +170,15 @@ export function ClientReports() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">{t('clientReports.filters.clientLabel')}</label>
-              <Select
-                value={selectedClientId}
-                onValueChange={setSelectedClientId}
+              <SearchableSelect
+                options={clients}
+                selectedId={selectedClientId ? Number(selectedClientId) : null}
+                onChange={(id) => setSelectedClientId(id ? String(id) : "")}
                 disabled={loadingClients}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t('clientReports.filters.clientPlaceholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder={t('clientReports.filters.clientPlaceholder')}
+                searchPlaceholder={t('admin.reports.filters.search')}
+                emptyText={t('common.noData')}
+              />
             </div>
             <div className="col-span-1 md:col-span-2">
               <label className="text-sm font-medium mb-2 block">{t('clientReports.filters.periodLabel')}</label>
