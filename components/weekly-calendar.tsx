@@ -638,7 +638,9 @@ export function WeeklyCalendar() {
                           <TableCell>{entry.marketName || "—"}</TableCell>
                           <TableCell>{entry.contractingAgencyName || "—"}</TableCell>
                           <TableCell>{entry.clientName || "—"}</TableCell>
-                          <TableCell>{entry.projectBrandName || "—"}</TableCell>
+                          <TableCell className="max-w-[200px] truncate" title={entry.projectBrandName ?? ""}>
+                            {entry.projectBrandName || "—"}
+                          </TableCell>
                           <TableCell>{entry.mediaName || "—"}</TableCell>
                           <TableCell>{entry.jobTypeName || "—"}</TableCell>
                           <TableCell className="max-w-[200px] truncate" title={entry.comments ?? ""}>
