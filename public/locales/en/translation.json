@@ -430,7 +430,8 @@
       "clientLabel": "Client",
       "clientPlaceholder": "Select client",
       "periodLabel": "Period",
-      "allClients": "All clients"
+      "allClients": "All clients",
+      "excludeAdminDepartments": "W/o Admin Dept."
     },
     "stats": {
       "totalHours": "Total Hours",

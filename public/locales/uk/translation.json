@@ -430,7 +430,8 @@
       "clientLabel": "Клієнт",
       "clientPlaceholder": "Оберіть клієнта",
       "periodLabel": "Період",
-      "allClients": "All clients"
+      "allClients": "All clients",
+      "excludeAdminDepartments": "Без відділів Admin"
     },
     "stats": {
       "totalHours": "Всього годин",

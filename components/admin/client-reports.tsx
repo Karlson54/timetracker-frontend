@@ -16,6 +16,7 @@ import { toLocalDateString } from "@/lib/utils"
 import { ErrorToast } from "@/components/ui/error-toast"
 import { useErrorToast } from "@/hooks/use-error-toast"
 import { msToHours } from '@/lib/utils'
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface UserContribution {
   userId: number
@@ -54,6 +55,8 @@ export function ClientReports() {
     to: today,
   })
 
+  const [excludeAdminDepartments, setExcludeAdminDepartments] = useState(false)
+
   const [clients, setClients] = useState<DictionaryItem[]>([])
   const [loadingClients, setLoadingClients] = useState(true)
   const [selectedClientId, setSelectedClientId] = useState<string>("")
@@ -91,6 +94,7 @@ export function ClientReports() {
             params: {
               fromDate: toLocalDateString(dateRange!.from!),
               toDate: toLocalDateString(dateRange!.to!),
+              excludeAdminDepartments,
             },
           }
         )
@@ -104,7 +108,7 @@ export function ClientReports() {
     }
 
     fetchReport()
-  }, [selectedClientId, dateRange])
+  }, [selectedClientId, dateRange, excludeAdminDepartments])
 
   const handleExport = async () => {
     if (!selectedClientId || !dateRange?.from || !dateRange?.to) return
@@ -117,7 +121,7 @@ export function ClientReports() {
       const response = await httpClient.get(
         `/api/reports/client/${selectedClientId}/export/excel`,
         {
-          params: { fromDate: fromStr, toDate: toStr, locale: 'uk' },
+          params: { fromDate: fromStr, toDate: toStr, locale: 'uk', excludeAdminDepartments },
           responseType: 'blob',
         }
       )
@@ -176,9 +180,24 @@ export function ClientReports() {
                 emptyText={t('common.noData')}
               />
             </div>
-            <div className="col-span-1 md:col-span-2">
+            <div>
               <label className="text-sm font-medium mb-2 block">{t('clientReports.filters.periodLabel')}</label>
               <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+            </div>
+            <div className="flex items-end pb-2.5">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="excludeAdminDepartments"
+                  checked={excludeAdminDepartments}
+                  onCheckedChange={(checked) => setExcludeAdminDepartments(!!checked)}
+                />
+                <label
+                  htmlFor="excludeAdminDepartments"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  {t('clientReports.filters.excludeAdminDepartments')}
+                </label>
+              </div>
             </div>
           </div>
         </CardContent>
