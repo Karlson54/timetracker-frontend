@@ -106,10 +106,6 @@ export function ClientReports() {
     fetchReport()
   }, [selectedClientId, dateRange])
 
-  const visibleContributions = report?.userContributions.filter(
-    (u) => Math.round(u.contributionPercentage) >= 1
-  ) ?? []
-
   const handleExport = async () => {
     if (!selectedClientId || !dateRange?.from || !dateRange?.to) return
     setIsDownloading(true)
@@ -259,12 +255,12 @@ export function ClientReports() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 mb-6">
-                  {visibleContributions.map((user) => (
+                  {report.userContributions.map((user) => (
                     <div key={user.userId}>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="font-medium">{user.userName}</span>
                         <span className="text-gray-500">
-                          {msToHours(user.totalHoursMs).toFixed(1)}{t('calendar.totalPeriodHours')} ({Math.round(user.contributionPercentage)}%)
+                          {msToHours(user.totalHoursMs).toFixed(1)}{t('calendar.totalPeriodHours')} ({user.contributionPercentage.toFixed(2)}%)
                         </span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
@@ -289,7 +285,7 @@ export function ClientReports() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {visibleContributions.map((user) => (
+                    {report.userContributions.map((user) => (
                       <TableRow key={user.userId}>
                         <TableCell className="font-medium">{user.userName}</TableCell>
                         <TableCell className="text-gray-500">{user.agencyName}</TableCell>
@@ -300,7 +296,7 @@ export function ClientReports() {
                           {user.entriesCount}
                         </TableCell>
                         <TableCell className="text-right text-muted-foreground">
-                          {Math.round(user.contributionPercentage)}%
+                          {user.contributionPercentage.toFixed(2)}%
                         </TableCell>
                       </TableRow>
                     ))}
