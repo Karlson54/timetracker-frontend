@@ -49,6 +49,12 @@ const usersService = {
   async deactivate(id: number): Promise<void> {
     await httpClient.patch(`/api/users/${id}/deactivate`)
   },
+  async exportActive(): Promise<Blob> {
+    const response = await httpClient.get('/api/users/active/export', {
+      responseType: 'blob',
+    })
+    return response.data
+  },
 }
 
 export default usersService

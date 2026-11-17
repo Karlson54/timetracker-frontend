@@ -104,7 +104,9 @@
         "title": "Employees List",
         "description": "Total employees: {{count}}",
         "searchPlaceholder": "Search employees...",
-        "empty": "No employees found"
+        "empty": "No employees found",
+        "export": "Export to Excel",
+        "exporting": "Exporting..."
       },
       "status": {
         "active": "Active",

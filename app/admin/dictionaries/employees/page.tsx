@@ -4,14 +4,12 @@ export const dynamic = 'force-dynamic'
 
 import { EmployeesList } from '@/components/admin/employees-list'
 import { DashboardSidebar } from '@/components/dashboard-sidebar'
-import { useAdminProtection } from '@/lib/auth'
-import { useTranslation } from 'react-i18next'
+import { useSuperAdminProtection } from '@/lib/auth'
 
 export default function EmployeesPage() {
-  const isAdmin = useAdminProtection()
-  const { t } = useTranslation()
+  const isSuperAdmin = useSuperAdminProtection()
 
-  if (!isAdmin) return null
+  if (!isSuperAdmin) return null
 
   return (
     <div className="flex h-screen bg-background">

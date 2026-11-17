@@ -27,7 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Pencil, Plus, Search, UserCheck, UserX } from "lucide-react"
+import { Pencil, Plus, Search, UserCheck, UserX, FileSpreadsheet } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import usersService from "@/lib/api/services/usersService"
 import { agenciesService } from "@/lib/api/services/dictionaryService"
@@ -36,6 +36,7 @@ import type { UserListItem, CreateUserRequest, UpdateUserRequest, DictionaryItem
 import { ErrorToast } from '@/components/ui/error-toast'
 import { useErrorToast } from '@/hooks/use-error-toast'
 import departmentsService, { Department } from '@/lib/api/services/departmentsService'
+import { toLocalDateString } from '@/lib/utils'
 
 const PAGE_SIZE = 15
 
@@ -68,6 +69,7 @@ export function EmployeesList() {
   const [loading, setLoading] = useState(true)
   const { error, showError, clearError } = useErrorToast()
   const [searchTerm, setSearchTerm] = useState("")
+  const [isExporting, setIsExporting] = useState(false)
 
   // Пагінація
   const [currentPage, setCurrentPage] = useState(1)
@@ -260,6 +262,23 @@ export function EmployeesList() {
     } finally {
       setSubmitting(false)
       setEmployeeToDelete(null)
+    }
+  }
+
+  const handleExportActive = async () => {
+    try {
+      setIsExporting(true)
+      const blob = await usersService.exportActive()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `ActiveEmployees_${toLocalDateString(new Date())}.xlsx`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err: any) {
+      showError(err, t('common.errors.loadFailed'))
+    } finally {
+      setIsExporting(false)
     }
   }
 
@@ -489,6 +508,16 @@ export function EmployeesList() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+              <Button
+                onClick={handleExportActive}
+                size="sm"
+                variant="outline"
+                disabled={isExporting}
+                className="gap-2"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                {isExporting ? t('admin.employees.list.exporting') : t('admin.employees.list.export')}
+              </Button>
               <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
                 <Plus className="h-4 w-4 mr-1" />
                 {t('admin.employees.add.button')}
